@@ -33,6 +33,8 @@ importers:
         specifier: ^8.67.0
         version: 8.67.0(eslint@10.9.0)(typescript@6.0.3)
 
+  packages/analysis-core: {}
+
 packages:
 
   '@babel/code-frame@7.29.7':
