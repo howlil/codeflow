@@ -5,6 +5,31 @@ CodeFlow turns a repository into an evidence-backed semantic map of architecture
 
 Canonical truth comes from deterministic/static/configured/runtime evidence. The canvas is a projection. AI explains evidence; it does not invent canonical graph structure.
 
+## Knowledge Preservation Rule
+Separate **durable product knowledge** from **temporary delivery workflow**.
+
+Durable product knowledge includes:
+- product goals and project detail,
+- requirements and user journeys,
+- acceptance criteria and explicit non-goals,
+- domain constraints,
+- architecture decisions/invariants,
+- security/privacy constraints,
+- API/semantic contracts,
+- validated design decisions.
+
+These artifacts must **never be deleted merely because a workflow changes or an iteration finishes**. They may be updated, reorganized, or explicitly superseded only when the underlying product decision changes. When superseding them, preserve the replacement and decision history needed to understand why.
+
+Temporary workflow artifacts include:
+- obsolete execution checklists,
+- duplicated milestone/task plans,
+- retry/final/review-fix plans,
+- stale checkpoints,
+- redundant status notes,
+- process documents that duplicate this file.
+
+Only temporary workflow artifacts should be removed when they become stale.
+
 ## Delivery North Star
 Optimize for **validated user value reaching `master` quickly and safely**.
 
@@ -21,17 +46,19 @@ Rules:
 - Keep WIP low: finish/merge before starting adjacent cleanup.
 - Fix review/CI feedback on the same branch; never create retry/final/review branches.
 - Refactor only what blocks the current slice or removes measured pain.
-- Documentation is not delivery unless the task itself is documentation.
-- For reversible decisions, implement first and learn. Write a design note only for costly-to-reverse boundaries.
+- Do not create process documentation that duplicates existing rules.
+- For reversible implementation decisions, implement first and learn. Record a durable decision only for product/architecture/security boundaries that future work must preserve.
 
 ## Requirement Rule
-Before coding, define only:
+Before coding, identify:
 1. user/problem statement,
 2. observable acceptance criteria,
 3. explicit non-goals,
-4. major risk only if material.
+4. material constraints/risks.
 
-Do not create long requirement/spec documents for normal changes. If acceptance cannot be observed by a test, behavior, metric, or manual check, tighten it.
+Requirements are durable product context. Keep them in `.agent/requirements/` or the appropriate product/design document. Never delete requirements because implementation is complete; update their status or supersede them when product intent changes.
+
+Avoid duplicating the same requirement across multiple documents. If acceptance cannot be observed by a test, behavior, metric, or manual check, tighten it.
 
 ## Iteration Rule
 Use thin vertical slices rather than horizontal scaffolding.
@@ -46,10 +73,10 @@ Bad:
 all parsers -> all abstractions -> all APIs -> all UI -> integration later
 ```
 
-Each iteration should leave `master` buildable and preferably usable.
+Each iteration should leave `master` buildable and preferably usable. Iteration/task plans are disposable; product requirements and design decisions are not.
 
 ## System Design Rules
-Preserve only these invariants:
+Preserve these invariants:
 - **Universal semantic IR** is the core boundary.
 - Every uncertain edge carries provenance: `verified-static`, `inferred-static`, `configured`, `observed-runtime`, or `user-asserted`.
 - Static and runtime evidence remain distinguishable.
@@ -138,7 +165,7 @@ Versioning:
 
 Rules:
 - Tag releases from `master`.
-- Generate concise release notes from shipped user-visible changes; no changelog ceremony for internal-only work.
+- Generate concise release notes from shipped user-visible changes.
 - Prefer forward fix for trivial low-risk defects; use revert when impact is active or root cause is uncertain.
 - Never block a release on unrelated cleanup, refactor, docs polish, or speculative hardening.
 
@@ -149,7 +176,7 @@ Agents should use the cheapest tool that can prove the next decision:
 - use existing project tooling before adding dependencies,
 - prefer repository evidence over generic best-practice assumptions.
 
-Do not produce a spec, plan, checkpoint, diagram, benchmark, or migration unless it materially reduces uncertainty or is explicitly required.
+Do not create duplicate process artifacts. Do create/update durable requirement or design documentation when product intent, architecture invariants, public contracts, or security constraints materially change.
 
 ## Delivery Metrics
 Track trends, not vanity targets.
@@ -188,15 +215,19 @@ Engineering speed is useful only if it advances product learning. For each meani
 Do not build analytics infrastructure before there is a real user path to measure.
 
 ## Agent Workspace
-`.agent/` exists for minimal working context, not ceremony.
+`.agent/` separates durable product context from temporary execution state.
 
-Keep only:
-- `.agent/README.md` — workspace rules,
+Durable:
+- `.agent/requirements/` — product requirements, scope, acceptance, non-goals,
+- `.agent/specs/` — product/system design and architectural decisions that still describe intended behavior,
+- `.agent/decisions/` — costly-to-reverse decisions and supersession history.
+
+Temporary:
 - `.agent/plan.md` — current state / next 1-3 slices,
-- `.agent/decisions/` — rare costly-to-reverse decisions,
-- `.agent/checkpoints/` — only when continuity needs evidence.
+- `.agent/plans/` — task execution sequencing only when genuinely necessary,
+- `.agent/checkpoints/` — concise continuity evidence.
 
-No permanent backlog of speculative specs/plans. Delete or archive artifacts once their decision is encoded in code/tests/rules and they no longer help execution.
+Delete stale temporary workflow artifacts. **Do not delete durable requirements/project detail/design context as cleanup.**
 
 ## Final Decision Filter
 Before adding anything, ask:
@@ -204,5 +235,6 @@ Before adding anything, ask:
 2. Is there evidence the simpler option fails?
 3. Can this decision be reversed cheaply later?
 4. Does it shorten or lengthen feedback time?
+5. Is this product knowledge that future contributors must retain, or merely temporary workflow state?
 
-If the simpler solution satisfies the current need, ship it.
+If the simpler solution satisfies the current need, ship it. Preserve the product knowledge required to make the next correct decision.
