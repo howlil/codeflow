@@ -80,7 +80,9 @@ function createTypeChecker(
       );
     },
     readFile: (requestedPath) =>
-      requestedPath === filePath ? sourceText : defaultHost.readFile(requestedPath),
+      requestedPath === filePath
+        ? sourceText
+        : defaultHost.readFile(requestedPath),
   };
   const program = ts.createProgram({
     rootNames: [filePath],
@@ -142,7 +144,11 @@ function collectCallRelationships(
       continue;
     }
 
-    const aliases = collectFunctionAliases(body, checker, declarationToFunction);
+    const aliases = collectFunctionAliases(
+      body,
+      checker,
+      declarationToFunction,
+    );
 
     const visit = (node: ts.Node): void => {
       if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
@@ -305,7 +311,9 @@ function locationOf(
   node: ts.Node,
   displayFilePath: string,
 ): SourceLocation {
-  const start = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
+  const start = sourceFile.getLineAndCharacterOfPosition(
+    node.getStart(sourceFile),
+  );
   const end = sourceFile.getLineAndCharacterOfPosition(node.getEnd());
 
   return {

@@ -124,13 +124,17 @@ describe('App', () => {
 
     render(<App />);
 
-    expect(await screen.findByText('handleGreeting request flow')).toBeInTheDocument();
+    expect(
+      await screen.findByText('handleGreeting request flow'),
+    ).toBeInTheDocument();
     expect(screen.getAllByText('verified-static').length).toBeGreaterThan(0);
     expect(screen.getAllByText('inferred-static').length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole('button', { name: /formatGreeting/i }));
 
-    expect(screen.getByRole('heading', { name: 'formatGreeting' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'formatGreeting' }),
+    ).toBeInTheDocument();
     expect(screen.getByText(/Hello, \$\{name\}!/)).toBeInTheDocument();
     expect(screen.getByText('Local alias inference.')).toBeInTheDocument();
   });

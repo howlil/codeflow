@@ -92,7 +92,10 @@ export function App() {
             />
           </section>
 
-          <aside className="inspector-panel" aria-label="Source evidence inspector">
+          <aside
+            className="inspector-panel"
+            aria-label="Source evidence inspector"
+          >
             <Inspector flow={flow} selectedNode={selectedNode} />
           </aside>
         </div>
@@ -172,7 +175,9 @@ function NodeButton({
       aria-pressed={selected}
       onClick={() => onSelect(node.id)}
     >
-      <span className="node-kind">{node.entryPoint ? 'Entry function' : node.kind}</span>
+      <span className="node-kind">
+        {node.entryPoint ? 'Entry function' : node.kind}
+      </span>
       <strong>{node.label}</strong>
       <span>
         L{node.location.startLine}–{node.location.endLine}
