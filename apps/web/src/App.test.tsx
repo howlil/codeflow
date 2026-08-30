@@ -260,13 +260,9 @@ describe('App', () => {
       ...sampleFlow,
       entryPointId: 'function:fixture:missing-entry',
       nodes: sampleFlow.nodes.map((node) => ({ ...node, entryPoint: false })),
-      edges: [
-        {
-          ...sampleFlow.edges[0],
-          evidence: [],
-        },
-        sampleFlow.edges[1],
-      ],
+      edges: sampleFlow.edges.map((edge) =>
+        edge.id === 'verified-edge' ? { ...edge, evidence: [] } : edge,
+      ),
     };
     stubFlowRequest(partialFlow);
 
