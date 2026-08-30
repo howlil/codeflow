@@ -346,8 +346,22 @@ h2 {
   align-items: center;
   gap: 7px;
   min-height: 24px;
+  padding: 4px 6px;
   color: var(--edge-default);
   font-size: 0.68rem;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+.flow-edge:hover,
+.flow-edge--selected {
+  background: var(--surface-muted);
+}
+
+.flow-edge--selected {
+  box-shadow: var(--shadow-selected);
 }
 
 .flow-edge::before {
