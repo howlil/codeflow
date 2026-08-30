@@ -21,7 +21,7 @@ The existing evidence-backed semantic model remains canonical. Search and focus 
 
 M1 is release-ready on PR #2 and remains the integration base for this stacked sprint.
 
-M2.1 is implemented on `feat/m2-canvas-comprehension`:
+M2.1 is implemented and verified on PR #3 / `feat/m2-canvas-comprehension`:
 
 - function search is available above the semantic canvas
 - matching functions can be selected directly from search results
@@ -32,15 +32,13 @@ M2.1 is implemented on `feat/m2-canvas-comprehension`:
 - source/evidence inspection continues to follow the selected function
 - controls use native input/button semantics and remain usable in the responsive single-column layout
 - a focused regression test covers search -> focus -> hidden unrelated node -> full-flow restore
+- standard repository format/lint/build/typecheck/test gates passed on the implementation head
 
 No analyzer, API, semantic IR, evidence model, dependency, or persistence boundary changed in this slice.
 
 ## Delta
 
-Verification remains before this slice is release-ready:
-
-1. standard repository format/lint/typecheck/test/build gates pass
-2. stacked PR diff stays limited to the M2.1 projection/UI behavior and Feature Compass state
+None inside the authorized M2.1 slice.
 
 Remaining M2 roadmap capabilities are intentionally not part of this sprint:
 
@@ -52,4 +50,4 @@ Remaining M2 roadmap capabilities are intentionally not part of this sprint:
 
 ## Next Move
 
-Run standard CI on the stacked M2.1 PR. Fix only observed regressions. If green, mark this slice release-ready and stop.
+STOP. M2.1 is release-ready. Integration/merge and selection of the next M2 capability remain separate decisions.
