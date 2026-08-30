@@ -29,5 +29,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Print formatted M2.2 files
+        run: |
+          pnpm exec prettier --write apps/web/src/App.tsx apps/web/src/App.test.tsx
+          echo '=== APP_TSX ==='
+          cat apps/web/src/App.tsx
+          echo '=== APP_TEST_TSX ==='
+          cat apps/web/src/App.test.tsx
+          exit 1
+
       - name: Verify repository
         run: pnpm check
