@@ -13,6 +13,7 @@ export function App() {
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [focusMode, setFocusMode] = useState(false);
+  const [sourceSplitMode, setSourceSplitMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -99,7 +100,11 @@ export function App() {
           Analyzing TypeScript fixture…
         </p>
       ) : (
-        <div className="workspace-grid">
+        <div
+          className={`workspace-grid${
+            sourceSplitMode ? ' workspace-grid--source-split' : ''
+          }`}
+        >
           <aside className="repository-panel" aria-label="Repository flow">
             <p className="panel-kicker">Fixture</p>
             <strong>{flow.source.filePath}</strong>
@@ -181,6 +186,10 @@ export function App() {
               flow={flow}
               selectedNode={selectedNode}
               selectedEdge={selectedEdge}
+              sourceSplitMode={sourceSplitMode}
+              onToggleSourceSplit={() =>
+                setSourceSplitMode((current) => !current)
+              }
             />
           </aside>
         </div>
@@ -313,13 +322,24 @@ function Inspector({
   flow,
   selectedNode,
   selectedEdge,
+  sourceSplitMode,
+  onToggleSourceSplit,
 }: {
   flow: FlowProjection;
   selectedNode: FlowNode | null;
   selectedEdge: FlowEdge | null;
+  sourceSplitMode: boolean;
+  onToggleSourceSplit: () => void;
 }) {
   if (selectedEdge !== null) {
-    return <RelationshipInspector flow={flow} edge={selectedEdge} />;
+    return (
+      <RelationshipInspector
+        flow={flow}
+        edge={selectedEdge}
+        sourceSplitMode={sourceSplitMode}
+        onToggleSourceSplit={onToggleSourceSplit}
+      />
+    );
   }
 
   if (selectedNode === null) {
@@ -338,7 +358,11 @@ function Inspector({
 
   return (
     <>
-      <p className="panel-kicker">Inspector / source</p>
+      <InspectorHeading
+        label="Inspector / source"
+        sourceSplitMode={sourceSplitMode}
+        onToggleSourceSplit={onToggleSourceSplit}
+      />
       <h2>{selectedNode.label}</h2>
       <p className="source-location">
         {selectedNode.location.filePath}:L{selectedNode.location.startLine}–
@@ -362,9 +386,13 @@ function Inspector({
 function RelationshipInspector({
   flow,
   edge,
+  sourceSplitMode,
+  onToggleSourceSplit,
 }: {
   flow: FlowProjection;
   edge: FlowEdge;
+  sourceSplitMode: boolean;
+  onToggleSourceSplit: () => void;
 }) {
   const evidence = edge.evidence[0];
   const sourceNode = flow.nodes.find((node) => node.id === edge.sourceId);
@@ -382,7 +410,11 @@ function RelationshipInspector({
 
   return (
     <>
-      <p className="panel-kicker">Inspector / relationship</p>
+      <InspectorHeading
+        label="Inspector / relationship"
+        sourceSplitMode={sourceSplitMode}
+        onToggleSourceSplit={onToggleSourceSplit}
+      />
       <h2>
         {sourceNode?.label ?? edge.sourceId} →{' '}
         {targetNode?.label ?? edge.targetId}
@@ -399,6 +431,30 @@ function RelationshipInspector({
         <EvidenceItem edge={edge} />
       </div>
     </>
+  );
+}
+
+function InspectorHeading({
+  label,
+  sourceSplitMode,
+  onToggleSourceSplit,
+}: {
+  label: string;
+  sourceSplitMode: boolean;
+  onToggleSourceSplit: () => void;
+}) {
+  return (
+    <div className="inspector-heading">
+      <p className="panel-kicker">{label}</p>
+      <button
+        className="focus-toggle"
+        type="button"
+        aria-pressed={sourceSplitMode}
+        onClick={onToggleSourceSplit}
+      >
+        {sourceSplitMode ? 'Restore inspector' : 'Expand source'}
+      </button>
+    </div>
   );
 }
 
