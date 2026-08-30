@@ -108,19 +108,23 @@ export function handleGreeting(name: string): string {
   },
 };
 
+function stubFlowRequest() {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => sampleFlow,
+    }),
+  );
+}
+
 describe('App', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
   });
 
   it('renders the flow and exposes source evidence on selection', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => sampleFlow,
-      }),
-    );
+    stubFlowRequest();
 
     render(<App />);
 
@@ -137,5 +141,34 @@ describe('App', () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/Hello, \$\{name\}!/)).toBeInTheDocument();
     expect(screen.getByText('Local alias inference.')).toBeInTheDocument();
+  });
+
+  it('navigates by search and limits the canvas to the selected neighborhood', async () => {
+    stubFlowRequest();
+
+    render(<App />);
+    await screen.findByText('handleGreeting request flow');
+
+    fireEvent.change(
+      screen.getByRole('searchbox', { name: 'Search functions' }),
+      { target: { value: 'format' } },
+    );
+    fireEvent.click(screen.getByRole('button', { name: /formatGreeting/i }));
+
+    expect(
+      screen.getByText('Neighborhood focus · formatGreeting'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'formatGreeting' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /normalizeName/i }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show full flow' }));
+
+    expect(
+      screen.getByRole('button', { name: /normalizeName/i }),
+    ).toBeInTheDocument();
   });
 });
