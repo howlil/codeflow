@@ -2,58 +2,54 @@
 
 ## Feature Shape
 
-M1 makes CodeFlow useful for one narrow, trustworthy developer journey:
+M2 improves comprehension once a semantic graph is large enough that seeing everything at once becomes noise.
+
+This sprint is the smallest M2 slice:
 
 ```text
-tiny TypeScript repository
- -> deterministic analysis
- -> evidence-backed semantic IR
- -> bounded request-flow projection
- -> canvas rendering
- -> selectable source/evidence
+semantic flow
+ -> search a function
+ -> navigate directly to it
+ -> focus on its immediate neighborhood
+ -> inspect source/evidence
+ -> return to the full flow
 ```
 
-The user can see one real request flow, inspect the functions involved, distinguish verified from inferred relationships, and inspect the source/evidence supporting CodeFlow's claim.
+The existing evidence-backed semantic model remains canonical. Search and focus only change the projection the user is viewing; they do not invent or mutate semantic relationships.
 
 ## Current Position
 
-M1 is implemented and release-ready on PR #2:
+M1 is release-ready on PR #2 and remains the integration base for this stacked sprint.
 
-- one tiny TypeScript request-flow fixture is analyzed with the TypeScript compiler API
-- top-level functions become deterministic semantic entities
-- direct symbol-resolved calls are labeled `verified-static`
-- local function-alias calls are explicitly labeled `inferred-static`
-- every projected call carries source location, analyzer provenance, and a human-readable evidence reason
-- `GET /api/flows/sample` exposes the bounded flow projection
-- the web workspace renders repository context, an interactive semantic flow, and a source/evidence inspector
-- selecting a function reveals its source range and related call evidence
-- solid vs dashed relationship styling keeps verified and inferred evidence visibly distinct
-- pnpm workspace dependency/build ordering supports `apps/api -> @codeflow/analysis-core`
-- the pnpm lockfile is synchronized with the new workspace dependencies
-- the normal read-only CI path passes `pnpm install --frozen-lockfile` and `pnpm check`
+M2.1 is implemented on `feat/m2-canvas-comprehension`:
 
-The temporary CI-only lock/format helpers used because the connected environment could not run repository commands locally have been removed. The repository workflow is restored to its normal read-only frozen-lock verification path.
+- function search is available above the semantic canvas
+- matching functions can be selected directly from search results
+- search navigation selects the function and enters neighborhood focus
+- neighborhood focus shows the selected function plus directly connected call relationships
+- incoming and outgoing relationships remain directionally distinguishable
+- `Show full flow` returns to the original entry-point projection
+- source/evidence inspection continues to follow the selected function
+- controls use native input/button semantics and remain usable in the responsive single-column layout
+- a focused regression test covers search -> focus -> hidden unrelated node -> full-flow restore
+
+No analyzer, API, semantic IR, evidence model, dependency, or persistence boundary changed in this slice.
 
 ## Delta
 
-There is no remaining implementation delta for the authorized M1 slice.
+Verification remains before this slice is release-ready:
 
-The M1 non-goals remain unchanged:
+1. standard repository format/lint/typecheck/test/build gates pass
+2. stacked PR diff stays limited to the M2.1 projection/UI behavior and Feature Compass state
 
-- AI explanation
-- auth/multi-user SaaS behavior
-- persistence/graph database
-- queue/Redis
-- runtime execution/tracing
-- multi-language support
-- generic plugin platform
-- broad design-system work
-- speculative scale infrastructure
+Remaining M2 roadmap capabilities are intentionally not part of this sprint:
 
-PR #2 remains the integration boundary. Merging or releasing it is a separate user-owned integration/product decision.
+- relationship filters/lenses
+- source split/snippet inspection improvements beyond the existing inspector
+- stable automatic layout for larger arbitrary graphs
+- broader empty/error/partial states
+- broader keyboard navigation beyond native primary controls
 
 ## Next Move
 
-**STOP this iteration.**
-
-Do not start a second language, AI layer, persistence system, runtime sandbox, renderer/platform expansion, or adjacent product feature without a new authorized product decision.
+Run standard CI on the stacked M2.1 PR. Fix only observed regressions. If green, mark this slice release-ready and stop.
