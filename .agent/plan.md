@@ -23,7 +23,7 @@ Durable visual and interaction language remains owned by root `DESIGN.md`.
 
 M0/M1 and M2.1 are integrated into `master`.
 
-M2.2 is implemented on `feat/m2-edge-evidence-inspection`:
+M2.2 is implemented and verified on PR #4 / `feat/m2-edge-evidence-inspection`:
 
 - projected relationships are keyboard-reachable selectable controls
 - each relationship exposes an accessible source -> target inspection label
@@ -32,17 +32,17 @@ M2.2 is implemented on `feat/m2-edge-evidence-inspection`:
 - the inspector shows canonical source -> target direction, supporting file/range, source snippet, evidence kind, analyzer source, and reason
 - selecting a function clears relationship selection and returns to the existing node/source inspector
 - focus-mode changes clear stale edge inspection state
-- no analyzer, semantic IR, API, dependency, persistence, or architecture boundary changed
 - focused regression coverage protects relationship selection -> source provenance inspection
+- existing node selection and search/neighborhood-focus regressions still pass
+- standard format/lint/build/typecheck/test gates passed on CI run #44
+
+No analyzer, semantic IR, API, dependency, persistence, runtime, AI, multi-language, or material architecture boundary changed.
 
 ## Delta
 
-Verification remains before release-ready:
+None inside the authorized M2.2 slice.
 
-1. standard format/lint/build/typecheck/test gates pass
-2. PR diff stays limited to M2.2 UI inspection behavior, focused coverage, styling, and Feature Compass state
-
-Remaining M2 roadmap capabilities are still intentionally outside this sprint:
+Remaining M2 roadmap capabilities are intentionally outside this sprint:
 
 - relationship filters/lenses once multiple useful relationship kinds exist
 - source split mode beyond the existing inspector surface
@@ -52,4 +52,4 @@ Remaining M2 roadmap capabilities are still intentionally outside this sprint:
 
 ## Next Move
 
-Run standard CI. Fix only observed regressions. If green, mark M2.2 release-ready, merge it into `master`, and stop.
+STOP after integration. M2.2 is release-ready and authorized to merge into `master` in this iteration.
