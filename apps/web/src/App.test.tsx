@@ -203,4 +203,29 @@ describe('App', () => {
       screen.getByText(/return formatter\(normalizeName\(name\)\);/),
     ).toBeInTheDocument();
   });
+
+  it('expands source inspection without leaving the semantic canvas', async () => {
+    stubFlowRequest();
+
+    render(<App />);
+    await screen.findByText('handleGreeting request flow');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Expand source' }));
+
+    expect(
+      screen.getByRole('button', { name: 'Restore inspector' }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      screen.getByRole('region', { name: 'Semantic flow canvas' }),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Source evidence inspector')).toHaveTextContent(
+      'export function handleGreeting',
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Restore inspector' }));
+
+    expect(
+      screen.getByRole('button', { name: 'Expand source' }),
+    ).toHaveAttribute('aria-pressed', 'false');
+  });
 });
