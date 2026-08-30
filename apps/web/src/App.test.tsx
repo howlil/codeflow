@@ -142,7 +142,7 @@ describe('App', () => {
     expect(screen.getAllByText('inferred-static').length).toBeGreaterThan(0);
 
     fireEvent.click(
-      screen.getByRole('button', { name: /^Function formatGreeting/i }),
+      screen.getByRole('button', { name: /^FunctionformatGreeting/i }),
     );
 
     expect(
