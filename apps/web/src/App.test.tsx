@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { App } from './App';
@@ -154,7 +160,10 @@ describe('App', () => {
       screen.getByRole('searchbox', { name: 'Search functions' }),
       { target: { value: 'format' } },
     );
-    fireEvent.click(screen.getByRole('button', { name: /formatGreeting/i }));
+    const searchResults = screen.getByLabelText('Function search results');
+    fireEvent.click(
+      within(searchResults).getByRole('button', { name: /formatGreeting/i }),
+    );
 
     expect(
       screen.getByText('Neighborhood focus · formatGreeting'),
