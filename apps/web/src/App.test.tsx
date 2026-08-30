@@ -141,7 +141,9 @@ describe('App', () => {
     expect(screen.getAllByText('verified-static').length).toBeGreaterThan(0);
     expect(screen.getAllByText('inferred-static').length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByRole('button', { name: /formatGreeting/i }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /^Function formatGreeting/i }),
+    );
 
     expect(
       screen.getByRole('heading', { name: 'formatGreeting' }),
@@ -171,14 +173,32 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'formatGreeting' }),
     ).toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: /normalizeName/i }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText('normalizeName')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Show full flow' }));
 
+    expect(screen.getByText('normalizeName')).toBeInTheDocument();
+  });
+
+  it('inspects one selected relationship with its source provenance', async () => {
+    stubFlowRequest();
+
+    render(<App />);
+    await screen.findByText('handleGreeting request flow');
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Inspect CALLS relationship from handleGreeting to normalizeName',
+      }),
+    );
+
     expect(
-      screen.getByRole('button', { name: /normalizeName/i }),
+      screen.getByRole('heading', { name: 'handleGreeting → normalizeName' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Direct symbol resolution.')).toBeInTheDocument();
+    expect(screen.queryByText('Local alias inference.')).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/return formatter\(normalizeName\(name\)\);/),
     ).toBeInTheDocument();
   });
 });
