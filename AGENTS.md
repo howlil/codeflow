@@ -1,127 +1,87 @@
-# AGENTS.md
+# CodeFlow Agent Adapter
 
-## Project Mission
+This file is the entry point for agent work in CodeFlow. It routes work into the repository's local sources of truth and preserves CodeFlow-specific invariants. It must not duplicate the full engineering policy.
 
-CodeFlow is an interactive program-understanding system. It turns a software repository into a navigable semantic map that helps a developer understand how the system works: architecture, execution flow, data flow, dependencies, state changes, failures, infrastructure, and eventually observed runtime behavior.
+## Read progressively
 
-The product is not a diagram editor and not an LLM wrapper around repository chunks. The repository model is the source of truth; the canvas is a projection of that model; AI is an explanation layer over evidence.
+Always start with:
 
-## Product Principles
+1. `.agent/plan.md` — current Feature Compass: feature shape, current position, delta, and next move.
+2. `.agent/rules.md` — canonical lifecycle, authority, minimum-change, testing, quality, documentation, dependency, retrospective, and stop rules.
 
-Preserve these principles unless a demonstrated requirement proves them insufficient:
+Load only when the current change touches the concern:
 
-1. **Evidence before explanation.** Deterministic analysis and runtime evidence come before LLM interpretation.
-2. **Universal model, incremental adapters.** Support additional languages/frameworks through adapters into one semantic IR; never build a separate product architecture per language.
-3. **Progressive disclosure.** A new user should see system-level meaning first and zoom toward modules, symbols, control flow, and source only when needed.
-4. **Truthful uncertainty.** Distinguish statically verified, inferred, and runtime-observed relationships. Never present an inference as observed fact.
-5. **Canvas is a view, not state.** Node coordinates and UI grouping must not become the canonical repository model.
-6. **Pragmatic modular monolith first.** One deployable backend and one web application are the default. Do not introduce microservices, queues, graph databases, Kubernetes, or distributed coordination without measured need.
-7. **Fast verified delivery.** Prefer small vertical slices with tests and observable acceptance criteria over broad framework scaffolding.
+- `.agent/requirements/product-roadmap.md` — durable product outcomes, milestone requirements, acceptance criteria, and non-goals.
+- `.agent/specs/2026-08-25-codeflow-foundation-design.md` — current foundation architecture, semantic model, UX direction, constraints, and trade-offs.
+- source code/tests — actual implemented behavior and repository conventions.
+- CI/release configuration — only when integration or release mechanics matter.
 
-## Engineering Priority Order
+Do not load the entire repository or `.agent/` tree by default. Expand context only when the requested change or a discovered dependency materially requires it.
 
-When trade-offs conflict, optimize in this order:
+## Authority model
 
-1. Correctness of semantic relationships
-2. Security and repository isolation
-3. Truthful evidence/confidence representation
-4. Data integrity and reproducibility
-5. Maintainability
-6. User comprehension and interaction quality
-7. Observability
-8. Performance
-9. Extensibility
+- The user owns WHY, WHAT, product scope/boundaries, product semantics, material architecture decisions, and final product/release decisions.
+- The agent has high autonomy for ordinary local engineering execution once the bounded change is authorized.
+- Do not ask for approval for routine implementation details.
+- Evidence, best practices, or recommendations do not authorize product scope expansion.
+- If a material product/architecture/security decision is not already authorized, surface it rather than silently crossing the boundary.
 
-Do not sacrifice semantic correctness to make a graph look complete.
-
-## Delivery Operating Model
-
-Default loop:
+## Canonical execution loop
 
 ```text
-goal
-  -> acceptance criteria
-  -> smallest vertical slice
-  -> RED
-  -> GREEN
-  -> REFACTOR
-  -> focused verification
-  -> PR / CI
-  -> review and fixes on the same branch
-  -> merge
-  -> observe
+USER INTENT
+ -> UNDERSTAND
+ -> BOUND
+ -> SPECIFY
+ -> DESIGN
+ -> IMPLEMENT
+ -> VERIFY
+ -> QUALITY GATES
+ -> RELEASE READY
+ -> STOP
 ```
 
-Rules:
-
-- Use TDD for behavior changes when an executable test seam exists.
-- Reproducible bugs should leave regression tests.
-- Prefer one coherent task, one branch, and one PR through review/CI feedback.
-- Keep changes small enough to reason about, review, revert, and verify.
-- Do not create architecture, wrappers, packages, or infrastructure solely for hypothetical future scale.
-- Do not optimize commit count, branch count, lines changed, or PR count as productivity metrics.
-- Do not split a vertical feature into artificial layer-by-layer PRs when one small coherent slice is safer.
-
-## Architecture Invariants
-
-### 1. Universal Semantic IR is the core boundary
-
-All language, framework, infrastructure, and runtime adapters emit a shared semantic model. UI code must not parse source files directly. LLM code must not invent graph structure directly.
-
-Canonical conceptual entities include:
+Operationally:
 
 ```text
-Repository
-Application
-Module
-File
-Namespace/Package
-Type/Class/Struct/Interface
-Function/Method
-Variable/Value
-Endpoint
-Database/Table/Collection
-Queue/Topic/Event
-ExternalService
-InfrastructureResource
-RuntimeProcess/Span
+understand explicit request/problem
+ -> inspect only relevant existing implementation
+ -> bound smallest coherent change
+ -> derive only acceptance criteria needed to remove ambiguity
+ -> choose smallest design using existing ownership/patterns
+ -> implement minimum change
+ -> identify realistic regression risk
+ -> choose cheapest high-signal verification
+ -> use TDD only when it is the best tool
+ -> run mandatory repository gates + justified risk-specific checks
+ -> declare release-ready only from observed evidence
+ -> stop
 ```
 
-Canonical conceptual relationships include:
+`.agent/rules.md` is normative if this summary is incomplete.
 
-```text
-CONTAINS
-DEFINES
-IMPORTS
-CALLS
-RETURNS
-READS
-WRITES
-MUTATES
-IMPLEMENTS
-EXTENDS
-INJECTS
-HANDLES
-REQUESTS
-RESPONDS
-PUBLISHES
-CONSUMES
-DEPENDS_ON
-DEPLOYS_TO
-RUNS_ON
-CONNECTS_TO
-```
+## CodeFlow mission
 
-The actual schema may evolve, but additions must preserve stable identifiers, evidence provenance, and compatibility with existing graph consumers where practical.
+CodeFlow turns a software repository into an evidence-backed semantic map of architecture, execution flow, data flow, dependencies, state changes, failures, infrastructure, and eventually observed runtime behavior.
 
-### 2. Evidence is first-class
+The repository model is the source of truth. The canvas is a projection of that model. AI is an explanation layer over evidence, not a source of canonical graph structure.
 
-Every relationship that can be uncertain must carry provenance/confidence metadata sufficient to answer:
+## Locked CodeFlow product/architecture invariants
 
-- Where did this edge come from?
-- Was it parsed, resolved, inferred, configured, or observed at runtime?
-- Which file/range/runtime span supports it?
-- How confident are we?
+Preserve these unless the user explicitly authorizes a material change:
+
+1. **Evidence before explanation.** Deterministic/static/configured/runtime evidence precedes LLM interpretation.
+2. **Universal semantic IR.** Language, framework, infrastructure, and runtime adapters emit into one shared semantic model rather than separate product architectures.
+3. **Truthful uncertainty.** Distinguish verified, inferred, configured, runtime-observed, and user-asserted relationships. Never present inference as observed fact.
+4. **Canvas is a projection, not canonical state.** UI coordinates/grouping do not define repository truth.
+5. **Static analysis is useful without executing untrusted code.** Runtime execution/tracing is a separately authorized, sandboxed capability.
+6. **Pragmatic modular monolith first.** Do not introduce microservices, queues, Redis, graph databases, Kubernetes, or distributed coordination without measured current need and authorized scope.
+7. **Progressive semantic disclosure.** Show system meaning first, then allow navigation toward modules, symbols, control/data flow, and source evidence.
+8. **Private repository data is confidential.** Minimize source exposure in logs, telemetry, prompts, traces, and client payloads.
+
+## Semantic evidence model
+
+Relationships that can be uncertain retain provenance sufficient to answer where the edge came from and what supports it.
 
 Preferred evidence classes:
 
@@ -130,382 +90,123 @@ verified-static   deterministic semantic resolution
 inferred-static   heuristic/static inference
 configured        explicit config/manifest evidence
 observed-runtime  captured runtime evidence
-user-asserted     explicit user annotation, kept separate from analyzer truth
+user-asserted     explicit user annotation, separate from analyzer truth
 ```
 
-Do not convert heuristic scores into false precision. Confidence is a communication aid, not fabricated probability.
+Do not convert heuristic scores into false precision.
 
-### 3. Analysis pipeline stays deterministic where possible
+## Analysis boundary
 
-Preferred pipeline:
+Preferred conceptual flow:
 
 ```text
 repository input
-  -> project discovery
-  -> language/framework/infra detection
-  -> parsing
-  -> symbol extraction
-  -> reference resolution
-  -> control/data/dependency extraction
-  -> semantic IR
-  -> derived graph projections
-  -> optional runtime evidence merge
-  -> optional AI explanation
-  -> canvas/API consumers
+ -> project discovery
+ -> language/framework/infra detection
+ -> parsing
+ -> symbol extraction
+ -> reference resolution
+ -> control/data/dependency extraction
+ -> semantic IR
+ -> graph projections
+ -> optional runtime evidence merge
+ -> optional grounded AI explanation
+ -> API/canvas consumers
 ```
 
-An LLM may summarize or explain an already-grounded path. It must not be the primary parser, symbol resolver, or source of canonical edges.
+An LLM may explain an already-grounded path. It must not be the primary parser, symbol resolver, or source of canonical edges.
 
-### 4. Adapters are narrow plugins, not mini-platforms
+UI code must not parse source files directly. Parser/framework-specific objects must not leak into the core semantic contract when a stable IR representation can own the concept.
 
-A language adapter should implement only the capabilities the core needs, for example:
+## Repository shape and architecture bias
 
-```text
-parse
-extractSymbols
-resolveReferences
-extractCalls
-extractTypes
-extractControlFlow
-extractDataFlow
-extractImports
-```
-
-Framework adapters add framework semantics such as HTTP routes, dependency-injection bindings, component boundaries, ORM relationships, or event wiring.
-
-Infrastructure adapters add deployment/config semantics such as Docker, Compose, Terraform, Kubernetes, CI, reverse proxies, and cloud resources.
-
-Do not require every adapter to implement every capability. Capability discovery is preferable to fake completeness.
-
-### 5. Static and runtime models remain separable
-
-Static analysis must be useful without executing untrusted repositories.
-
-Runtime tracing is an optional enhancement. Runtime-observed paths may strengthen or override a view of execution, but they must retain their provenance rather than silently mutating static evidence.
-
-Never execute arbitrary repository code as part of ordinary analysis without an explicit sandboxed execution design and user action.
-
-## Initial Technology Direction
-
-Use stable, boring tools with good ecosystem fit. Versions belong in package manifests, not this policy.
-
-### Web
-
-- React + TypeScript + Vite
-- `@xyflow/react` for the interactive node canvas
-- plain CSS/CSS modules or a small utility layer; avoid a large design-system dependency initially
-- local component state first; add a dedicated state library only after state ownership becomes demonstrably painful
-
-React Flow is selected because the product needs custom nodes, edges, pan/zoom, selection, grouping, minimap, and interaction primitives rather than low-level canvas rendering from scratch.
-
-### Backend / analysis host
-
-- Node.js + TypeScript
-- Fastify for the HTTP boundary
-- worker threads/process isolation for CPU-heavy parsing only when profiling shows event-loop pressure
-- Tree-sitter as a pragmatic baseline parser where a stronger language-native semantic API is not yet integrated
-- use language-native semantic tooling when it materially improves resolution accuracy (for example, TypeScript compiler APIs for TS/JS)
-
-### Persistence
-
-Start simple:
-
-- PostgreSQL for SaaS product metadata only when durable multi-user/project metadata is introduced
-- analysis artifacts/IR may initially be deterministic files or compact persisted blobs if that keeps the MVP simpler
-- do **not** add Neo4j or another graph database by default; graph traversal can live in memory/application code until actual dataset/query pressure proves otherwise
-- do **not** add Redis or a queue by default
-
-### Package management / repository shape
-
-Prefer pnpm workspaces with a small monorepo. Keep package count low. A reasonable starting shape is:
+Current direction is a small TypeScript monorepo:
 
 ```text
 apps/
-  web/            React canvas UI
-  api/            Fastify API + orchestration
+  web/
+  api/
 packages/
-  analysis-core/  semantic IR, graph derivation, analysis contracts/adapters
-  contracts/      shared API schemas/types when sharing is genuinely useful
+  analysis-core/
 ```
 
-Do not split adapters, graph utilities, parsers, or every domain concept into separate packages until independent ownership/build boundaries justify it. Directories/modules inside `analysis-core` are cheaper than packages.
+Use existing ownership before creating another package. A local module is cheaper than a package; a package is cheaper than a service.
 
-## UI / Canvas Product Contract
+Use stable, boring ecosystem tools when they satisfy the requirement. Do not build custom parser, graph layout, renderer, orchestration, persistence, or plugin infrastructure until a current requirement proves existing/simple approaches insufficient.
 
-The canvas is the primary spatial workspace, supported by repository navigation and an inspector/source panel.
-
-Default desktop composition:
-
-```text
-repository / flows | infinite semantic canvas | inspector / source
-```
-
-Core interaction principles:
-
-- System meaning before file structure.
-- Automatic layout must produce a readable default; users should not need to manually arrange generated graphs.
-- Selecting a node reveals purpose, inputs/outputs, callers/callees, reads/writes, side effects, failures, evidence, and source location when known.
-- Focus/neighborhood mode reduces unrelated graph noise.
-- Users can filter relationship lenses: calls, data, state, events, dependencies, infrastructure, runtime.
-- Entry points such as endpoints, CLI commands, UI actions, jobs, or consumers can drive trace views.
-- The same IR can render different projections: System, Flow, Data, Dependency, Infrastructure, Runtime.
-- Large repositories require abstraction levels and collapse/expand. Never render the entire symbol graph by default.
-
-### Abstraction levels
-
-Target mental model:
-
-```text
-L0 ecosystem/system
-L1 applications/services
-L2 modules/features
-L3 types/functions
-L4 control/data flow
-L5 source
-```
-
-Exact level names may evolve, but progressive semantic zoom is a core product invariant.
-
-### Simulation / trace UX
-
-Static simulation means deterministic/inferred stepping through a derived flow; runtime trace means observed execution. The UI must label which one is being shown.
-
-A trace may visualize:
-
-- step order
-- data shape/value transformations when safely available
-- state reads/writes
-- external calls
-- events
-- branch/failure paths
-- optional observed latency when runtime evidence exists
-
-Never fabricate runtime values or latency from static analysis.
-
-## Visual Design Direction
-
-CodeFlow uses a restrained monochrome AI-SaaS aesthetic:
-
-- black/white/neutral gray palette
-- minimal, high-contrast, information-first composition
-- subtle glass surfaces only where they create hierarchy; no glassmorphism everywhere
-- thin neutral borders and restrained blur
-- generous negative space
-- typography and alignment carry hierarchy more than decoration
-- glow/shine is rare and reserved for selection, active trace, or focus state
-- no rainbow graph by default; semantics should rely on labels, shape, line style, iconography, and contrast before color
-- avoid giant gradients, decorative blobs, excessive shadows, and marketing-style visual noise inside the engineering workspace
-
-### Suggested semantic styling
-
-- solid edge: verified/static or explicit relationship
-- dashed edge: inferred relationship
-- animated/trace treatment: runtime-observed or active simulation path
-- selected node: high-contrast outline plus subtle restrained shine
-- external system: visually distinct boundary, not a saturated color
-- database/event/API/function nodes may use different geometry/iconography while staying monochrome
-
-Accessibility beats aesthetic purity. Maintain visible focus states, keyboard navigation for important actions, readable contrast, and non-color-only semantics.
-
-## Architecture and Code Design Rules
-
-Apply SOLID as a reasoning tool, not a mandate to create interfaces everywhere.
-
-### SRP
-
-A module should have one coherent reason to change. Parsing, semantic resolution, graph derivation, persistence, HTTP transport, and UI rendering are separate responsibilities.
-
-### OCP
-
-Language/framework support should usually extend through adapter registration rather than edits across the entire core. Do not build a generic plugin framework beyond the minimum registration/capability contract required.
-
-### LSP / ISP
-
-Prefer small capability interfaces. Do not force an adapter to implement fake methods for unsupported analysis features.
-
-### DIP
-
-Core semantic logic depends on narrow analyzer/evidence contracts, not Fastify, React, Tree-sitter node objects, or a specific database API.
-
-### KISS
-
-Prefer explicit functions, discriminated unions, plain data, and direct control flow. Avoid factories, DI containers, command buses, mediator frameworks, or meta-programming unless there is a concrete problem they solve.
-
-### DRY
-
-Remove duplicated knowledge, not merely repeated syntax. Two small explicit functions are often better than a premature generic abstraction.
-
-### YAGNI
-
-Do not build multi-language completeness, SaaS billing, collaboration, graph persistence infrastructure, runtime sandboxing, or production-scale distributed analysis before the current milestone requires them.
-
-## Anti-Over-Engineering Rules
-
-Do not add these by default:
-
-- microservices
-- Kafka/RabbitMQ/BullMQ
-- Redis
-- Neo4j/graph database
-- Kubernetes/service mesh
-- event sourcing/CQRS
-- generic repository/service/controller layers for every feature
-- dependency-injection frameworks
-- a custom parser when reliable parser tooling exists
-- WebGL renderer before DOM/SVG canvas performance is measured insufficient
-- a custom graph layout engine before ELK/Dagre-like approaches are proven insufficient
-- embeddings/vector DB for relationships that deterministic semantic analysis can represent directly
-- LLM calls in the critical path of repository parsing
-
-A small explicit module is preferable to an internal framework.
-
-## Security Boundaries
+## Security boundary
 
 Repository contents are untrusted input.
 
-- Path traversal and symlink behavior must be handled deliberately.
-- Never expose repository secrets in logs, analytics, traces, prompts, error messages, or client payloads without explicit need.
-- Ignore common dependency/build directories by default and enforce resource limits.
-- Do not execute repository code during static analysis.
-- Any future runtime execution must use a separately designed sandbox with CPU, memory, filesystem, network, process, and timeout limits.
-- Treat private repository source as confidential tenant data.
-- LLM context must be minimized to the evidence needed for the answer; do not upload an entire private repository to a model by default.
-- Log metadata, timings, counts, and sanitized identifiers rather than source contents.
+- handle path traversal and symlinks deliberately
+- do not execute analyzed repository code during ordinary static analysis
+- do not leak repository secrets/source into logs, analytics, prompts, errors, or client payloads without explicit need
+- enforce reasonable resource limits and ignore common generated/dependency directories
+- minimize LLM context to evidence needed for the question
+- any future runtime execution requires an explicitly designed sandbox for CPU, memory, filesystem, network, process, and timeout limits
 
-## Performance Model
+Security/privacy boundaries outrank delivery speed.
 
-Optimize based on measurements.
+## UI/understanding contract
 
-Expected pressure points:
+The product should help a developer move from system-level meaning to supporting evidence without fabricating certainty.
 
-- parsing many files
-- reference/symbol resolution
-- derived graph size
-- layout of large projections
-- repeated analysis after small changes
+Core UX principles:
 
-Prefer these optimizations in order:
+- system meaning before file structure
+- automatic readable layout before manual arrangement
+- selection reveals purpose, inputs/outputs, relationships, state/side effects, failures, evidence, and source when known
+- focus/neighborhood views reduce unrelated graph noise
+- relationship lenses may project calls, data, state, events, dependencies, infrastructure, and runtime
+- large repositories use abstraction/collapse/focus rather than rendering the entire symbol graph by default
+- static simulation and runtime-observed traces must be visibly distinguishable
+- never fabricate runtime values or latency from static analysis
 
-1. ignore irrelevant/generated/dependency directories
-2. incremental/cached analysis keyed by content hash
-3. bounded graph projections rather than whole-repository rendering
-4. lazy inspector/source loading
-5. background CPU isolation for parsing/resolution
-6. renderer virtualization/WebGL only when measured necessary
+## CodeFlow-specific verification focus
 
-Do not introduce distributed analysis solely because repositories can theoretically be large.
+When relevant, prioritize confidence in:
 
-## Testing Strategy
-
-Tests should protect semantic correctness and user-visible understanding.
-
-### Analysis core
-
-- small fixture repositories
-- golden IR/graph fixtures where stable and readable
-- symbol resolution tests
-- call/data/control relationship tests
-- unsupported/dynamic-language ambiguity tests
-- evidence provenance tests
-- deterministic graph ID tests
-
-### API
-
-- boundary validation
-- repository/project isolation
-- analysis lifecycle/error mapping
-- contract tests for graph/projection payloads
-
-### Web
-
-- node/edge projection mapping
-- filter/focus behavior
-- inspector evidence rendering
+- semantic relationship correctness
+- stable/deterministic graph identifiers where required
+- evidence provenance and truthful uncertainty
+- repository/project isolation and boundary validation
+- graph/projection contracts across analysis core, API, and web
+- source/evidence inspection flow
 - static-vs-runtime labeling
-- keyboard/accessibility behavior where practical
+- security/privacy behavior for untrusted/private repositories
 
-### End-to-end
+A tiny representative fixture is preferable to a huge external repository when it proves the same regression risk more deterministically.
 
-Prefer a tiny representative full-stack fixture before a huge external repository. Prove the vertical journey:
+Testing mechanics and TDD policy are defined in `.agent/rules.md`.
 
-```text
-fixture repo -> analyze -> semantic IR -> flow projection -> canvas -> inspect source/evidence
-```
+## Git/integration
 
-## Observability
+`master` is the current integration branch.
 
-At minimum, analysis operations should eventually expose structured metrics/logs for:
+For implementation changes, keep one coherent task identity through branch, PR, CI, review, and fixes. Do not create retry/final/review-fix branches for the same work. Keep unrelated cleanup out of the PR. Prefer squash merge unless repository policy changes.
 
-- repository/file counts and ignored counts
-- parse success/failure by adapter
-- analysis duration by stage
-- graph node/edge counts by projection
-- cache hit/miss
-- layout duration
-- API latency/error class
-- model calls/tokens only when AI explanation is added, without source leakage
+Do not treat commit count, branch count, PR count, or changed LOC as productivity metrics.
 
-Observability must help diagnose correctness/performance, not become a distributed telemetry platform.
+## Agent workspace
 
-## AI Explanation Rules
+- `AGENTS.md` — progressive entry point + CodeFlow-specific invariants.
+- `.agent/rules.md` — canonical engineering execution policy.
+- `.agent/plan.md` — short-lived Feature Compass/current execution state.
+- `.agent/requirements/` — durable product scope, outcomes, acceptance, and non-goals.
+- `.agent/specs/` — durable material product/system design decisions.
+- `.agent/plans/` — sequencing only when it genuinely reduces execution risk.
+- `.agent/checkpoints/` — concise continuity evidence only when useful.
 
-AI is optional and layered over deterministic context.
+Do not create process artifacts as ceremony or duplicate the same truth across multiple files.
 
-Preferred query flow:
+## Final decision filter
 
-```text
-user question / selected node
-  -> graph/evidence retrieval
-  -> minimal relevant source snippets
-  -> grounded explanation
-```
+Before adding code, abstractions, dependencies, tests, instrumentation, or process, ask:
 
-The explanation should identify uncertainty when the graph itself is uncertain. Never allow generated prose to write canonical graph edges without a separate explicit validation path.
+1. Does this directly satisfy or de-risk the authorized outcome?
+2. Which existing owner/pattern can handle it?
+3. What realistic failure/regression does it prevent?
+4. Is there evidence the simpler option is insufficient?
+5. Does it cross a product, architecture, data, privacy, permission, or public-contract boundary that requires user authority?
 
-## Git Workflow
-
-The repository's current default branch is `master`; treat it as the integration branch unless it is intentionally renamed.
-
-Normal lifecycle:
-
-```text
-master
-  -> feat|fix|docs|chore/<task>
-  -> work/test/review/fix on same branch
-  -> one PR
-  -> verify current head
-  -> squash merge
-  -> clean branch
-```
-
-- Do not perform normal feature work directly on the integration branch.
-- Do not create `iteration-*`, `final-*`, `retry-*`, or review-fix branches for the same task.
-- Failed tests and CI are feedback, not new task identity.
-- Keep unrelated cleanup out of feature PRs.
-- Prefer squash merge for a clean integration history.
-
-## Agent Workspace
-
-- `AGENTS.md` — repository-wide execution and architecture policy.
-- `.agent/README.md` — how internal agent artifacts are organized.
-- `.agent/specs/` — decision-oriented designs for material architectural work.
-- `.agent/plans/` — executable implementation plans when sequencing matters.
-- `.agent/checkpoints/` — concise evidence/status when useful.
-- `plan.md` — short product/engineering roadmap and current milestone state.
-
-Do not create planning artifacts as ceremony. A trivial low-risk change needs no heavyweight spec.
-
-## Definition of Done
-
-A change is not done merely because code exists. Depending on scope, completion requires:
-
-- acceptance criteria satisfied
-- relevant tests passing
-- type/lint/build gates passing
-- semantic evidence preserved correctly
-- no known misleading UI state
-- security/privacy implications considered for repository data
-- documentation/spec updated when architecture or public behavior changed
-- PR review/CI resolved on the same task branch
-
-The core quality bar is simple: a developer should be able to trust what CodeFlow shows, understand why it shows it, and move from system-level meaning to supporting source evidence without the tool inventing certainty.
+If the simpler bounded solution satisfies the current need and required gates, ship that solution and stop.

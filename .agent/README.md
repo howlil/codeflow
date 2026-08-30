@@ -1,118 +1,123 @@
 # CodeFlow Agent Workspace
 
-`.agent/` is the repository-local workspace for internal engineering designs, plans, and execution evidence. It exists to help coding agents and contributors preserve context without turning the public product surface into an agent notebook.
+`.agent/` holds repository-local product/engineering context without turning delivery into documentation ceremony.
+
+The workspace separates **durable product/system truth** from **temporary execution state** and uses progressive disclosure so agents load only the context needed for the current change.
 
 ## Source-of-truth hierarchy
 
-1. Runtime code and tests define actual behavior.
-2. Root `AGENTS.md` defines repository-wide engineering and architecture policy.
-3. Root `plan.md` defines current milestone state and short roadmap.
-4. `.agent/specs/` contains approved architecture/product decisions.
-5. `.agent/plans/` contains executable implementation sequencing when the work is large enough to benefit from it.
-6. `.agent/checkpoints/` contains concise execution evidence when continuity or auditability benefits from it.
+1. Runtime code + tests — actual implemented behavior.
+2. `.agent/requirements/` — durable product outcomes, scope, acceptance criteria, and non-goals.
+3. `.agent/specs/` — durable material product/system design decisions and constraints.
+4. `.agent/rules.md` — canonical engineering execution policy.
+5. `AGENTS.md` — progressive entry-point adapter + CodeFlow-specific invariants.
+6. `.agent/plan.md` — short-lived Feature Compass/current execution state.
+7. `.agent/plans/` / `.agent/checkpoints/` — temporary sequencing/continuity evidence only when useful.
 
-If code and an old plan disagree because implementation has moved forward, update or supersede the plan rather than forcing code back to stale prose.
+If code and old execution prose disagree because implementation has moved forward, update/supersede the stale execution prose. If the disagreement concerns product intent or a material design decision, surface it instead of silently choosing one source.
 
-## Directory shape
+## Read progressively
 
-```text
-.agent/
-  README.md
-  specs/
-    YYYY-MM-DD-<topic>-design.md
-  plans/
-    YYYY-MM-DD-<topic>.md
-  checkpoints/
-    YYYY-MM-DD-<topic>.md
-```
+Start with `AGENTS.md`, `.agent/plan.md`, and `.agent/rules.md`.
 
-Create artifacts only when they reduce ambiguity, execution risk, or repeated rediscovery. Do not mirror source-code folders under `.agent/`.
+Then load only the concern-specific durable source that the change actually touches:
 
-## When to write a spec
+- requirements for product behavior/scope
+- specs for material architecture/contracts/security/data decisions
+- source/tests for implementation ownership and current behavior
+- CI/release files only when integration/release mechanics matter
 
-Use `.agent/specs/` when a task changes a material boundary such as:
+Do not perform repository-wide reconnaissance or load the entire `.agent/` tree by default.
 
-- semantic IR/schema
-- language/framework adapter contracts
-- evidence/provenance model
-- repository security/sandboxing
-- public graph/API contracts
-- persistence format/migrations
-- runtime tracing model
-- canvas abstraction/navigation model
-- architecture/deployment shape
+## Durable knowledge
 
-A spec should be decision-oriented: problem, constraints, invariants, chosen design, rejected alternatives when useful, risks, acceptance criteria.
+Do **not** delete durable product/system knowledge merely because:
 
-## When to write a plan
+- an iteration completed
+- implementation moved forward
+- workflow changed
+- a document is old
+- fewer process files would look cleaner
 
-Use `.agent/plans/` when sequencing matters across multiple files/modules or when a task needs staged verification. Plans must be executable and test-oriented, not speculative TODO catalogs.
+Durable knowledge includes:
 
-Prefer vertical slices:
+- product goals/outcomes
+- product requirements and user journeys
+- acceptance criteria/non-goals
+- semantic/domain constraints
+- architecture decisions/invariants
+- security/privacy constraints
+- public/semantic/API contracts
+- validated design decisions
 
-```text
-fixture repo
-  -> analyze
-  -> semantic IR
-  -> projection
-  -> API
-  -> canvas
-  -> inspector/evidence
-```
+When durable knowledge changes, update it or explicitly supersede it with the replacement needed to understand the current decision.
 
-over horizontal scaffolding such as “build all parsers, then all API, then all UI”.
+## Temporary execution artifacts
 
-## Checkpoints
+Temporary artifacts may be deleted when stale and when they contain no unique durable product/design truth, for example:
 
-Use `.agent/checkpoints/` for concise evidence when needed:
+- duplicated task plans
+- retry/final/review-fix plans
+- stale checkpoints/status snapshots
+- superseded process instructions
+- task sequencing that no longer helps execution
 
-- what changed
-- what was verified
-- current result
-- remaining blocker/risk
-
-Do not create checkpoint spam for every command or edit.
-
-## Delivery model
-
-Default engineering loop:
+For mixed documents:
 
 ```text
-goal
-  -> acceptance criteria
-  -> smallest coherent vertical slice
-  -> RED
-  -> GREEN
-  -> REFACTOR
-  -> focused verification
-  -> PR / CI
-  -> review/fix on same branch
-  -> merge
+durable product/system knowledge?
+ -> preserve or migrate
+
+temporary execution/process only?
+ -> delete when stale
+
+mixed?
+ -> migrate durable truth first, then remove obsolete shell
 ```
 
-Rules:
+## Artifact creation rule
 
-- behavior changes use TDD when an executable seam exists
-- one coherent task normally uses one branch and one PR
-- failed tests/CI/review fixes stay on the same task identity
-- optimize cycle time without trading away correctness or evidence quality
-- use YAGNI aggressively
-- avoid architecture ceremony for trivial work
+Create an artifact only when it reduces meaningful ambiguity, delivery risk, or repeated rediscovery.
 
-## CodeFlow-specific review questions
+- update requirements when product intent/scope/acceptance changes
+- update a spec when a material architecture, contract, security, privacy, persistence, or data-ownership decision changes
+- create a task plan only when sequencing across boundaries materially helps execution
+- create a checkpoint only when another session would otherwise need to rediscover important evidence
+- do not create a spec/plan/checkpoint merely because work is non-trivial
 
-Before accepting a change, ask:
+A small bounded change normally needs no new planning document.
 
-1. Does this improve or preserve semantic correctness?
-2. Is the relationship grounded in deterministic/configured/runtime evidence, or did we accidentally let an LLM invent structure?
-3. Is uncertainty represented honestly?
-4. Does the change keep the universal IR independent from React, Fastify, parser-specific AST objects, and database APIs?
-5. Could this remain a module instead of becoming a new package/service/infrastructure dependency?
-6. Does the canvas remain a projection rather than the source of truth?
-7. For large graphs, are we reducing information through abstraction/focus rather than rendering everything?
-8. Does private repository source stay isolated and sanitized?
-9. Is there a small fixture/test that proves the behavior?
+## Feature Compass
 
-## Anti-ceremony rule
+`.agent/plan.md` is the preferred orientation surface.
 
-Do not create a new spec, plan, package, abstraction, service, worker, database, or tool merely because CodeFlow may eventually support every language and project type. The architecture is universal; implementation remains incremental.
+Keep it compact enough to answer:
+
+```text
+Feature Shape
+ -> Current Position
+ -> Delta
+ -> Next Move
+```
+
+It should make clear what the feature will become, what differs from current state, what is done/in progress, and the single next meaningful action. Do not duplicate the full requirement/specification there.
+
+## Planning preference
+
+When sequencing genuinely matters, prefer a small vertical slice:
+
+```text
+fixture/input
+ -> analysis/domain behavior
+ -> contract/boundary
+ -> consumer/UI
+ -> evidence/verification
+```
+
+over horizontal scaffolding such as building all parsers, then all APIs, then all UI before integration.
+
+## Execution policy
+
+The canonical lifecycle, authority boundary, minimum-change rule, testing-by-risk, documentation/dependency policy, Feature Compass behavior, retrospective rule, quality gates, and stop conditions live in `.agent/rules.md`.
+
+Do not restate those rules in new process documents.
