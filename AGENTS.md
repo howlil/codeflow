@@ -1,240 +1,212 @@
-# CodeFlow Engineering Rules
+# CodeFlow Agent Adapter
 
-## Mission
-CodeFlow turns a repository into an evidence-backed semantic map of architecture, execution flow, data flow, dependencies, state, failures, and infrastructure.
+This file is the entry point for agent work in CodeFlow. It routes work into the repository's local sources of truth and preserves CodeFlow-specific invariants. It must not duplicate the full engineering policy.
 
-Canonical truth comes from deterministic/static/configured/runtime evidence. The canvas is a projection. AI explains evidence; it does not invent canonical graph structure.
+## Read progressively
 
-## Knowledge Preservation Rule
-Separate **durable product knowledge** from **temporary delivery workflow**.
+Always start with:
 
-Durable product knowledge includes:
-- product goals and project detail,
-- requirements and user journeys,
-- acceptance criteria and explicit non-goals,
-- domain constraints,
-- architecture decisions/invariants,
-- security/privacy constraints,
-- API/semantic contracts,
-- validated design decisions.
+1. `.agent/plan.md` — current Feature Compass: feature shape, current position, delta, and next move.
+2. `.agent/rules.md` — canonical lifecycle, authority, minimum-change, testing, quality, documentation, dependency, retrospective, and stop rules.
 
-These artifacts must **never be deleted merely because a workflow changes or an iteration finishes**. They may be updated, reorganized, or explicitly superseded only when the underlying product decision changes. When superseding them, preserve the replacement and decision history needed to understand why.
+Load only when the current change touches the concern:
 
-Temporary workflow artifacts include:
-- obsolete execution checklists,
-- duplicated milestone/task plans,
-- retry/final/review-fix plans,
-- stale checkpoints,
-- redundant status notes,
-- process documents that duplicate this file.
+- `.agent/requirements/product-roadmap.md` — durable product outcomes, milestone requirements, acceptance criteria, and non-goals.
+- `.agent/specs/2026-08-25-codeflow-foundation-design.md` — current foundation architecture, semantic model, UX direction, constraints, and trade-offs.
+- source code/tests — actual implemented behavior and repository conventions.
+- CI/release configuration — only when integration or release mechanics matter.
 
-Only temporary workflow artifacts should be removed when they become stale.
+Do not load the entire repository or `.agent/` tree by default. Expand context only when the requested change or a discovered dependency materially requires it.
 
-## Delivery North Star
-Optimize for **validated user value reaching `master` quickly and safely**.
+## Authority model
 
-Default loop:
+- The user owns WHY, WHAT, product scope/boundaries, product semantics, material architecture decisions, and final product/release decisions.
+- The agent has high autonomy for ordinary local engineering execution once the bounded change is authorized.
+- Do not ask for approval for routine implementation details.
+- Evidence, best practices, or recommendations do not authorize product scope expansion.
+- If a material product/architecture/security decision is not already authorized, surface it rather than silently crossing the boundary.
+
+## Canonical execution loop
 
 ```text
-problem -> acceptance criteria -> smallest vertical slice -> implement/test -> PR -> CI -> merge -> observe
+USER INTENT
+ -> UNDERSTAND
+ -> BOUND
+ -> SPECIFY
+ -> DESIGN
+ -> IMPLEMENT
+ -> VERIFY
+ -> QUALITY GATES
+ -> RELEASE READY
+ -> STOP
 ```
 
-Rules:
-- Ship the smallest end-to-end behavior that proves value.
-- Prefer hours-to-1-day slices. Split work when a change cannot be reviewed or reverted easily.
-- One task = one short-lived branch = one PR.
-- Keep WIP low: finish/merge before starting adjacent cleanup.
-- Fix review/CI feedback on the same branch; never create retry/final/review branches.
-- Refactor only what blocks the current slice or removes measured pain.
-- Do not create process documentation that duplicates existing rules.
-- For reversible implementation decisions, implement first and learn. Record a durable decision only for product/architecture/security boundaries that future work must preserve.
-
-## Requirement Rule
-Before coding, identify:
-1. user/problem statement,
-2. observable acceptance criteria,
-3. explicit non-goals,
-4. material constraints/risks.
-
-Requirements are durable product context. Keep them in `.agent/requirements/` or the appropriate product/design document. Never delete requirements because implementation is complete; update their status or supersede them when product intent changes.
-
-Avoid duplicating the same requirement across multiple documents. If acceptance cannot be observed by a test, behavior, metric, or manual check, tighten it.
-
-## Iteration Rule
-Use thin vertical slices rather than horizontal scaffolding.
-
-Good:
-```text
-fixture repo -> analyze -> semantic IR -> API projection -> canvas -> evidence inspector
-```
-
-Bad:
-```text
-all parsers -> all abstractions -> all APIs -> all UI -> integration later
-```
-
-Each iteration should leave `master` buildable and preferably usable. Iteration/task plans are disposable; product requirements and design decisions are not.
-
-## System Design Rules
-Preserve these invariants:
-- **Universal semantic IR** is the core boundary.
-- Every uncertain edge carries provenance: `verified-static`, `inferred-static`, `configured`, `observed-runtime`, or `user-asserted`.
-- Static and runtime evidence remain distinguishable.
-- UI never parses source directly.
-- LLM output never becomes canonical graph truth without explicit validation.
-- Repository contents are untrusted input; do not execute arbitrary analyzed code by default.
-- Start as a modular monolith. Add services, queues, graph DBs, Redis, workers, or Kubernetes only from measured need.
-
-Preferred initial shape:
-```text
-apps/web
-apps/api
-packages/analysis-core
-```
-
-A directory/module is cheaper than a new package. A package is cheaper than a service.
-
-## Code Pattern Rules
-Apply KISS/YAGNI first; SOLID and DRY are reasoning tools, not abstraction quotas.
-
-Prefer:
-- plain functions and data,
-- explicit control flow,
-- discriminated unions/types,
-- narrow modules,
-- dependency direction toward domain/IR,
-- regression tests for reproducible bugs.
-
-Avoid unless evidence requires them:
-- generic repository/service/controller layers,
-- DI containers,
-- factories for one implementation,
-- command/event buses for local calls,
-- speculative plugin frameworks,
-- premature shared packages,
-- custom parser/layout/renderer when mature tooling works,
-- microservices, CQRS/event sourcing, Kafka/RabbitMQ, Redis, Neo4j, Kubernetes.
-
-Rule of three: tolerate small duplication until a stable shared concept is visible. Remove duplicated knowledge, not every repeated line.
-
-## Testing and Quality
-Tests protect behavior and semantic correctness, not implementation shape.
-
-Priority:
-1. focused unit/fixture test for changed semantics,
-2. API/component test when crossing a boundary,
-3. one tiny end-to-end journey for critical flows.
-
-Do not chase coverage percentages. Add tests where regression cost is real.
-
-Definition of done:
-- acceptance criteria satisfied,
-- relevant tests pass,
-- lint/type/build pass,
-- no known misleading evidence/UI state,
-- security boundary preserved,
-- branch is mergeable.
-
-## Git Strategy
-`master` is the integration/release branch.
+Operationally:
 
 ```text
-master -> feat|fix|chore/<short-task> -> PR -> squash merge -> delete branch
+understand explicit request/problem
+ -> inspect only relevant existing implementation
+ -> bound smallest coherent change
+ -> derive only acceptance criteria needed to remove ambiguity
+ -> choose smallest design using existing ownership/patterns
+ -> implement minimum change
+ -> identify realistic regression risk
+ -> choose cheapest high-signal verification
+ -> use TDD only when it is the best tool
+ -> run mandatory repository gates + justified risk-specific checks
+ -> declare release-ready only from observed evidence
+ -> stop
 ```
 
-Rules:
-- Branch lifetime target: < 1 working day; > 2 days is a signal to split scope.
-- PR target: one coherent behavior; prefer < ~400 changed LOC excluding generated/lock files. This is a diagnostic, not a hard blocker.
-- Squash merge by default.
-- Delete merged branches.
-- Rebase/update only when needed to resolve real conflicts or stale checks.
-- No long-lived develop/release branches.
-- Hotfix: branch from `master`, smallest fix + regression test, merge, release.
+`.agent/rules.md` is normative if this summary is incomplete.
 
-## Release Strategy
-Release from `master`; do not accumulate artificial release batches.
+## CodeFlow mission
 
-A release is allowed when:
-- required CI is green,
-- the shipped path meets acceptance criteria,
-- rollback is understood.
+CodeFlow turns a software repository into an evidence-backed semantic map of architecture, execution flow, data flow, dependencies, state changes, failures, infrastructure, and eventually observed runtime behavior.
 
-Versioning:
-- pre-1.0: `0.MINOR.PATCH`; MINOR = usable capability, PATCH = compatible fix/improvement.
-- after stable public contracts: use SemVer normally.
+The repository model is the source of truth. The canvas is a projection of that model. AI is an explanation layer over evidence, not a source of canonical graph structure.
 
-Rules:
-- Tag releases from `master`.
-- Generate concise release notes from shipped user-visible changes.
-- Prefer forward fix for trivial low-risk defects; use revert when impact is active or root cause is uncertain.
-- Never block a release on unrelated cleanup, refactor, docs polish, or speculative hardening.
+## Locked CodeFlow product/architecture invariants
 
-## Agent Skills / Tool Rule
-Agents should use the cheapest tool that can prove the next decision:
-- inspect/search before designing,
-- run the narrowest relevant test before full-suite verification,
-- use existing project tooling before adding dependencies,
-- prefer repository evidence over generic best-practice assumptions.
+Preserve these unless the user explicitly authorizes a material change:
 
-Do not create duplicate process artifacts. Do create/update durable requirement or design documentation when product intent, architecture invariants, public contracts, or security constraints materially change.
+1. **Evidence before explanation.** Deterministic/static/configured/runtime evidence precedes LLM interpretation.
+2. **Universal semantic IR.** Language, framework, infrastructure, and runtime adapters emit into one shared semantic model rather than separate product architectures.
+3. **Truthful uncertainty.** Distinguish verified, inferred, configured, runtime-observed, and user-asserted relationships. Never present inference as observed fact.
+4. **Canvas is a projection, not canonical state.** UI coordinates/grouping do not define repository truth.
+5. **Static analysis is useful without executing untrusted code.** Runtime execution/tracing is a separately authorized, sandboxed capability.
+6. **Pragmatic modular monolith first.** Do not introduce microservices, queues, Redis, graph databases, Kubernetes, or distributed coordination without measured current need and authorized scope.
+7. **Progressive semantic disclosure.** Show system meaning first, then allow navigation toward modules, symbols, control/data flow, and source evidence.
+8. **Private repository data is confidential.** Minimize source exposure in logs, telemetry, prompts, traces, and client payloads.
 
-## Delivery Metrics
-Track trends, not vanity targets.
+## Semantic evidence model
 
-Primary:
-- **Lead time:** task start -> merged to `master`.
-- **Cycle time:** first implementation commit -> merge.
-- **PR pickup/review latency.**
-- **CI feedback time and failure rate.**
-- **Change failure:** revert/hotfix/regression after merge.
-- **WIP:** simultaneously open implementation PRs.
+Relationships that can be uncertain retain provenance sufficient to answer where the edge came from and what supports it.
 
-Diagnostic:
-- PR changed LOC/files,
-- rework/churn before merge,
-- flaky test rate,
-- build/test duration,
-- hotspot complexity/coupling when actual code exists.
+Preferred evidence classes:
 
-Never optimize commit count, LOC produced, number of plans, or number of abstractions.
-
-When delivery slows, inspect in this order:
 ```text
-scope too large?
--> waiting/review?
--> CI too slow/flaky?
--> unclear acceptance?
--> architecture coupling?
--> environment/tool friction?
--> only then add process/tooling
+verified-static   deterministic semantic resolution
+inferred-static   heuristic/static inference
+configured        explicit config/manifest evidence
+observed-runtime  captured runtime evidence
+user-asserted     explicit user annotation, separate from analyzer truth
 ```
 
-## Product Metrics
-Engineering speed is useful only if it advances product learning. For each meaningful slice, identify one observable outcome when possible: successful repository analysis, time-to-first-map, analysis error rate, graph/evidence correctness issues, user completion of a flow inspection, or performance on a representative fixture.
+Do not convert heuristic scores into false precision.
 
-Do not build analytics infrastructure before there is a real user path to measure.
+## Analysis boundary
 
-## Agent Workspace
-`.agent/` separates durable product context from temporary execution state.
+Preferred conceptual flow:
 
-Durable:
-- `.agent/requirements/` — product requirements, scope, acceptance, non-goals,
-- `.agent/specs/` — product/system design and architectural decisions that still describe intended behavior,
-- `.agent/decisions/` — costly-to-reverse decisions and supersession history.
+```text
+repository input
+ -> project discovery
+ -> language/framework/infra detection
+ -> parsing
+ -> symbol extraction
+ -> reference resolution
+ -> control/data/dependency extraction
+ -> semantic IR
+ -> graph projections
+ -> optional runtime evidence merge
+ -> optional grounded AI explanation
+ -> API/canvas consumers
+```
 
-Temporary:
-- `.agent/plan.md` — current state / next 1-3 slices,
-- `.agent/plans/` — task execution sequencing only when genuinely necessary,
-- `.agent/checkpoints/` — concise continuity evidence.
+An LLM may explain an already-grounded path. It must not be the primary parser, symbol resolver, or source of canonical edges.
 
-Delete stale temporary workflow artifacts. **Do not delete durable requirements/project detail/design context as cleanup.**
+UI code must not parse source files directly. Parser/framework-specific objects must not leak into the core semantic contract when a stable IR representation can own the concept.
 
-## Final Decision Filter
-Before adding anything, ask:
-1. Does this directly help the current acceptance criteria?
-2. Is there evidence the simpler option fails?
-3. Can this decision be reversed cheaply later?
-4. Does it shorten or lengthen feedback time?
-5. Is this product knowledge that future contributors must retain, or merely temporary workflow state?
+## Repository shape and architecture bias
 
-If the simpler solution satisfies the current need, ship it. Preserve the product knowledge required to make the next correct decision.
+Current direction is a small TypeScript monorepo:
+
+```text
+apps/
+  web/
+  api/
+packages/
+  analysis-core/
+```
+
+Use existing ownership before creating another package. A local module is cheaper than a package; a package is cheaper than a service.
+
+Use stable, boring ecosystem tools when they satisfy the requirement. Do not build custom parser, graph layout, renderer, orchestration, persistence, or plugin infrastructure until a current requirement proves existing/simple approaches insufficient.
+
+## Security boundary
+
+Repository contents are untrusted input.
+
+- handle path traversal and symlinks deliberately
+- do not execute analyzed repository code during ordinary static analysis
+- do not leak repository secrets/source into logs, analytics, prompts, errors, or client payloads without explicit need
+- enforce reasonable resource limits and ignore common generated/dependency directories
+- minimize LLM context to evidence needed for the question
+- any future runtime execution requires an explicitly designed sandbox for CPU, memory, filesystem, network, process, and timeout limits
+
+Security/privacy boundaries outrank delivery speed.
+
+## UI/understanding contract
+
+The product should help a developer move from system-level meaning to supporting evidence without fabricating certainty.
+
+Core UX principles:
+
+- system meaning before file structure
+- automatic readable layout before manual arrangement
+- selection reveals purpose, inputs/outputs, relationships, state/side effects, failures, evidence, and source when known
+- focus/neighborhood views reduce unrelated graph noise
+- relationship lenses may project calls, data, state, events, dependencies, infrastructure, and runtime
+- large repositories use abstraction/collapse/focus rather than rendering the entire symbol graph by default
+- static simulation and runtime-observed traces must be visibly distinguishable
+- never fabricate runtime values or latency from static analysis
+
+## CodeFlow-specific verification focus
+
+When relevant, prioritize confidence in:
+
+- semantic relationship correctness
+- stable/deterministic graph identifiers where required
+- evidence provenance and truthful uncertainty
+- repository/project isolation and boundary validation
+- graph/projection contracts across analysis core, API, and web
+- source/evidence inspection flow
+- static-vs-runtime labeling
+- security/privacy behavior for untrusted/private repositories
+
+A tiny representative fixture is preferable to a huge external repository when it proves the same regression risk more deterministically.
+
+Testing mechanics and TDD policy are defined in `.agent/rules.md`.
+
+## Git/integration
+
+`master` is the current integration branch.
+
+For implementation changes, keep one coherent task identity through branch, PR, CI, review, and fixes. Do not create retry/final/review-fix branches for the same work. Keep unrelated cleanup out of the PR. Prefer squash merge unless repository policy changes.
+
+Do not treat commit count, branch count, PR count, or changed LOC as productivity metrics.
+
+## Agent workspace
+
+- `AGENTS.md` — progressive entry point + CodeFlow-specific invariants.
+- `.agent/rules.md` — canonical engineering execution policy.
+- `.agent/plan.md` — short-lived Feature Compass/current execution state.
+- `.agent/requirements/` — durable product scope, outcomes, acceptance, and non-goals.
+- `.agent/specs/` — durable material product/system design decisions.
+- `.agent/plans/` — sequencing only when it genuinely reduces execution risk.
+- `.agent/checkpoints/` — concise continuity evidence only when useful.
+
+Do not create process artifacts as ceremony or duplicate the same truth across multiple files.
+
+## Final decision filter
+
+Before adding code, abstractions, dependencies, tests, instrumentation, or process, ask:
+
+1. Does this directly satisfy or de-risk the authorized outcome?
+2. Which existing owner/pattern can handle it?
+3. What realistic failure/regression does it prevent?
+4. Is there evidence the simpler option is insufficient?
+5. Does it cross a product, architecture, data, privacy, permission, or public-contract boundary that requires user authority?
+
+If the simpler bounded solution satisfies the current need and required gates, ship that solution and stop.
