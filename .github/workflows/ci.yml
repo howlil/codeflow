@@ -42,5 +42,28 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Format touched files
+        run: |
+          pnpm exec prettier --write \
+            apps/web/src/App.test.tsx \
+            apps/web/src/App.tsx \
+            apps/web/src/index.css \
+            packages/analysis-core/src/typescript-flow.ts
+          if ! git diff --quiet -- \
+            apps/web/src/App.test.tsx \
+            apps/web/src/App.tsx \
+            apps/web/src/index.css \
+            packages/analysis-core/src/typescript-flow.ts; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add \
+              apps/web/src/App.test.tsx \
+              apps/web/src/App.tsx \
+              apps/web/src/index.css \
+              packages/analysis-core/src/typescript-flow.ts
+            git commit -m "style: format M1 vertical slice"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
+
       - name: Verify repository
         run: pnpm check
