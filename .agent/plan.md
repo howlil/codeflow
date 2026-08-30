@@ -17,6 +17,8 @@ semantic flow
 
 The existing evidence-backed semantic model remains canonical. Search and focus only change the projection the user is viewing; they do not invent or mutate semantic relationships.
 
+Durable visual and interaction language now has one canonical source: root `DESIGN.md`.
+
 ## Current Position
 
 M1 is release-ready on PR #2 and remains the integration base for this stacked sprint.
@@ -32,13 +34,22 @@ M2.1 is implemented and verified on PR #3 / `feat/m2-canvas-comprehension`:
 - source/evidence inspection continues to follow the selected function
 - controls use native input/button semantics and remain usable in the responsive single-column layout
 - a focused regression test covers search -> focus -> hidden unrelated node -> full-flow restore
-- standard repository format/lint/build/typecheck/test gates passed on the implementation head
 
-No analyzer, API, semantic IR, evidence model, dependency, or persistence boundary changed in this slice.
+Design-system alignment is also complete on this branch:
+
+- `DESIGN.md` is the canonical durable visual/interaction/workspace source
+- older foundation-spec visual/interaction guidance is explicitly superseded when conflicting
+- product thesis, semantic architecture, IR, adapters, API, security, and other material system decisions remain owned by the foundation spec
+- `.agent/README.md` registers the new source-of-truth boundary
+- existing CSS palette, borders, selection, graph, elevation, and radius values use semantic tokens
+- tokenization preserves current rendered behavior and intentionally does not introduce dark mode or a new component library
+- standard repository format/lint/build/typecheck/test gates passed on CI run #35 after the design-system implementation
+
+No analyzer, API, semantic IR, evidence model, dependency, persistence, theme, or product-behavior boundary changed in this alignment.
 
 ## Delta
 
-None inside the authorized M2.1 slice.
+None inside the authorized M2.1 + design-system alignment scope.
 
 Remaining M2 roadmap capabilities are intentionally not part of this sprint:
 
@@ -50,4 +61,4 @@ Remaining M2 roadmap capabilities are intentionally not part of this sprint:
 
 ## Next Move
 
-STOP. M2.1 is release-ready. Integration/merge and selection of the next M2 capability remain separate decisions.
+STOP. M2.1 and the design-system alignment are release-ready. Integration/merge and selection of the next M2 capability remain separate decisions.
