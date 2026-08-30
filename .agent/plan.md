@@ -17,7 +17,7 @@ The user can see one real request flow, inspect the functions involved, distingu
 
 ## Current Position
 
-M1 is implemented on PR #2:
+M1 is implemented and release-ready on PR #2:
 
 - one tiny TypeScript request-flow fixture is analyzed with the TypeScript compiler API
 - top-level functions become deterministic semantic entities
@@ -28,17 +28,15 @@ M1 is implemented on PR #2:
 - the web workspace renders repository context, an interactive semantic flow, and a source/evidence inspector
 - selecting a function reveals its source range and related call evidence
 - solid vs dashed relationship styling keeps verified and inferred evidence visibly distinct
-- pnpm workspace dependency/build ordering now supports `apps/api -> @codeflow/analysis-core`
+- pnpm workspace dependency/build ordering supports `apps/api -> @codeflow/analysis-core`
 - the pnpm lockfile is synchronized with the new workspace dependencies
+- the normal read-only CI path passes `pnpm install --frozen-lockfile` and `pnpm check`
 
-The temporary CI-only lock/format helpers used because the connected environment could not run repository commands locally have been removed. The repository workflow is back to its normal read-only frozen-lock verification path.
+The temporary CI-only lock/format helpers used because the connected environment could not run repository commands locally have been removed. The repository workflow is restored to its normal read-only frozen-lock verification path.
 
 ## Delta
 
-The requested M1 product behavior is implemented. The remaining iteration delta is integration evidence only:
-
-- standard CI must pass on the final branch head using `pnpm install --frozen-lockfile` + `pnpm check`
-- PR #2 remains the integration boundary; merging/releasing it is a product/integration decision, not part of ordinary local implementation
+There is no remaining implementation delta for the authorized M1 slice.
 
 The M1 non-goals remain unchanged:
 
@@ -52,8 +50,10 @@ The M1 non-goals remain unchanged:
 - broad design-system work
 - speculative scale infrastructure
 
+PR #2 remains the integration boundary. Merging or releasing it is a separate user-owned integration/product decision.
+
 ## Next Move
 
-If final standard CI is green, M1 is release-ready and this iteration stops.
+**STOP this iteration.**
 
 Do not start a second language, AI layer, persistence system, runtime sandbox, renderer/platform expansion, or adjacent product feature without a new authorized product decision.
