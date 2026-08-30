@@ -7,7 +7,7 @@ on:
       - master
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   verify:
@@ -25,6 +25,17 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+
+      - name: Sync workspace lockfile
+        run: |
+          pnpm install --lockfile-only --no-frozen-lockfile
+          if ! git diff --quiet -- pnpm-lock.yaml; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add pnpm-lock.yaml
+            git commit -m "chore: sync pnpm lockfile"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
