@@ -2,58 +2,63 @@
 
 ## Feature Shape
 
-M1 makes CodeFlow useful for one narrow, trustworthy developer journey:
+M2 improves comprehension once a semantic graph is large enough that seeing everything at once becomes noise.
+
+This sprint is the smallest M2 slice:
 
 ```text
-tiny TypeScript repository
- -> deterministic analysis
- -> evidence-backed semantic IR
- -> bounded request-flow projection
- -> canvas rendering
- -> selectable source/evidence
+semantic flow
+ -> search a function
+ -> navigate directly to it
+ -> focus on its immediate neighborhood
+ -> inspect source/evidence
+ -> return to the full flow
 ```
 
-The user can see one real request flow, inspect the functions involved, distinguish verified from inferred relationships, and inspect the source/evidence supporting CodeFlow's claim.
+The existing evidence-backed semantic model remains canonical. Search and focus only change the projection the user is viewing; they do not invent or mutate semantic relationships.
+
+Durable visual and interaction language now has one canonical source: root `DESIGN.md`.
 
 ## Current Position
 
-M1 is implemented and release-ready on PR #2:
+M1 is release-ready on PR #2 and remains the integration base for this stacked sprint.
 
-- one tiny TypeScript request-flow fixture is analyzed with the TypeScript compiler API
-- top-level functions become deterministic semantic entities
-- direct symbol-resolved calls are labeled `verified-static`
-- local function-alias calls are explicitly labeled `inferred-static`
-- every projected call carries source location, analyzer provenance, and a human-readable evidence reason
-- `GET /api/flows/sample` exposes the bounded flow projection
-- the web workspace renders repository context, an interactive semantic flow, and a source/evidence inspector
-- selecting a function reveals its source range and related call evidence
-- solid vs dashed relationship styling keeps verified and inferred evidence visibly distinct
-- pnpm workspace dependency/build ordering supports `apps/api -> @codeflow/analysis-core`
-- the pnpm lockfile is synchronized with the new workspace dependencies
-- the normal read-only CI path passes `pnpm install --frozen-lockfile` and `pnpm check`
+M2.1 is implemented and verified on PR #3 / `feat/m2-canvas-comprehension`:
 
-The temporary CI-only lock/format helpers used because the connected environment could not run repository commands locally have been removed. The repository workflow is restored to its normal read-only frozen-lock verification path.
+- function search is available above the semantic canvas
+- matching functions can be selected directly from search results
+- search navigation selects the function and enters neighborhood focus
+- neighborhood focus shows the selected function plus directly connected call relationships
+- incoming and outgoing relationships remain directionally distinguishable
+- `Show full flow` returns to the original entry-point projection
+- source/evidence inspection continues to follow the selected function
+- controls use native input/button semantics and remain usable in the responsive single-column layout
+- a focused regression test covers search -> focus -> hidden unrelated node -> full-flow restore
+
+Design-system alignment is also complete on this branch:
+
+- `DESIGN.md` is the canonical durable visual/interaction/workspace source
+- older foundation-spec visual/interaction guidance is explicitly superseded when conflicting
+- product thesis, semantic architecture, IR, adapters, API, security, and other material system decisions remain owned by the foundation spec
+- `.agent/README.md` registers the new source-of-truth boundary
+- existing CSS palette, borders, selection, graph, elevation, and radius values use semantic tokens
+- tokenization preserves current rendered behavior and intentionally does not introduce dark mode or a new component library
+- standard repository format/lint/build/typecheck/test gates passed on CI run #35 after the design-system implementation
+
+No analyzer, API, semantic IR, evidence model, dependency, persistence, theme, or product-behavior boundary changed in this alignment.
 
 ## Delta
 
-There is no remaining implementation delta for the authorized M1 slice.
+None inside the authorized M2.1 + design-system alignment scope.
 
-The M1 non-goals remain unchanged:
+Remaining M2 roadmap capabilities are intentionally not part of this sprint:
 
-- AI explanation
-- auth/multi-user SaaS behavior
-- persistence/graph database
-- queue/Redis
-- runtime execution/tracing
-- multi-language support
-- generic plugin platform
-- broad design-system work
-- speculative scale infrastructure
-
-PR #2 remains the integration boundary. Merging or releasing it is a separate user-owned integration/product decision.
+- relationship filters/lenses
+- source split/snippet inspection improvements beyond the existing inspector
+- stable automatic layout for larger arbitrary graphs
+- broader empty/error/partial states
+- broader keyboard navigation beyond native primary controls
 
 ## Next Move
 
-**STOP this iteration.**
-
-Do not start a second language, AI layer, persistence system, runtime sandbox, renderer/platform expansion, or adjacent product feature without a new authorized product decision.
+STOP. M2.1 and the design-system alignment are release-ready. Integration/merge and selection of the next M2 capability remain separate decisions.
