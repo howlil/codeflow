@@ -114,14 +114,18 @@ export function handleGreeting(name: string): string {
   },
 };
 
-function stubFlowRequest() {
+function stubFlowRequest(flow: FlowProjection = sampleFlow) {
   vi.stubGlobal(
     'fetch',
     vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => sampleFlow,
+      json: async () => flow,
     }),
   );
+}
+
+function stubFlowFailure(message: string) {
+  vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error(message)));
 }
 
 describe('App', () => {
@@ -227,5 +231,80 @@ describe('App', () => {
     expect(
       screen.getByRole('button', { name: 'Expand source' }),
     ).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('shows an explicit empty state when analysis projects no functions', async () => {
+    stubFlowRequest({
+      ...sampleFlow,
+      nodes: [],
+      edges: [],
+    });
+
+    render(<App />);
+
+    expect(await screen.findByText('No functions projected')).toBeInTheDocument();
+    expect(
+      screen.getByText(/analysis completed, but this projection contains no functions/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('region', { name: 'Semantic flow canvas' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps a partial projection navigable without inventing missing evidence', async () => {
+    const partialFlow: FlowProjection = {
+      ...sampleFlow,
+      entryPointId: 'function:fixture:missing-entry',
+      nodes: sampleFlow.nodes.map((node) => ({ ...node, entryPoint: false })),
+      edges: [
+        {
+          ...sampleFlow.edges[0],
+          evidence: [],
+        },
+        sampleFlow.edges[1],
+      ],
+    };
+    stubFlowRequest(partialFlow);
+
+    render(<App />);
+
+    expect(await screen.findByText('Partial projection')).toBeInTheDocument();
+    expect(screen.getByText(/entry point was not projected/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/1 relationship has no supporting evidence/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/No focal function is available/i),
+    ).toBeInTheDocument();
+
+    fireEvent.change(
+      screen.getByRole('searchbox', { name: 'Search functions' }),
+      { target: { value: 'normalize' } },
+    );
+    fireEvent.click(
+      within(screen.getByLabelText('Function search results')).getByRole(
+        'button',
+        { name: /normalizeName/i },
+      ),
+    );
+
+    expect(
+      screen.getByText('Neighborhood focus · normalizeName'),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText('evidence-unavailable').length).toBeGreaterThan(
+      0,
+    );
+    expect(
+      screen.getByText('No supporting provenance was projected for this relationship.'),
+    ).toBeInTheDocument();
+  });
+
+  it('shows a failure state when the flow request cannot be loaded', async () => {
+    stubFlowFailure('Fixture request failed.');
+
+    render(<App />);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Flow unavailable');
+    expect(screen.getByRole('alert')).toHaveTextContent('Fixture request failed.');
   });
 });
