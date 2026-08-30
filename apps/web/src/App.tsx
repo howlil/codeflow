@@ -10,6 +10,8 @@ import {
 export function App() {
   const [flow, setFlow] = useState<FlowProjection | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [query, setQuery] = useState('');
+  const [focusMode, setFocusMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,6 +47,22 @@ export function App() {
     () => flow?.nodes.find((node) => node.id === selectedNodeId) ?? null,
     [flow, selectedNodeId],
   );
+  const searchResults = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    if (normalizedQuery === '' || flow === null) {
+      return [];
+    }
+
+    return flow.nodes.filter((node) =>
+      node.label.toLowerCase().includes(normalizedQuery),
+    );
+  }, [flow, query]);
+
+  function navigateToNode(nodeId: string) {
+    setSelectedNodeId(nodeId);
+    setFocusMode(true);
+    setQuery('');
+  }
 
   return (
     <main className="workspace-shell">
@@ -85,9 +103,52 @@ export function App() {
               </div>
               <span>{flow.nodes.length} functions</span>
             </div>
+            <div className="comprehension-controls">
+              <div className="search-control">
+                <label htmlFor="function-search">Search functions</label>
+                <input
+                  id="function-search"
+                  type="search"
+                  value={query}
+                  placeholder="Find a function…"
+                  autoComplete="off"
+                  onChange={(event) => setQuery(event.target.value)}
+                />
+                {query.trim() !== '' ? (
+                  <div className="search-results" aria-label="Function search results">
+                    {searchResults.length === 0 ? (
+                      <p>No matching functions.</p>
+                    ) : (
+                      searchResults.map((node) => (
+                        <button
+                          key={node.id}
+                          type="button"
+                          onClick={() => navigateToNode(node.id)}
+                        >
+                          <strong>{node.label}</strong>
+                          <span>
+                            L{node.location.startLine}–{node.location.endLine}
+                          </span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                ) : null}
+              </div>
+              <button
+                className="focus-toggle"
+                type="button"
+                aria-pressed={focusMode}
+                disabled={selectedNode === null}
+                onClick={() => setFocusMode((current) => !current)}
+              >
+                {focusMode ? 'Show full flow' : 'Focus selected'}
+              </button>
+            </div>
             <FlowCanvas
               flow={flow}
               selectedNodeId={selectedNodeId}
+              focusMode={focusMode}
               onSelect={setSelectedNodeId}
             />
           </section>
@@ -107,32 +168,46 @@ export function App() {
 function FlowCanvas({
   flow,
   selectedNodeId,
+  focusMode,
   onSelect,
 }: {
   flow: FlowProjection;
   selectedNodeId: string | null;
+  focusMode: boolean;
   onSelect: (id: string) => void;
 }) {
   const entryPoint = flow.nodes.find((node) => node.entryPoint);
-  const outgoing = flow.edges.filter(
-    (edge) => edge.sourceId === flow.entryPointId,
-  );
+  const selectedNode = flow.nodes.find((node) => node.id === selectedNodeId);
+  const focalNode = focusMode ? selectedNode : entryPoint;
 
-  if (entryPoint === undefined) {
-    return <p role="status">No entry point found.</p>;
+  if (focalNode === undefined) {
+    return <p role="status">No focal function found.</p>;
   }
+
+  const relatedEdges = flow.edges.filter((edge) =>
+    focusMode
+      ? edge.sourceId === focalNode.id || edge.targetId === focalNode.id
+      : edge.sourceId === flow.entryPointId,
+  );
 
   return (
     <div className="semantic-canvas">
+      {focusMode ? (
+        <p className="focus-status" role="status">
+          Neighborhood focus · {focalNode.label}
+        </p>
+      ) : null}
       <NodeButton
-        node={entryPoint}
-        selected={selectedNodeId === entryPoint.id}
+        node={focalNode}
+        selected={selectedNodeId === focalNode.id}
         onSelect={onSelect}
       />
       <div className="edge-lanes">
-        {outgoing.map((edge) => {
-          const target = flow.nodes.find((node) => node.id === edge.targetId);
-          if (target === undefined) {
+        {relatedEdges.map((edge) => {
+          const outgoing = edge.sourceId === focalNode.id;
+          const neighborId = outgoing ? edge.targetId : edge.sourceId;
+          const neighbor = flow.nodes.find((node) => node.id === neighborId);
+          if (neighbor === undefined) {
             return null;
           }
 
@@ -142,13 +217,13 @@ function FlowCanvas({
               <div className={`flow-edge flow-edge--${evidenceKind}`}>
                 <span>{edge.kind}</span>
                 <span className="edge-arrow" aria-hidden="true">
-                  →
+                  {outgoing ? '→' : '←'}
                 </span>
                 <span>{evidenceKind}</span>
               </div>
               <NodeButton
-                node={target}
-                selected={selectedNodeId === target.id}
+                node={neighbor}
+                selected={selectedNodeId === neighbor.id}
                 onSelect={onSelect}
               />
             </div>
