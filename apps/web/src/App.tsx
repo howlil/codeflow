@@ -235,8 +235,12 @@ function FlowCanvas({
           const outgoing = edge.sourceId === focalNode.id;
           const neighborId = outgoing ? edge.targetId : edge.sourceId;
           const neighbor = flow.nodes.find((node) => node.id === neighborId);
-          const sourceNode = flow.nodes.find((node) => node.id === edge.sourceId);
-          const targetNode = flow.nodes.find((node) => node.id === edge.targetId);
+          const sourceNode = flow.nodes.find(
+            (node) => node.id === edge.sourceId,
+          );
+          const targetNode = flow.nodes.find(
+            (node) => node.id === edge.targetId,
+          );
           if (neighbor === undefined) {
             return null;
           }
@@ -380,7 +384,8 @@ function RelationshipInspector({
     <>
       <p className="panel-kicker">Inspector / relationship</p>
       <h2>
-        {sourceNode?.label ?? edge.sourceId} → {targetNode?.label ?? edge.targetId}
+        {sourceNode?.label ?? edge.sourceId} →{' '}
+        {targetNode?.label ?? edge.targetId}
       </h2>
       <p className="source-location">
         {evidence.location.filePath}:L{evidence.location.startLine}–
