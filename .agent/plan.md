@@ -2,7 +2,7 @@
 
 ## Feature Shape
 
-M1 should make CodeFlow useful for one narrow, trustworthy developer journey:
+M1 makes CodeFlow useful for one narrow, trustworthy developer journey:
 
 ```text
 tiny TypeScript repository
@@ -13,36 +13,34 @@ tiny TypeScript repository
  -> selectable source/evidence
 ```
 
-The user should be able to see one real execution relationship, understand what CodeFlow believes, and inspect why it believes it. Verified and inferred evidence must remain visibly distinct.
+The user can see one real request flow, inspect the functions involved, distinguish verified from inferred relationships, and inspect the source/evidence supporting CodeFlow's claim.
 
 ## Current Position
 
-M0 is implemented on PR #2:
+M1 is implemented on PR #2:
 
-- executable pnpm/TypeScript workspace
-- Fastify API shell
-- React/Vite web shell
-- `analysis-core` package
-- tests + lint/type/build checks
-- GitHub Actions CI
-- durable product/foundation design context preserved
-- engineering workflow aligned to the canonical agent lifecycle in `.agent/rules.md`
+- one tiny TypeScript request-flow fixture is analyzed with the TypeScript compiler API
+- top-level functions become deterministic semantic entities
+- direct symbol-resolved calls are labeled `verified-static`
+- local function-alias calls are explicitly labeled `inferred-static`
+- every projected call carries source location, analyzer provenance, and a human-readable evidence reason
+- `GET /api/flows/sample` exposes the bounded flow projection
+- the web workspace renders repository context, an interactive semantic flow, and a source/evidence inspector
+- selecting a function reveals its source range and related call evidence
+- solid vs dashed relationship styling keeps verified and inferred evidence visibly distinct
+- pnpm workspace dependency/build ordering now supports `apps/api -> @codeflow/analysis-core`
+- the pnpm lockfile is synchronized with the new workspace dependencies
 
-The foundation exists, but CodeFlow still has no end-to-end semantic understanding slice that delivers the core product value.
+The temporary CI-only lock/format helpers used because the connected environment could not run repository commands locally have been removed. The repository workflow is back to its normal read-only frozen-lock verification path.
 
 ## Delta
 
-To reach M1, the missing product behavior is:
+The requested M1 product behavior is implemented. The remaining iteration delta is integration evidence only:
 
-- analyze one tiny TypeScript fixture
-- emit the minimum semantic entities/relationships needed for one request flow
-- attach evidence provenance to uncertain relationships
-- expose one bounded flow projection through the API
-- render the projection in the web UI
-- allow selection to reveal supporting source/evidence
-- visibly distinguish verified vs inferred evidence
+- standard CI must pass on the final branch head using `pnpm install --frozen-lockfile` + `pnpm check`
+- PR #2 remains the integration boundary; merging/releasing it is a product/integration decision, not part of ordinary local implementation
 
-Explicit non-goals for this slice:
+The M1 non-goals remain unchanged:
 
 - AI explanation
 - auth/multi-user SaaS behavior
@@ -56,16 +54,6 @@ Explicit non-goals for this slice:
 
 ## Next Move
 
-Finish PR #2 cleanly, then implement **one M1 vertical slice** from fixture to evidence inspector using the smallest existing ownership/patterns.
+If final standard CI is green, M1 is release-ready and this iteration stops.
 
-Acceptance for that next slice:
-
-1. one tiny TypeScript fixture can be analyzed deterministically
-2. minimal semantic IR + provenance is produced
-3. one bounded flow projection is returned by the API
-4. the web UI renders it
-5. selecting a rendered element exposes supporting source/evidence
-6. verified vs inferred evidence is distinguishable
-7. focused regression checks + mandatory repository gates pass
-
-Do not start a second language, AI layer, persistence system, runtime sandbox, or architecture expansion before this slice proves the core contract.
+Do not start a second language, AI layer, persistence system, runtime sandbox, renderer/platform expansion, or adjacent product feature without a new authorized product decision.
