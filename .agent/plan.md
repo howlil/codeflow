@@ -23,7 +23,7 @@ Durable visual and interaction language remains owned by root `DESIGN.md`.
 
 M0/M1, M2.1, and M2.2 are integrated into `master`.
 
-M2.3 is implemented on `feat/m2-source-split`:
+M2.3 is implemented and verified on PR #5 / `feat/m2-source-split`:
 
 - node and relationship inspectors expose one `Expand source` control
 - expanded mode reallocates workspace width toward source while keeping repository context and semantic canvas visible
@@ -32,15 +32,14 @@ M2.3 is implemented on `feat/m2-source-split`:
 - primary controls remain native keyboard-reachable buttons
 - responsive layouts collapse expanded and standard modes to the same single-column reading order below the existing breakpoint
 - focused regression coverage protects expand -> canvas preserved -> source preserved -> restore
+- existing node selection, search/neighborhood focus, and relationship evidence inspection regressions remain green
+- standard format/lint/build/typecheck/test gates passed on CI run #48
 
 No analyzer, semantic IR, API, dependency, persistence, runtime, AI, multi-language, or material architecture boundary changed.
 
 ## Delta
 
-Verification remains before release-ready:
-
-1. standard format/lint/build/typecheck/test gates pass
-2. PR diff stays limited to M2.3 layout/view state, focused coverage, and Feature Compass state
+None inside the authorized M2.3 slice.
 
 Remaining M2 roadmap capabilities are intentionally outside this sprint:
 
@@ -51,4 +50,4 @@ Remaining M2 roadmap capabilities are intentionally outside this sprint:
 
 ## Next Move
 
-Run standard CI. Fix only observed regressions. If green, mark M2.3 release-ready and stop for integration decision.
+STOP. M2.3 is release-ready. Merge/integration remains a separate decision.
