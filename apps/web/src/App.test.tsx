@@ -218,9 +218,9 @@ describe('App', () => {
     expect(
       screen.getByRole('region', { name: 'Semantic flow canvas' }),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText('Source evidence inspector')).toHaveTextContent(
-      'export function handleGreeting',
-    );
+    expect(
+      screen.getByLabelText('Source evidence inspector'),
+    ).toHaveTextContent('export function handleGreeting');
 
     fireEvent.click(screen.getByRole('button', { name: 'Restore inspector' }));
 
