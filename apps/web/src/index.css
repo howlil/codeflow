@@ -133,6 +133,13 @@ h2 {
   border-radius: var(--radius-workspace);
 }
 
+.workspace-grid--source-split {
+  grid-template-columns: minmax(160px, 0.6fr) minmax(420px, 1.7fr) minmax(
+      420px,
+      1.4fr
+    );
+}
+
 .repository-panel,
 .inspector-panel,
 .canvas-panel {
@@ -403,6 +410,18 @@ h2 {
   border-top-style: dashed;
 }
 
+.inspector-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.inspector-heading .panel-kicker {
+  margin-bottom: 0;
+}
+
 .source-location {
   margin-bottom: 16px;
   word-break: break-word;
@@ -475,7 +494,8 @@ h2 {
 }
 
 @media (max-width: 960px) {
-  .workspace-grid {
+  .workspace-grid,
+  .workspace-grid--source-split {
     grid-template-columns: 1fr;
   }
 
