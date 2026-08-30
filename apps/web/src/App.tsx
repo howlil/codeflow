@@ -115,7 +115,10 @@ export function App() {
                   onChange={(event) => setQuery(event.target.value)}
                 />
                 {query.trim() !== '' ? (
-                  <div className="search-results" aria-label="Function search results">
+                  <div
+                    className="search-results"
+                    aria-label="Function search results"
+                  >
                     {searchResults.length === 0 ? (
                       <p>No matching functions.</p>
                     ) : (
