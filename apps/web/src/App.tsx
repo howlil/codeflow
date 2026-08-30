@@ -10,6 +10,7 @@ import {
 export function App() {
   const [flow, setFlow] = useState<FlowProjection | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [focusMode, setFocusMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +48,10 @@ export function App() {
     () => flow?.nodes.find((node) => node.id === selectedNodeId) ?? null,
     [flow, selectedNodeId],
   );
+  const selectedEdge = useMemo(
+    () => flow?.edges.find((edge) => edge.id === selectedEdgeId) ?? null,
+    [flow, selectedEdgeId],
+  );
   const searchResults = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
     if (normalizedQuery === '' || flow === null) {
@@ -58,10 +63,20 @@ export function App() {
     );
   }, [flow, query]);
 
-  function navigateToNode(nodeId: string) {
+  function selectNode(nodeId: string) {
     setSelectedNodeId(nodeId);
+    setSelectedEdgeId(null);
+  }
+
+  function navigateToNode(nodeId: string) {
+    selectNode(nodeId);
     setFocusMode(true);
     setQuery('');
+  }
+
+  function toggleFocusMode() {
+    setFocusMode((current) => !current);
+    setSelectedEdgeId(null);
   }
 
   return (
@@ -143,7 +158,7 @@ export function App() {
                 type="button"
                 aria-pressed={focusMode}
                 disabled={selectedNode === null}
-                onClick={() => setFocusMode((current) => !current)}
+                onClick={toggleFocusMode}
               >
                 {focusMode ? 'Show full flow' : 'Focus selected'}
               </button>
@@ -151,8 +166,10 @@ export function App() {
             <FlowCanvas
               flow={flow}
               selectedNodeId={selectedNodeId}
+              selectedEdgeId={selectedEdgeId}
               focusMode={focusMode}
-              onSelect={setSelectedNodeId}
+              onSelectNode={selectNode}
+              onSelectEdge={setSelectedEdgeId}
             />
           </section>
 
@@ -160,7 +177,11 @@ export function App() {
             className="inspector-panel"
             aria-label="Source evidence inspector"
           >
-            <Inspector flow={flow} selectedNode={selectedNode} />
+            <Inspector
+              flow={flow}
+              selectedNode={selectedNode}
+              selectedEdge={selectedEdge}
+            />
           </aside>
         </div>
       )}
@@ -171,13 +192,17 @@ export function App() {
 function FlowCanvas({
   flow,
   selectedNodeId,
+  selectedEdgeId,
   focusMode,
-  onSelect,
+  onSelectNode,
+  onSelectEdge,
 }: {
   flow: FlowProjection;
   selectedNodeId: string | null;
+  selectedEdgeId: string | null;
   focusMode: boolean;
-  onSelect: (id: string) => void;
+  onSelectNode: (id: string) => void;
+  onSelectEdge: (id: string) => void;
 }) {
   const entryPoint = flow.nodes.find((node) => node.entryPoint);
   const selectedNode = flow.nodes.find((node) => node.id === selectedNodeId);
@@ -202,32 +227,52 @@ function FlowCanvas({
       ) : null}
       <NodeButton
         node={focalNode}
-        selected={selectedNodeId === focalNode.id}
-        onSelect={onSelect}
+        selected={selectedNodeId === focalNode.id && selectedEdgeId === null}
+        onSelect={onSelectNode}
       />
       <div className="edge-lanes">
         {relatedEdges.map((edge) => {
           const outgoing = edge.sourceId === focalNode.id;
           const neighborId = outgoing ? edge.targetId : edge.sourceId;
           const neighbor = flow.nodes.find((node) => node.id === neighborId);
+          const sourceNode = flow.nodes.find(
+            (node) => node.id === edge.sourceId,
+          );
+          const targetNode = flow.nodes.find(
+            (node) => node.id === edge.targetId,
+          );
           if (neighbor === undefined) {
             return null;
           }
 
           const evidenceKind = edge.evidence[0]?.kind ?? 'inferred-static';
+          const relationshipLabel = `Inspect ${edge.kind} relationship from ${
+            sourceNode?.label ?? edge.sourceId
+          } to ${targetNode?.label ?? edge.targetId}`;
+
           return (
             <div className="edge-lane" key={edge.id}>
-              <div className={`flow-edge flow-edge--${evidenceKind}`}>
+              <button
+                className={`flow-edge flow-edge--${evidenceKind}${
+                  selectedEdgeId === edge.id ? ' flow-edge--selected' : ''
+                }`}
+                type="button"
+                aria-label={relationshipLabel}
+                aria-pressed={selectedEdgeId === edge.id}
+                onClick={() => onSelectEdge(edge.id)}
+              >
                 <span>{edge.kind}</span>
                 <span className="edge-arrow" aria-hidden="true">
                   {outgoing ? '→' : '←'}
                 </span>
                 <span>{evidenceKind}</span>
-              </div>
+              </button>
               <NodeButton
                 node={neighbor}
-                selected={selectedNodeId === neighbor.id}
-                onSelect={onSelect}
+                selected={
+                  selectedNodeId === neighbor.id && selectedEdgeId === null
+                }
+                onSelect={onSelectNode}
               />
             </div>
           );
@@ -267,10 +312,16 @@ function NodeButton({
 function Inspector({
   flow,
   selectedNode,
+  selectedEdge,
 }: {
   flow: FlowProjection;
   selectedNode: FlowNode | null;
+  selectedEdge: FlowEdge | null;
 }) {
+  if (selectedEdge !== null) {
+    return <RelationshipInspector flow={flow} edge={selectedEdge} />;
+  }
+
   if (selectedNode === null) {
     return <p className="panel-copy">Select a function to inspect evidence.</p>;
   }
@@ -279,7 +330,11 @@ function Inspector({
     (edge) =>
       edge.sourceId === selectedNode.id || edge.targetId === selectedNode.id,
   );
-  const sourceSnippet = getSourceSnippet(flow.source.text, selectedNode);
+  const sourceSnippet = getSourceSnippet(
+    flow.source.text,
+    selectedNode.location.startLine,
+    selectedNode.location.endLine,
+  );
 
   return (
     <>
@@ -299,6 +354,49 @@ function Inspector({
         ) : (
           relatedEdges.map((edge) => <EvidenceItem edge={edge} key={edge.id} />)
         )}
+      </div>
+    </>
+  );
+}
+
+function RelationshipInspector({
+  flow,
+  edge,
+}: {
+  flow: FlowProjection;
+  edge: FlowEdge;
+}) {
+  const evidence = edge.evidence[0];
+  const sourceNode = flow.nodes.find((node) => node.id === edge.sourceId);
+  const targetNode = flow.nodes.find((node) => node.id === edge.targetId);
+
+  if (evidence === undefined) {
+    return <p className="panel-copy">No evidence for this relationship.</p>;
+  }
+
+  const sourceSnippet = getSourceSnippet(
+    flow.source.text,
+    evidence.location.startLine,
+    evidence.location.endLine,
+  );
+
+  return (
+    <>
+      <p className="panel-kicker">Inspector / relationship</p>
+      <h2>
+        {sourceNode?.label ?? edge.sourceId} →{' '}
+        {targetNode?.label ?? edge.targetId}
+      </h2>
+      <p className="source-location">
+        {evidence.location.filePath}:L{evidence.location.startLine}–
+        {evidence.location.endLine}
+      </p>
+      <pre className="source-snippet">
+        <code>{sourceSnippet}</code>
+      </pre>
+      <div className="evidence-list">
+        <p className="panel-kicker">Selected evidence</p>
+        <EvidenceItem edge={edge} />
       </div>
     </>
   );
@@ -340,9 +438,13 @@ function EvidenceLegend() {
   );
 }
 
-function getSourceSnippet(source: string, node: FlowNode): string {
+function getSourceSnippet(
+  source: string,
+  startLine: number,
+  endLine: number,
+): string {
   return source
     .split('\n')
-    .slice(node.location.startLine - 1, node.location.endLine)
+    .slice(startLine - 1, endLine)
     .join('\n');
 }
