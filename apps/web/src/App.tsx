@@ -7,6 +7,11 @@ import {
   type FlowProjection,
 } from './flow-client';
 
+type ProjectionStatus =
+  | { kind: 'ready' }
+  | { kind: 'empty'; message: string }
+  | { kind: 'partial'; reasons: string[] };
+
 export function App() {
   const [flow, setFlow] = useState<FlowProjection | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -45,6 +50,10 @@ export function App() {
     };
   }, []);
 
+  const projectionStatus = useMemo(
+    () => (flow === null ? null : getProjectionStatus(flow)),
+    [flow],
+  );
   const selectedNode = useMemo(
     () => flow?.nodes.find((node) => node.id === selectedNodeId) ?? null,
     [flow, selectedNodeId],
@@ -95,10 +104,15 @@ export function App() {
           <strong>Flow unavailable</strong>
           <span>{error}</span>
         </section>
-      ) : flow === null ? (
+      ) : flow === null || projectionStatus === null ? (
         <p className="state-panel" role="status">
           Analyzing TypeScript fixture…
         </p>
+      ) : projectionStatus.kind === 'empty' ? (
+        <section className="state-panel" role="status">
+          <strong>No functions projected</strong>
+          <span>{projectionStatus.message}</span>
+        </section>
       ) : (
         <div
           className={`workspace-grid${
@@ -116,6 +130,7 @@ export function App() {
           </aside>
 
           <section className="canvas-panel" aria-label="Semantic flow canvas">
+            <AnalysisNotice status={projectionStatus} />
             <div className="canvas-toolbar">
               <div>
                 <p className="panel-kicker">Flow projection</p>
@@ -198,6 +213,19 @@ export function App() {
   );
 }
 
+function AnalysisNotice({ status }: { status: ProjectionStatus }) {
+  if (status.kind !== 'partial') {
+    return null;
+  }
+
+  return (
+    <div className="analysis-notice" role="status">
+      <strong>Partial projection</strong>
+      <span>{status.reasons.join(' ')}</span>
+    </div>
+  );
+}
+
 function FlowCanvas({
   flow,
   selectedNodeId,
@@ -213,12 +241,17 @@ function FlowCanvas({
   onSelectNode: (id: string) => void;
   onSelectEdge: (id: string) => void;
 }) {
-  const entryPoint = flow.nodes.find((node) => node.entryPoint);
+  const entryPoint = flow.nodes.find((node) => node.id === flow.entryPointId);
   const selectedNode = flow.nodes.find((node) => node.id === selectedNodeId);
   const focalNode = focusMode ? selectedNode : entryPoint;
 
   if (focalNode === undefined) {
-    return <p role="status">No focal function found.</p>;
+    return (
+      <p className="canvas-state" role="status">
+        No focal function is available. Search for a projected function to
+        continue.
+      </p>
+    );
   }
 
   const relatedEdges = flow.edges.filter((edge) =>
@@ -254,7 +287,7 @@ function FlowCanvas({
             return null;
           }
 
-          const evidenceKind = edge.evidence[0]?.kind ?? 'inferred-static';
+          const evidenceKind = edge.evidence[0]?.kind ?? 'evidence-unavailable';
           const relationshipLabel = `Inspect ${edge.kind} relationship from ${
             sourceNode?.label ?? edge.sourceId
           } to ${targetNode?.label ?? edge.targetId}`;
@@ -397,9 +430,25 @@ function RelationshipInspector({
   const evidence = edge.evidence[0];
   const sourceNode = flow.nodes.find((node) => node.id === edge.sourceId);
   const targetNode = flow.nodes.find((node) => node.id === edge.targetId);
+  const relationshipTitle = `${sourceNode?.label ?? edge.sourceId} → ${
+    targetNode?.label ?? edge.targetId
+  }`;
 
   if (evidence === undefined) {
-    return <p className="panel-copy">No evidence for this relationship.</p>;
+    return (
+      <>
+        <InspectorHeading
+          label="Inspector / relationship"
+          sourceSplitMode={sourceSplitMode}
+          onToggleSourceSplit={onToggleSourceSplit}
+        />
+        <h2>{relationshipTitle}</h2>
+        <div className="evidence-list">
+          <p className="panel-kicker">Selected evidence</p>
+          <EvidenceItem edge={edge} />
+        </div>
+      </>
+    );
   }
 
   const sourceSnippet = getSourceSnippet(
@@ -415,10 +464,7 @@ function RelationshipInspector({
         sourceSplitMode={sourceSplitMode}
         onToggleSourceSplit={onToggleSourceSplit}
       />
-      <h2>
-        {sourceNode?.label ?? edge.sourceId} →{' '}
-        {targetNode?.label ?? edge.targetId}
-      </h2>
+      <h2>{relationshipTitle}</h2>
       <p className="source-location">
         {evidence.location.filePath}:L{evidence.location.startLine}–
         {evidence.location.endLine}
@@ -462,7 +508,17 @@ function EvidenceItem({ edge }: { edge: FlowEdge }) {
   const evidence = edge.evidence[0];
 
   if (evidence === undefined) {
-    return null;
+    return (
+      <article className="evidence-item evidence-item--unavailable">
+        <div>
+          <span className="evidence-chip evidence-chip--unavailable">
+            evidence-unavailable
+          </span>
+          <span className="relationship-label">{edge.kind}</span>
+        </div>
+        <p>No supporting provenance was projected for this relationship.</p>
+      </article>
+    );
   }
 
   return (
@@ -492,6 +548,47 @@ function EvidenceLegend() {
       </span>
     </div>
   );
+}
+
+function getProjectionStatus(flow: FlowProjection): ProjectionStatus {
+  if (flow.nodes.length === 0) {
+    return {
+      kind: 'empty',
+      message:
+        'The analysis completed, but this projection contains no functions to inspect.',
+    };
+  }
+
+  const nodeIds = new Set(flow.nodes.map((node) => node.id));
+  const reasons: string[] = [];
+
+  if (!nodeIds.has(flow.entryPointId)) {
+    reasons.push('The entry point was not projected.');
+  }
+
+  const danglingRelationships = flow.edges.filter(
+    (edge) => !nodeIds.has(edge.sourceId) || !nodeIds.has(edge.targetId),
+  ).length;
+  if (danglingRelationships > 0) {
+    reasons.push(
+      `${danglingRelationships} relationship${
+        danglingRelationships === 1 ? '' : 's'
+      } reference${danglingRelationships === 1 ? 's' : ''} unavailable functions.`,
+    );
+  }
+
+  const relationshipsWithoutEvidence = flow.edges.filter(
+    (edge) => edge.evidence.length === 0,
+  ).length;
+  if (relationshipsWithoutEvidence > 0) {
+    reasons.push(
+      `${relationshipsWithoutEvidence} relationship${
+        relationshipsWithoutEvidence === 1 ? '' : 's'
+      } ${relationshipsWithoutEvidence === 1 ? 'has' : 'have'} no supporting evidence.`,
+    );
+  }
+
+  return reasons.length > 0 ? { kind: 'partial', reasons } : { kind: 'ready' };
 }
 
 function getSourceSnippet(
