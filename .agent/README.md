@@ -9,12 +9,15 @@ The workspace separates **durable product/system truth** from **temporary execut
 1. Runtime code + tests — actual implemented behavior.
 2. `.agent/requirements/` — durable product outcomes, scope, acceptance criteria, and non-goals.
 3. `.agent/specs/` — durable material product/system design decisions and constraints.
-4. `.agent/rules.md` — canonical engineering execution policy.
-5. `AGENTS.md` — progressive entry-point adapter + CodeFlow-specific invariants.
-6. `.agent/plan.md` — short-lived Feature Compass/current execution state.
-7. `.agent/plans/` / `.agent/checkpoints/` — temporary sequencing/continuity evidence only when useful.
+4. `DESIGN.md` — canonical durable visual, interaction, workspace, and interface language.
+5. `.agent/rules.md` — canonical engineering execution policy.
+6. `AGENTS.md` — progressive entry-point adapter + CodeFlow-specific invariants.
+7. `.agent/plan.md` — short-lived Feature Compass/current execution state.
+8. `.agent/plans/` / `.agent/checkpoints/` — temporary sequencing/continuity evidence only when useful.
 
 If code and old execution prose disagree because implementation has moved forward, update/supersede the stale execution prose. If the disagreement concerns product intent or a material design decision, surface it instead of silently choosing one source.
+
+`DESIGN.md` supersedes visual/interaction guidance inside older specs when they conflict; material product/system architecture remains owned by the relevant spec.
 
 ## Read progressively
 
@@ -24,6 +27,7 @@ Then load only the concern-specific durable source that the change actually touc
 
 - requirements for product behavior/scope
 - specs for material architecture/contracts/security/data decisions
+- `DESIGN.md` for durable visual/interaction/workspace language
 - source/tests for implementation ownership and current behavior
 - CI/release files only when integration/release mechanics matter
 
@@ -81,6 +85,7 @@ Create an artifact only when it reduces meaningful ambiguity, delivery risk, or 
 
 - update requirements when product intent/scope/acceptance changes
 - update a spec when a material architecture, contract, security, privacy, persistence, or data-ownership decision changes
+- update `DESIGN.md` when durable visual, interaction, workspace, or interface language changes
 - create a task plan only when sequencing across boundaries materially helps execution
 - create a checkpoint only when another session would otherwise need to rediscover important evidence
 - do not create a spec/plan/checkpoint merely because work is non-trivial
