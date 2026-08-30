@@ -2,20 +2,19 @@
 
 ## Feature Shape
 
-M2 improves comprehension by keeping semantic context visible while source inspection receives enough space for focused reading.
+M2 improves comprehension by making incomplete analysis states explicit without discarding useful semantic context.
 
-This sprint is the smallest source-split slice:
+This sprint is the smallest analysis-state slice:
 
 ```text
-semantic flow
- -> inspect selected node or relationship
- -> expand source
- -> keep canvas + selection visible
- -> read source/evidence in a wider inspector
- -> restore the standard inspector layout
+analysis request
+ -> loading
+ -> ready | empty | partial | error
+ -> partial keeps recovered functions navigable
+ -> missing evidence stays visibly unavailable
 ```
 
-Source split is view state only. It does not change the selected semantic entity, relationship, evidence, or canonical graph.
+Analysis-state rendering is a UI interpretation of the existing projection contract. It does not create semantic entities, relationships, evidence, or confidence.
 
 Durable visual and interaction language remains owned by root `DESIGN.md`.
 
@@ -23,31 +22,34 @@ Durable visual and interaction language remains owned by root `DESIGN.md`.
 
 M0/M1, M2.1, and M2.2 are integrated into `master`.
 
-M2.3 is implemented and verified on PR #5 / `feat/m2-source-split`:
+M2.3 is release-ready on PR #5 / `feat/m2-source-split` and remains unmerged.
 
-- node and relationship inspectors expose one `Expand source` control
-- expanded mode reallocates workspace width toward source while keeping repository context and semantic canvas visible
-- `Restore inspector` returns to the normal three-region proportions
-- source split stays synchronized with the currently selected node or relationship
-- primary controls remain native keyboard-reachable buttons
-- responsive layouts collapse expanded and standard modes to the same single-column reading order below the existing breakpoint
-- focused regression coverage protects expand -> canvas preserved -> source preserved -> restore
-- existing node selection, search/neighborhood focus, and relationship evidence inspection regressions remain green
-- standard format/lint/build/typecheck/test gates passed on CI run #48
+M2.4 is implemented on `feat/m2-analysis-states`, stacked on the M2.3 head:
+
+- loading and request failure remain distinct states
+- a completed projection with zero functions renders an explicit empty state instead of an empty workspace
+- projections with a missing entry point, dangling relationship endpoint, or missing relationship evidence render a `Partial projection` notice
+- partial projections keep recovered functions searchable and navigable
+- the canvas derives its default focal function from the canonical `entryPointId`; a missing entry point is not silently replaced
+- relationships without evidence render `evidence-unavailable` instead of falling back to `inferred-static`
+- relationship/node inspection shows missing provenance explicitly instead of omitting it
+- focused regression coverage protects empty, partial-but-navigable, missing-evidence, and request-failure behavior
 
 No analyzer, semantic IR, API, dependency, persistence, runtime, AI, multi-language, or material architecture boundary changed.
 
 ## Delta
 
-None inside the authorized M2.3 slice.
+Verification remains before release-ready:
 
-Remaining M2 roadmap capabilities are intentionally outside this sprint:
+1. standard format/lint/build/typecheck/test gates pass
+2. stacked PR diff stays limited to M2.4 UI state behavior, styling, focused coverage, and Feature Compass state
+
+Remaining M2 roadmap capabilities intentionally outside this sprint:
 
 - relationship filters/lenses once multiple useful relationship kinds exist
 - stable automatic layout for larger arbitrary graphs
-- broader empty/error/partial states
 - broader keyboard navigation beyond native primary controls
 
 ## Next Move
 
-STOP. M2.3 is release-ready. Merge/integration remains a separate decision.
+Run standard CI. Fix only observed regressions. If green, mark M2.4 release-ready and STOP without merging either stacked PR.
