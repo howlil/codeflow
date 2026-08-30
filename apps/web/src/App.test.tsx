@@ -242,9 +242,13 @@ describe('App', () => {
 
     render(<App />);
 
-    expect(await screen.findByText('No functions projected')).toBeInTheDocument();
     expect(
-      screen.getByText(/analysis completed, but this projection contains no functions/i),
+      await screen.findByText('No functions projected'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /analysis completed, but this projection contains no functions/i,
+      ),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('region', { name: 'Semantic flow canvas' }),
@@ -269,7 +273,9 @@ describe('App', () => {
     render(<App />);
 
     expect(await screen.findByText('Partial projection')).toBeInTheDocument();
-    expect(screen.getByText(/entry point was not projected/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/entry point was not projected/i),
+    ).toBeInTheDocument();
     expect(
       screen.getByText(/1 relationship has no supporting evidence/i),
     ).toBeInTheDocument();
@@ -295,7 +301,9 @@ describe('App', () => {
       0,
     );
     expect(
-      screen.getByText('No supporting provenance was projected for this relationship.'),
+      screen.getByText(
+        'No supporting provenance was projected for this relationship.',
+      ),
     ).toBeInTheDocument();
   });
 
@@ -304,7 +312,11 @@ describe('App', () => {
 
     render(<App />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Flow unavailable');
-    expect(screen.getByRole('alert')).toHaveTextContent('Fixture request failed.');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Flow unavailable',
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Fixture request failed.',
+    );
   });
 });
