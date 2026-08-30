@@ -1,70 +1,123 @@
 # CodeFlow Agent Workspace
 
-`.agent/` separates **durable product knowledge** from **temporary execution workflow**.
+`.agent/` holds repository-local product/engineering context without turning delivery into documentation ceremony.
 
-## Source of truth
-1. Runtime code + tests — actual implemented behavior
-2. `.agent/requirements/` — product scope, user journeys, acceptance criteria, non-goals
-3. `.agent/specs/` / `.agent/decisions/` — intended architecture and durable decisions
-4. `AGENTS.md` — engineering/delivery rules
-5. `.agent/plan.md` — current state and next 1-3 vertical slices
-6. `.agent/plans/` / `.agent/checkpoints/` — temporary execution context when needed
+The workspace separates **durable product/system truth** from **temporary execution state** and uses progressive disclosure so agents load only the context needed for the current change.
 
-## Never-delete-by-cleanup rule
-Do **not** delete project detail, requirements, user journeys, acceptance criteria, domain constraints, architecture decisions, security constraints, semantic/API contracts, or validated design context merely because:
-- an iteration completed,
-- implementation moved forward,
-- the workflow changed,
-- a document is old,
-- the team wants fewer process files.
+## Source-of-truth hierarchy
 
-When durable product knowledge becomes outdated, update it or mark it superseded and link to the replacement. Preserve enough history to understand the decision.
+1. Runtime code + tests — actual implemented behavior.
+2. `.agent/requirements/` — durable product outcomes, scope, acceptance criteria, and non-goals.
+3. `.agent/specs/` — durable material product/system design decisions and constraints.
+4. `.agent/rules.md` — canonical engineering execution policy.
+5. `AGENTS.md` — progressive entry-point adapter + CodeFlow-specific invariants.
+6. `.agent/plan.md` — short-lived Feature Compass/current execution state.
+7. `.agent/plans/` / `.agent/checkpoints/` — temporary sequencing/continuity evidence only when useful.
 
-## What may be deleted
-Legacy workflow/process artifacts may be removed when they no longer help execution, for example:
-- duplicated execution plans,
-- retry/final/review-fix plans,
-- stale checkpoints/status snapshots,
-- old process instructions superseded by `AGENTS.md`,
-- task sequencing that has no remaining product/architecture information.
+If code and old execution prose disagree because implementation has moved forward, update/supersede the stale execution prose. If the disagreement concerns product intent or a material design decision, surface it instead of silently choosing one source.
 
-Before deleting any document, classify its information:
+## Read progressively
+
+Start with `AGENTS.md`, `.agent/plan.md`, and `.agent/rules.md`.
+
+Then load only the concern-specific durable source that the change actually touches:
+
+- requirements for product behavior/scope
+- specs for material architecture/contracts/security/data decisions
+- source/tests for implementation ownership and current behavior
+- CI/release files only when integration/release mechanics matter
+
+Do not perform repository-wide reconnaissance or load the entire `.agent/` tree by default.
+
+## Durable knowledge
+
+Do **not** delete durable product/system knowledge merely because:
+
+- an iteration completed
+- implementation moved forward
+- workflow changed
+- a document is old
+- fewer process files would look cleaner
+
+Durable knowledge includes:
+
+- product goals/outcomes
+- product requirements and user journeys
+- acceptance criteria/non-goals
+- semantic/domain constraints
+- architecture decisions/invariants
+- security/privacy constraints
+- public/semantic/API contracts
+- validated design decisions
+
+When durable knowledge changes, update it or explicitly supersede it with the replacement needed to understand the current decision.
+
+## Temporary execution artifacts
+
+Temporary artifacts may be deleted when stale and when they contain no unique durable product/design truth, for example:
+
+- duplicated task plans
+- retry/final/review-fix plans
+- stale checkpoints/status snapshots
+- superseded process instructions
+- task sequencing that no longer helps execution
+
+For mixed documents:
 
 ```text
-product/requirement/design knowledge?
-  -> preserve or migrate
+durable product/system knowledge?
+ -> preserve or migrate
 
 temporary execution/process only?
-  -> safe to delete when stale
+ -> delete when stale
 
-mixed document?
-  -> migrate durable content first, then delete obsolete workflow shell
+mixed?
+ -> migrate durable truth first, then remove obsolete shell
 ```
 
-## Artifact rule
-Do not create duplicate documentation by default.
+## Artifact creation rule
 
-Create/update:
-- requirements when product intent/scope/acceptance changes,
-- specs/decisions for material architecture, contract, security, or data decisions,
-- a temporary plan only when sequencing genuinely reduces execution risk,
-- a checkpoint only when another session would otherwise rediscover important evidence.
+Create an artifact only when it reduces meaningful ambiguity, delivery risk, or repeated rediscovery.
 
-## Planning format
-`.agent/plan.md` remains operational and short:
+- update requirements when product intent/scope/acceptance changes
+- update a spec when a material architecture, contract, security, privacy, persistence, or data-ownership decision changes
+- create a task plan only when sequencing across boundaries materially helps execution
+- create a checkpoint only when another session would otherwise need to rediscover important evidence
+- do not create a spec/plan/checkpoint merely because work is non-trivial
+
+A small bounded change normally needs no new planning document.
+
+## Feature Compass
+
+`.agent/plan.md` is the preferred orientation surface.
+
+Keep it compact enough to answer:
 
 ```text
-Current outcome
-Current blocker/risk
-Next slice (acceptance criteria)
-Later (max 2 items)
+Feature Shape
+ -> Current Position
+ -> Delta
+ -> Next Move
 ```
 
-Completed workflow detail can be removed from this file, but any durable requirement discovered during execution must first be moved into `.agent/requirements/`, `.agent/specs/`, or `.agent/decisions/`.
+It should make clear what the feature will become, what differs from current state, what is done/in progress, and the single next meaningful action. Do not duplicate the full requirement/specification there.
 
-## Execution loop
+## Planning preference
+
+When sequencing genuinely matters, prefer a small vertical slice:
+
 ```text
-observe -> choose smallest valuable slice -> implement -> focused verify -> PR/CI -> merge -> update state
+fixture/input
+ -> analysis/domain behavior
+ -> contract/boundary
+ -> consumer/UI
+ -> evidence/verification
 ```
 
-The goal is low process overhead **without losing product knowledge**.
+over horizontal scaffolding such as building all parsers, then all APIs, then all UI before integration.
+
+## Execution policy
+
+The canonical lifecycle, authority boundary, minimum-change rule, testing-by-risk, documentation/dependency policy, Feature Compass behavior, retrospective rule, quality gates, and stop conditions live in `.agent/rules.md`.
+
+Do not restate those rules in new process documents.
