@@ -7,7 +7,7 @@ on:
       - master
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   verify:
@@ -16,8 +16,6 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
 
       - name: Enable Corepack
         run: corepack enable
@@ -28,42 +26,8 @@ jobs:
           node-version: 24
           cache: pnpm
 
-      - name: Sync workspace lockfile
-        run: |
-          pnpm install --lockfile-only --no-frozen-lockfile
-          if ! git diff --quiet -- pnpm-lock.yaml; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add pnpm-lock.yaml
-            git commit -m "chore: sync pnpm lockfile"
-            git push origin HEAD:${{ github.head_ref }}
-          fi
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      - name: Format touched files
-        run: |
-          pnpm exec prettier --write \
-            apps/web/src/App.test.tsx \
-            apps/web/src/App.tsx \
-            apps/web/src/index.css \
-            packages/analysis-core/src/typescript-flow.ts
-          if ! git diff --quiet -- \
-            apps/web/src/App.test.tsx \
-            apps/web/src/App.tsx \
-            apps/web/src/index.css \
-            packages/analysis-core/src/typescript-flow.ts; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add \
-              apps/web/src/App.test.tsx \
-              apps/web/src/App.tsx \
-              apps/web/src/index.css \
-              packages/analysis-core/src/typescript-flow.ts
-            git commit -m "style: format M1 vertical slice"
-            git push origin HEAD:${{ github.head_ref }}
-          fi
 
       - name: Verify repository
         run: pnpm check
