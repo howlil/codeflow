@@ -196,7 +196,9 @@ describe('App', () => {
       screen.getByRole('heading', { name: 'handleGreeting → normalizeName' }),
     ).toBeInTheDocument();
     expect(screen.getByText('Direct symbol resolution.')).toBeInTheDocument();
-    expect(screen.queryByText('Local alias inference.')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Local alias inference.'),
+    ).not.toBeInTheDocument();
     expect(
       screen.getByText(/return formatter\(normalizeName\(name\)\);/),
     ).toBeInTheDocument();
