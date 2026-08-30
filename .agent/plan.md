@@ -2,63 +2,54 @@
 
 ## Feature Shape
 
-M2 improves comprehension once a semantic graph is large enough that seeing everything at once becomes noise.
+M2 improves comprehension by letting developers move from a semantic relationship directly to the source evidence that supports it.
 
-This sprint is the smallest M2 slice:
+This sprint is the smallest source-inspection slice:
 
 ```text
 semantic flow
- -> search a function
- -> navigate directly to it
- -> focus on its immediate neighborhood
- -> inspect source/evidence
- -> return to the full flow
+ -> select relationship
+ -> inspect canonical source -> target direction
+ -> inspect exact supporting source range
+ -> inspect provenance and evidence kind
+ -> return to node inspection by selecting a function
 ```
 
-The existing evidence-backed semantic model remains canonical. Search and focus only change the projection the user is viewing; they do not invent or mutate semantic relationships.
+The semantic graph and evidence records remain canonical. Relationship selection only changes inspection state; it does not mutate or infer new graph facts.
 
-Durable visual and interaction language now has one canonical source: root `DESIGN.md`.
+Durable visual and interaction language remains owned by root `DESIGN.md`.
 
 ## Current Position
 
-M1 is release-ready on PR #2 and remains the integration base for this stacked sprint.
+M0/M1 and M2.1 are integrated into `master`.
 
-M2.1 is implemented and verified on PR #3 / `feat/m2-canvas-comprehension`:
+M2.2 is implemented on `feat/m2-edge-evidence-inspection`:
 
-- function search is available above the semantic canvas
-- matching functions can be selected directly from search results
-- search navigation selects the function and enters neighborhood focus
-- neighborhood focus shows the selected function plus directly connected call relationships
-- incoming and outgoing relationships remain directionally distinguishable
-- `Show full flow` returns to the original entry-point projection
-- source/evidence inspection continues to follow the selected function
-- controls use native input/button semantics and remain usable in the responsive single-column layout
-- a focused regression test covers search -> focus -> hidden unrelated node -> full-flow restore
-
-Design-system alignment is also complete on this branch:
-
-- `DESIGN.md` is the canonical durable visual/interaction/workspace source
-- older foundation-spec visual/interaction guidance is explicitly superseded when conflicting
-- product thesis, semantic architecture, IR, adapters, API, security, and other material system decisions remain owned by the foundation spec
-- `.agent/README.md` registers the new source-of-truth boundary
-- existing CSS palette, borders, selection, graph, elevation, and radius values use semantic tokens
-- tokenization preserves current rendered behavior and intentionally does not introduce dark mode or a new component library
-- standard repository format/lint/build/typecheck/test gates passed on CI run #35 after the design-system implementation
-
-No analyzer, API, semantic IR, evidence model, dependency, persistence, theme, or product-behavior boundary changed in this alignment.
+- projected relationships are keyboard-reachable selectable controls
+- each relationship exposes an accessible source -> target inspection label
+- selected relationship state is visually distinguishable without changing evidence styling
+- selecting a relationship opens a relationship-specific inspector
+- the inspector shows canonical source -> target direction, supporting file/range, source snippet, evidence kind, analyzer source, and reason
+- selecting a function clears relationship selection and returns to the existing node/source inspector
+- focus-mode changes clear stale edge inspection state
+- no analyzer, semantic IR, API, dependency, persistence, or architecture boundary changed
+- focused regression coverage protects relationship selection -> source provenance inspection
 
 ## Delta
 
-None inside the authorized M2.1 + design-system alignment scope.
+Verification remains before release-ready:
 
-Remaining M2 roadmap capabilities are intentionally not part of this sprint:
+1. standard format/lint/build/typecheck/test gates pass
+2. PR diff stays limited to M2.2 UI inspection behavior, focused coverage, styling, and Feature Compass state
 
-- relationship filters/lenses
-- source split/snippet inspection improvements beyond the existing inspector
+Remaining M2 roadmap capabilities are still intentionally outside this sprint:
+
+- relationship filters/lenses once multiple useful relationship kinds exist
+- source split mode beyond the existing inspector surface
 - stable automatic layout for larger arbitrary graphs
 - broader empty/error/partial states
 - broader keyboard navigation beyond native primary controls
 
 ## Next Move
 
-STOP. M2.1 and the design-system alignment are release-ready. Integration/merge and selection of the next M2 capability remain separate decisions.
+Run standard CI. Fix only observed regressions. If green, mark M2.2 release-ready, merge it into `master`, and stop.
