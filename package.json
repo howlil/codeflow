@@ -8,6 +8,7 @@
     "node": ">=24 <25"
   },
   "scripts": {
+    "dev": "pnpm --parallel --filter @codeflow/api --filter @codeflow/web dev",
     "dev:api": "pnpm --filter @codeflow/api dev",
     "dev:web": "pnpm --filter @codeflow/web dev",
     "format": "prettier --write .",
