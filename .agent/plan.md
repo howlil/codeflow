@@ -31,7 +31,7 @@ M2.4 is release-ready on PR #6 / `feat/m2-analysis-states`, stacked on M2.3, and
 
 M2.5 is release-ready on PR #7 / `feat/m2-keyboard-navigation`, stacked on M2.4, and remains unmerged.
 
-M2.6 is implemented on `feat/m2-stable-auto-layout`, stacked on the verified M2.5 head:
+M2.6 is implemented and verified on PR #8 / `feat/m2-stable-auto-layout`, stacked on the verified M2.5 head:
 
 - relationship lanes no longer assume exactly two columns
 - CSS Grid uses `auto-fit` with a bounded minimum lane width so available canvas width determines the useful column count automatically
@@ -41,18 +41,21 @@ M2.6 is implemented on `feat/m2-stable-auto-layout`, stacked on the verified M2.
 - the existing narrow-screen breakpoint still collapses lanes to one column
 - source-split mode automatically receives fewer columns as the canvas narrows without any separate JS layout state
 - no layout engine, graph library, dependency, or persistent layout configuration is introduced
-- no new automated test is added because this is presentation-only layout behavior; existing behavior regressions remain the relevant executable confidence
+- no new automated test was added because this is presentation-only layout behavior; existing behavior regressions remain the relevant executable confidence
+- standard format/lint/build/typecheck/test gates passed on CI run #58
 
 No analyzer, semantic IR, API, dependency, persistence, runtime, AI, multi-language, or material architecture boundary changed.
 
 ## Delta
 
-Verification is pending for the authorized M2.6 slice.
+None inside the authorized M2.6 slice.
 
-Remaining M2 roadmap capability intentionally outside this sprint:
+Remaining M2 roadmap capability intentionally deferred:
 
 - relationship filters/lenses once multiple useful relationship kinds exist
 
+With the current graph model still exposing only `CALLS`, implementing a relationship filter now would create a control with no meaningful filtering choice. It remains deferred rather than inventing M3 semantics.
+
 ## Next Move
 
-Run the normal repository quality gates. If green, mark M2.6 release-ready and STOP. PR #5, PR #6, PR #7, and this sprint remain separate integration decisions.
+STOP. M2.6 is release-ready. PR #5, PR #6, PR #7, and PR #8 remain separate integration decisions.
