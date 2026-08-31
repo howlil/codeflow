@@ -184,6 +184,42 @@ describe('App', () => {
     expect(screen.getByText('normalizeName')).toBeInTheDocument();
   });
 
+  it('moves between caller and callee with arrow keys while keeping inspection synchronized', async () => {
+    stubFlowRequest();
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      (callback: FrameRequestCallback): number => {
+        callback(0);
+        return 0;
+      },
+    );
+
+    render(<App />);
+    await screen.findByText('handleGreeting request flow');
+
+    const entryNode = screen.getByRole('button', {
+      name: /^Entry functionhandleGreeting/i,
+    });
+    entryNode.focus();
+
+    fireEvent.keyDown(entryNode, { key: 'ArrowRight' });
+
+    const calleeNode = screen.getByRole('button', {
+      name: /^FunctionnormalizeName/i,
+    });
+    expect(calleeNode).toHaveFocus();
+    expect(
+      screen.getByRole('heading', { name: 'normalizeName' }),
+    ).toBeInTheDocument();
+
+    fireEvent.keyDown(calleeNode, { key: 'ArrowLeft' });
+
+    expect(entryNode).toHaveFocus();
+    expect(
+      screen.getByRole('heading', { name: 'handleGreeting' }),
+    ).toBeInTheDocument();
+  });
+
   it('inspects one selected relationship with its source provenance', async () => {
     stubFlowRequest();
 
