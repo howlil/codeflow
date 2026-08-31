@@ -2,23 +2,24 @@
 
 ## Feature Shape
 
-M2 improves comprehension by letting keyboard users traverse semantic caller/callee relationships directly from the canvas without losing source inspection context.
+M2 improves comprehension by keeping larger semantic neighborhoods readable without manual diagram editing or introducing a layout-engine dependency.
 
-This sprint is the smallest semantic keyboard-navigation slice:
+This sprint is the smallest stable automatic-layout slice:
 
 ```text
-focus semantic function
- -> ArrowRight follows a projected callee
- -> ArrowLeft follows a projected caller
- -> selected function + inspector stay synchronized
- -> keyboard focus follows the destination node
+deterministic projected relationships
+ -> responsive auto-fit lanes
+ -> preserve stable row-major ordering
+ -> add columns when space allows
+ -> wrap into more rows as relationships grow
+ -> collapse to one column on narrow screens
 ```
 
-Arrow navigation follows existing projected graph direction only. It does not create relationships, infer ordering semantics, or replace native Tab / Enter behavior.
+Layout remains a presentation concern. It does not change graph semantics, selection, relationship direction, evidence, focus mode, keyboard traversal, or source inspection.
 
-When more than one directional candidate exists, CodeFlow chooses the first candidate using deterministic source-location ordering so repeated navigation is stable.
+The semantic projection already provides deterministic relationship ordering; this slice removes the previous fixed two-column presentation constraint and lets CSS place that stable sequence according to available canvas width.
 
-Durable visual and interaction language remains owned by root `DESIGN.md`; this feature-specific shortcut behavior remains iteration/product behavior.
+Durable visual and interaction language remains owned by root `DESIGN.md`.
 
 ## Current Position
 
@@ -28,31 +29,30 @@ M2.3 is release-ready on PR #5 / `feat/m2-source-split` and remains unmerged.
 
 M2.4 is release-ready on PR #6 / `feat/m2-analysis-states`, stacked on M2.3, and remains unmerged.
 
-M2.5 is implemented and verified on PR #7 / `feat/m2-keyboard-navigation`, stacked on the verified M2.4 head:
+M2.5 is release-ready on PR #7 / `feat/m2-keyboard-navigation`, stacked on M2.4, and remains unmerged.
 
-- semantic node buttons expose `ArrowLeft ArrowRight` through `aria-keyshortcuts`
-- `ArrowRight` follows an existing outgoing relationship to a projected callee
-- `ArrowLeft` follows an existing incoming relationship to a projected caller
-- navigation updates canonical selection state and clears stale relationship inspection through the existing node-selection path
-- source/evidence inspector follows the keyboard-selected function
-- browser focus follows the destination semantic node after React updates the view
-- directional candidates are ordered deterministically by source file, line, column, then semantic ID
-- keys with no valid directional neighbor are left untouched
-- native Tab, Enter, click, search, focus mode, source split, and relationship inspection behavior remain unchanged
-- focused regression coverage protects caller -> callee -> caller keyboard traversal and inspector/focus synchronization
-- standard format/lint/build/typecheck/test gates passed on CI run #56
+M2.6 is implemented on `feat/m2-stable-auto-layout`, stacked on the verified M2.5 head:
+
+- relationship lanes no longer assume exactly two columns
+- CSS Grid uses `auto-fit` with a bounded minimum lane width so available canvas width determines the useful column count automatically
+- stable DOM/projection order remains the row-major layout order; no random/manual coordinates are introduced
+- additional relationships wrap into further rows instead of squeezing fixed columns
+- lanes explicitly align from the start and allow internal content to shrink without forcing horizontal overflow
+- the existing narrow-screen breakpoint still collapses lanes to one column
+- source-split mode automatically receives fewer columns as the canvas narrows without any separate JS layout state
+- no layout engine, graph library, dependency, or persistent layout configuration is introduced
+- no new automated test is added because this is presentation-only layout behavior; existing behavior regressions remain the relevant executable confidence
 
 No analyzer, semantic IR, API, dependency, persistence, runtime, AI, multi-language, or material architecture boundary changed.
 
 ## Delta
 
-None inside the authorized M2.5 slice.
+Verification is pending for the authorized M2.6 slice.
 
-Remaining M2 roadmap capabilities intentionally outside this sprint:
+Remaining M2 roadmap capability intentionally outside this sprint:
 
 - relationship filters/lenses once multiple useful relationship kinds exist
-- stable automatic layout for larger arbitrary graphs
 
 ## Next Move
 
-STOP. M2.5 is release-ready. PR #5, PR #6, and PR #7 remain separate integration decisions.
+Run the normal repository quality gates. If green, mark M2.6 release-ready and STOP. PR #5, PR #6, PR #7, and this sprint remain separate integration decisions.
