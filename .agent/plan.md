@@ -28,7 +28,7 @@ M2.3 is release-ready on PR #5 / `feat/m2-source-split` and remains unmerged.
 
 M2.4 is release-ready on PR #6 / `feat/m2-analysis-states`, stacked on M2.3, and remains unmerged.
 
-M2.5 is implemented on `feat/m2-keyboard-navigation`, stacked on the verified M2.4 head:
+M2.5 is implemented and verified on PR #7 / `feat/m2-keyboard-navigation`, stacked on the verified M2.4 head:
 
 - semantic node buttons expose `ArrowLeft ArrowRight` through `aria-keyshortcuts`
 - `ArrowRight` follows an existing outgoing relationship to a projected callee
@@ -40,12 +40,13 @@ M2.5 is implemented on `feat/m2-keyboard-navigation`, stacked on the verified M2
 - keys with no valid directional neighbor are left untouched
 - native Tab, Enter, click, search, focus mode, source split, and relationship inspection behavior remain unchanged
 - focused regression coverage protects caller -> callee -> caller keyboard traversal and inspector/focus synchronization
+- standard format/lint/build/typecheck/test gates passed on CI run #56
 
 No analyzer, semantic IR, API, dependency, persistence, runtime, AI, multi-language, or material architecture boundary changed.
 
 ## Delta
 
-Verification is pending for the M2.5 slice.
+None inside the authorized M2.5 slice.
 
 Remaining M2 roadmap capabilities intentionally outside this sprint:
 
@@ -54,4 +55,4 @@ Remaining M2 roadmap capabilities intentionally outside this sprint:
 
 ## Next Move
 
-Run standard format/lint/build/typecheck/test gates. If green, mark M2.5 release-ready and STOP. PR #5, PR #6, and M2.5 integration remain separate decisions.
+STOP. M2.5 is release-ready. PR #5, PR #6, and PR #7 remain separate integration decisions.
