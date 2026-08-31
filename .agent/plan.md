@@ -2,21 +2,23 @@
 
 ## Feature Shape
 
-M2 improves comprehension by making incomplete analysis states explicit without discarding useful semantic context.
+M2 improves comprehension by letting keyboard users traverse semantic caller/callee relationships directly from the canvas without losing source inspection context.
 
-This sprint is the smallest analysis-state slice:
+This sprint is the smallest semantic keyboard-navigation slice:
 
 ```text
-analysis request
- -> loading
- -> ready | empty | partial | error
- -> partial keeps recovered functions navigable
- -> missing evidence stays visibly unavailable
+focus semantic function
+ -> ArrowRight follows a projected callee
+ -> ArrowLeft follows a projected caller
+ -> selected function + inspector stay synchronized
+ -> keyboard focus follows the destination node
 ```
 
-Analysis-state rendering is a UI interpretation of the existing projection contract. It does not create semantic entities, relationships, evidence, or confidence.
+Arrow navigation follows existing projected graph direction only. It does not create relationships, infer ordering semantics, or replace native Tab / Enter behavior.
 
-Durable visual and interaction language remains owned by root `DESIGN.md`.
+When more than one directional candidate exists, CodeFlow chooses the first candidate using deterministic source-location ordering so repeated navigation is stable.
+
+Durable visual and interaction language remains owned by root `DESIGN.md`; this feature-specific shortcut behavior remains iteration/product behavior.
 
 ## Current Position
 
@@ -24,31 +26,32 @@ M0/M1, M2.1, and M2.2 are integrated into `master`.
 
 M2.3 is release-ready on PR #5 / `feat/m2-source-split` and remains unmerged.
 
-M2.4 is implemented and verified on PR #6 / `feat/m2-analysis-states`, stacked on the M2.3 head:
+M2.4 is release-ready on PR #6 / `feat/m2-analysis-states`, stacked on M2.3, and remains unmerged.
 
-- loading and request failure are distinct states
-- a completed projection with zero functions renders an explicit empty state instead of an empty workspace
-- projections with a missing entry point, dangling relationship endpoint, or missing relationship evidence render a `Partial projection` notice
-- partial projections keep recovered functions searchable and navigable
-- the canvas derives its default focal function from canonical `entryPointId`; a missing entry point is not silently replaced
-- relationships without evidence render `evidence-unavailable` instead of falling back to `inferred-static`
-- relationship/node inspection shows missing provenance explicitly instead of omitting it
-- focused regression coverage protects empty, partial-but-navigable, missing-evidence, and request-failure behavior
-- existing node selection, search/neighborhood focus, relationship evidence inspection, and source split regressions remain green
-- standard format/lint/build/typecheck/test gates passed on CI run #52
+M2.5 is implemented on `feat/m2-keyboard-navigation`, stacked on the verified M2.4 head:
+
+- semantic node buttons expose `ArrowLeft ArrowRight` through `aria-keyshortcuts`
+- `ArrowRight` follows an existing outgoing relationship to a projected callee
+- `ArrowLeft` follows an existing incoming relationship to a projected caller
+- navigation updates canonical selection state and clears stale relationship inspection through the existing node-selection path
+- source/evidence inspector follows the keyboard-selected function
+- browser focus follows the destination semantic node after React updates the view
+- directional candidates are ordered deterministically by source file, line, column, then semantic ID
+- keys with no valid directional neighbor are left untouched
+- native Tab, Enter, click, search, focus mode, source split, and relationship inspection behavior remain unchanged
+- focused regression coverage protects caller -> callee -> caller keyboard traversal and inspector/focus synchronization
 
 No analyzer, semantic IR, API, dependency, persistence, runtime, AI, multi-language, or material architecture boundary changed.
 
 ## Delta
 
-None inside the authorized M2.4 slice.
+Verification is pending for the M2.5 slice.
 
 Remaining M2 roadmap capabilities intentionally outside this sprint:
 
 - relationship filters/lenses once multiple useful relationship kinds exist
 - stable automatic layout for larger arbitrary graphs
-- broader keyboard navigation beyond native primary controls
 
 ## Next Move
 
-STOP. M2.4 is release-ready. PR #5 and PR #6 remain separate integration decisions.
+Run standard format/lint/build/typecheck/test gates. If green, mark M2.5 release-ready and STOP. PR #5, PR #6, and M2.5 integration remain separate decisions.
