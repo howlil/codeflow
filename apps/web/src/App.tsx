@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type KeyboardEvent } from 'react';
 
 import {
   loadSampleFlow,
@@ -189,6 +189,7 @@ export function App() {
               selectedEdgeId={selectedEdgeId}
               focusMode={focusMode}
               onSelectNode={selectNode}
+              onKeyboardNavigate={selectNode}
               onSelectEdge={setSelectedEdgeId}
             />
           </section>
@@ -232,6 +233,7 @@ function FlowCanvas({
   selectedEdgeId,
   focusMode,
   onSelectNode,
+  onKeyboardNavigate,
   onSelectEdge,
 }: {
   flow: FlowProjection;
@@ -239,6 +241,7 @@ function FlowCanvas({
   selectedEdgeId: string | null;
   focusMode: boolean;
   onSelectNode: (id: string) => void;
+  onKeyboardNavigate: (id: string) => void;
   onSelectEdge: (id: string) => void;
 }) {
   const entryPoint = flow.nodes.find((node) => node.id === flow.entryPointId);
@@ -260,6 +263,44 @@ function FlowCanvas({
       : edge.sourceId === flow.entryPointId,
   );
 
+  function handleNodeKeyDown(
+    event: KeyboardEvent<HTMLButtonElement>,
+    nodeId: string,
+  ) {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
+      return;
+    }
+
+    const candidateIds = new Set(
+      flow.edges.flatMap((edge) => {
+        if (event.key === 'ArrowRight' && edge.sourceId === nodeId) {
+          return [edge.targetId];
+        }
+        if (event.key === 'ArrowLeft' && edge.targetId === nodeId) {
+          return [edge.sourceId];
+        }
+        return [];
+      }),
+    );
+    const nextNode = flow.nodes
+      .filter((node) => candidateIds.has(node.id))
+      .sort(compareFlowNodes)[0];
+
+    if (nextNode === undefined) {
+      return;
+    }
+
+    event.preventDefault();
+    onKeyboardNavigate(nextNode.id);
+
+    requestAnimationFrame(() => {
+      const target = Array.from(
+        document.querySelectorAll<HTMLButtonElement>('[data-flow-node-id]'),
+      ).find((button) => button.dataset.flowNodeId === nextNode.id);
+      target?.focus();
+    });
+  }
+
   return (
     <div className="semantic-canvas">
       {focusMode ? (
@@ -271,6 +312,7 @@ function FlowCanvas({
         node={focalNode}
         selected={selectedNodeId === focalNode.id && selectedEdgeId === null}
         onSelect={onSelectNode}
+        onKeyDown={handleNodeKeyDown}
       />
       <div className="edge-lanes">
         {relatedEdges.map((edge) => {
@@ -315,6 +357,7 @@ function FlowCanvas({
                   selectedNodeId === neighbor.id && selectedEdgeId === null
                 }
                 onSelect={onSelectNode}
+                onKeyDown={handleNodeKeyDown}
               />
             </div>
           );
@@ -328,17 +371,22 @@ function NodeButton({
   node,
   selected,
   onSelect,
+  onKeyDown,
 }: {
   node: FlowNode;
   selected: boolean;
   onSelect: (id: string) => void;
+  onKeyDown: (event: KeyboardEvent<HTMLButtonElement>, id: string) => void;
 }) {
   return (
     <button
       className={`flow-node${selected ? ' flow-node--selected' : ''}`}
       type="button"
+      data-flow-node-id={node.id}
+      aria-keyshortcuts="ArrowLeft ArrowRight"
       aria-pressed={selected}
       onClick={() => onSelect(node.id)}
+      onKeyDown={(event) => onKeyDown(event, node.id)}
     >
       <span className="node-kind">
         {node.entryPoint ? 'Entry function' : node.kind}
@@ -589,6 +637,15 @@ function getProjectionStatus(flow: FlowProjection): ProjectionStatus {
   }
 
   return reasons.length > 0 ? { kind: 'partial', reasons } : { kind: 'ready' };
+}
+
+function compareFlowNodes(left: FlowNode, right: FlowNode): number {
+  return (
+    left.location.filePath.localeCompare(right.location.filePath) ||
+    left.location.startLine - right.location.startLine ||
+    left.location.startColumn - right.location.startColumn ||
+    left.id.localeCompare(right.id)
+  );
 }
 
 function getSourceSnippet(
