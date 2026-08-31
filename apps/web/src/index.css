@@ -333,13 +333,15 @@ h2 {
 
 .edge-lanes {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 28px;
+  align-items: start;
 }
 
 .edge-lane {
   display: grid;
   gap: 12px;
+  min-width: 0;
   justify-items: center;
 }
 
