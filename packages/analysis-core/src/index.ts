@@ -9,7 +9,7 @@ export type {
   SemanticRelationship,
   SourceLocation,
 } from './model.js';
-export { buildSampleRequestFlow, sampleRequestFlowSource } from './sample.js';
+export { buildSampleRequestFlow } from './sample.js';
 export {
   analyzeTypeScriptFlow,
   type AnalyzeTypeScriptFlowInput,

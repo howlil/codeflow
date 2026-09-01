@@ -1,54 +1,25 @@
 # Agent Instructions
 
-This repository uses `.agents/` as the canonical project knowledge and active iteration state.
-
-Before making a meaningful change, inspect the relevant canonical documents.
+`.agents/` is the canonical repository knowledge and engineering-state layer for CodeFlow.
 
 ## Canonical Sources
 
-- `.agents/PROJECT.md`
-  Product intent, domain behavior, scope, contracts, ownership, non-goals, and deferred product work.
+- `.agents/PROJECT.md` — product intent, behavior, scope, constraints, non-goals, and deferred work.
+- `.agents/ARCHITECTURE.md` — system boundaries, ownership, data flow, trust boundaries, and invariants.
+- `.agents/CURRENT_ITERATION.md` — current execution position, evidence, and single next action.
+- `.agents/CODE_PATTERNS.md` — repository-specific implementation patterns and traps.
+- `.agents/QUALITY.md` — repository commands, verification strategy, CI, and release-ready gates.
+- `.agents/DECISIONS.md` — durable material decisions and rationale.
+- `.agents/DESIGN.md` — durable visual, interaction, responsive, and accessibility behavior.
 
-- `.agents/ARCHITECTURE.md`
-  System boundaries, module ownership, data flow, trust boundaries, and architecture invariants.
+Read only the sources relevant to the requested change. Read `.agents/CURRENT_ITERATION.md` whenever continuing active work or deciding what should happen next.
 
-- `.agents/CURRENT_ITERATION.md`
-  Current milestone, active/pending slices, evidence, risks, and single next action.
+## Authority
 
-- `.agents/CODE_PATTERNS.md`
-  Repository-specific implementation patterns and conventions.
+Repository documents own CodeFlow-specific truth. Generic SWE lifecycle, product-authority, minimum-change, delivery, and retrospective rules remain global agent policy and should not be duplicated here.
 
-- `.agents/QUALITY.md`
-  Verification strategy, required checks, CI behavior, and release-ready gates.
+Prefer the smallest coherent change in the existing owning module. Do not create parallel project-state files, persistent sprint/task plans, or additional `.agents/*.md` files without a durable project-level owner.
 
-- `.agents/DECISIONS.md`
-  Durable material decisions and their rationale.
+Product behavior, public contracts, architecture/data ownership, security/trust boundaries, persistence/runtime topology, and other material decisions require explicit user approval before change.
 
-- `.agents/DESIGN.md`
-  Durable visual, interaction, workspace, responsive, and accessibility behavior.
-
-Read only the documents relevant to the requested change, but always inspect `.agents/CURRENT_ITERATION.md` when continuing active work.
-
-## Operating Rule
-
-Follow the canonical engineering lifecycle and user authority model.
-
-Do not change product behavior, public contracts, architecture boundaries, data ownership, security/trust boundaries, persistence/runtime topology, or other material decisions without explicit user approval.
-
-Prefer the smallest coherent change and the existing owning module/pattern.
-
-Do not create persistent task plans, sprint files, status files, or additional `.agents/*.md` documents unless the information has a durable project-level owner or the project genuinely requires an optional canonical document.
-
-## Material CodeFlow Boundaries
-
-Treat the following as material boundaries owned by the canonical documents above:
-
-- evidence-backed semantic relationships rather than generated canonical graph facts;
-- one shared semantic model across analyzers/adapters;
-- parser-specific structures stay behind analysis boundaries;
-- canvas/view state is not canonical semantic state;
-- static and runtime-observed evidence remain distinguishable;
-- ordinary static analysis does not execute arbitrary repository code;
-- private/untrusted repository source must respect the documented trust/privacy boundary.
-
-If a requested change crosses one of these boundaries, inspect `.agents/ARCHITECTURE.md` and `.agents/DECISIONS.md` and surface the material decision before implementation.
+For material CodeFlow boundaries, inspect `.agents/ARCHITECTURE.md` and `.agents/DECISIONS.md` rather than duplicating those boundaries in this entrypoint.
