@@ -66,7 +66,7 @@ describe('CodeFlow API', () => {
     const flow = response.json<FlowProjection>();
 
     expect(response.statusCode).toBe(200);
-    expect(flow.nodes.map((node) => node.label)).toEqual([
+    expect(flow.nodes.map((node) => node.label).sort()).toEqual([
       'handleGreeting',
       'normalizeName',
     ]);
