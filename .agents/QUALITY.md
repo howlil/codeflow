@@ -36,9 +36,10 @@ pnpm check
 format:check
  -> lint
  -> build
- -> typecheck
  -> test
 ```
+
+Each package build already runs the TypeScript compiler, so running the repository-wide `typecheck` again inside `pnpm check` would duplicate the same compiler work. Keep `pnpm typecheck` available for focused/manual type verification when a full build is unnecessary.
 
 GitHub Actions runs `pnpm install --frozen-lockfile` followed by `pnpm check` for pull requests and pushes to `master`.
 

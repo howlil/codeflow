@@ -1,7 +1,7 @@
 import type { FlowProjection } from './model.js';
 import { analyzeTypeScriptFlow } from './typescript-flow.js';
 
-export const sampleRequestFlowSource = `function normalizeName(name: string): string {
+const sampleRequestFlowSource = `function normalizeName(name: string): string {
   return name.trim().toLowerCase();
 }
 

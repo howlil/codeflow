@@ -26,14 +26,6 @@
 
 **Consequences:** New services/distributed boundaries are not the default and require a measured current need plus approval when they materially change architecture.
 
-## D-004 — React/Vite with `@xyflow/react` for the semantic workspace
-
-**Decision:** The interactive web workspace uses React/Vite and `@xyflow/react` rather than building a low-level canvas/WebGL graph renderer from scratch.
-
-**Why:** CodeFlow needs graph interaction primitives while product risk is semantic navigation/comprehension, not renderer infrastructure.
-
-**Consequences:** Renderer replacement should be driven by measured limitations rather than hypothetical graph scale.
-
 ## D-005 — Fastify is the HTTP boundary
 
 **Decision:** `apps/api` uses Fastify as a narrow HTTP/orchestration layer over semantic analysis.
