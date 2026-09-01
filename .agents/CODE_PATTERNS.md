@@ -13,6 +13,23 @@ packages/analysis-core
 
 When changing behavior, first locate the existing owner above rather than creating a parallel package/layer.
 
+## Vertical Feature Delivery
+
+For user-facing CodeFlow capabilities, delivery is vertical by default:
+
+```text
+semantic/domain behavior
+-> API/projection contract
+-> web interaction/presentation
+-> verification
+```
+
+A semantic/backend capability intended to be observable by the user is not complete merely because `analysis-core` or the API supports it. The corresponding UI must expose the capability truthfully in the same milestone/slice unless the authorized work is explicitly infrastructure-only, contract-only, migration-only, or an exploratory spike.
+
+Do not accumulate hidden backend product features for a later generic frontend phase. Do not build UI that invents semantic behavior not supported by analysis/API truth.
+
+Apply `.agents/skills/frontend/SKILL.md` for web ownership and `.agents/skills/backend/SKILL.md` for API/analysis ownership. Apply both for cross-stack user-facing slices.
+
 ## Semantic Model Pattern
 
 `analysis-core` owns semantic truth.
