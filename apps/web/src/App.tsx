@@ -1,11 +1,16 @@
-import { useEffect, useMemo, useState, type KeyboardEvent } from 'react';
+import { useMemo, useState, type KeyboardEvent } from 'react';
 
 import {
-  loadSampleFlow,
+  analyzeRepositoryFlow,
   type FlowEdge,
   type FlowNode,
   type FlowProjection,
+  type RepositoryAnalysisRequest,
 } from './flow-client';
+import {
+  RepositoryPicker,
+  type RepositorySelectionSummary,
+} from './RepositoryPicker';
 
 type ProjectionStatus =
   | { kind: 'ready' }
@@ -20,36 +25,9 @@ export function App() {
   const [focusMode, setFocusMode] = useState(false);
   const [sourceSplitMode, setSourceSplitMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let active = true;
-
-    void loadSampleFlow()
-      .then((loadedFlow) => {
-        if (!active) {
-          return;
-        }
-
-        setFlow(loadedFlow);
-        setSelectedNodeId(loadedFlow.entryPointId);
-      })
-      .catch((caughtError: unknown) => {
-        if (!active) {
-          return;
-        }
-
-        setError(
-          caughtError instanceof Error
-            ? caughtError.message
-            : 'Unable to load the flow.',
-        );
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
+  const [analyzing, setAnalyzing] = useState(false);
+  const [selectionSummary, setSelectionSummary] =
+    useState<RepositorySelectionSummary | null>(null);
   const projectionStatus = useMemo(
     () => (flow === null ? null : getProjectionStatus(flow)),
     [flow],
@@ -73,6 +51,35 @@ export function App() {
     );
   }, [flow, query]);
 
+  async function analyzeRepository(
+    request: RepositoryAnalysisRequest,
+    summary: RepositorySelectionSummary,
+  ) {
+    setAnalyzing(true);
+    setError(null);
+    setFlow(null);
+    setSelectionSummary(summary);
+    setSelectedNodeId(null);
+    setSelectedEdgeId(null);
+    setFocusMode(false);
+    setSourceSplitMode(false);
+    setQuery('');
+
+    try {
+      const loadedFlow = await analyzeRepositoryFlow(request);
+      setFlow(loadedFlow);
+      setSelectedNodeId(loadedFlow.entryPointId);
+    } catch (caughtError: unknown) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'Unable to analyze the selected repository.',
+      );
+    } finally {
+      setAnalyzing(false);
+    }
+  }
+
   function selectNode(nodeId: string) {
     setSelectedNodeId(nodeId);
     setSelectedEdgeId(null);
@@ -89,6 +96,8 @@ export function App() {
     setSelectedEdgeId(null);
   }
 
+  const entryPoint = flow?.nodes.find((node) => node.id === flow.entryPointId);
+
   return (
     <main className="workspace-shell">
       <header className="workspace-header">
@@ -99,15 +108,25 @@ export function App() {
         <p className="trust-note">Evidence first · static analysis only</p>
       </header>
 
-      {error !== null ? (
+      <RepositoryPicker busy={analyzing} onAnalyze={analyzeRepository} />
+
+      {analyzing ? (
+        <p className="state-panel" role="status">
+          Analyzing selected TypeScript repository…
+        </p>
+      ) : error !== null ? (
         <section className="state-panel" role="alert">
-          <strong>Flow unavailable</strong>
+          <strong>Repository analysis unavailable</strong>
           <span>{error}</span>
         </section>
       ) : flow === null || projectionStatus === null ? (
-        <p className="state-panel" role="status">
-          Analyzing TypeScript fixture…
-        </p>
+        <section className="state-panel" role="status">
+          <strong>Select a local TypeScript repository</strong>
+          <span>
+            Choose an exported entry function to build an evidence-backed flow
+            without executing repository code.
+          </span>
+        </section>
       ) : projectionStatus.kind === 'empty' ? (
         <section className="state-panel" role="status">
           <strong>No functions projected</strong>
@@ -120,12 +139,23 @@ export function App() {
           }`}
         >
           <aside className="repository-panel" aria-label="Repository flow">
-            <p className="panel-kicker">Fixture</p>
-            <strong>{flow.source.filePath}</strong>
+            <p className="panel-kicker">Repository</p>
+            <strong>
+              {selectionSummary?.rootLabel ?? flow.source.filePath}
+            </strong>
             <p className="panel-copy">
-              One exported entry point projected from deterministic TypeScript
-              analysis.
+              {flow.analysis.analyzedFileCount} TypeScript source file
+              {flow.analysis.analyzedFileCount === 1 ? '' : 's'} analyzed from
+              the selected repository.
             </p>
+            {selectionSummary !== null &&
+            selectionSummary.ignoredFileCount > 0 ? (
+              <p className="panel-copy">
+                {selectionSummary.ignoredFileCount} unsupported/dependency file
+                {selectionSummary.ignoredFileCount === 1 ? '' : 's'} ignored
+                before upload.
+              </p>
+            ) : null}
             <EvidenceLegend />
           </aside>
 
@@ -134,7 +164,7 @@ export function App() {
             <div className="canvas-toolbar">
               <div>
                 <p className="panel-kicker">Flow projection</p>
-                <h2>handleGreeting request flow</h2>
+                <h2>{entryPoint?.label ?? 'Selected entry'} request flow</h2>
               </div>
               <span>{flow.nodes.length} functions</span>
             </div>
@@ -165,7 +195,7 @@ export function App() {
                         >
                           <strong>{node.label}</strong>
                           <span>
-                            L{node.location.startLine}–{node.location.endLine}
+                            {node.location.filePath}:L{node.location.startLine}
                           </span>
                         </button>
                       ))
@@ -393,7 +423,8 @@ function NodeButton({
       </span>
       <strong>{node.label}</strong>
       <span>
-        L{node.location.startLine}–{node.location.endLine}
+        {node.location.filePath}:L{node.location.startLine}–
+        {node.location.endLine}
       </span>
     </button>
   );
@@ -432,7 +463,7 @@ function Inspector({
       edge.sourceId === selectedNode.id || edge.targetId === selectedNode.id,
   );
   const sourceSnippet = getSourceSnippet(
-    flow.source.text,
+    sourceTextFor(flow, selectedNode.location.filePath),
     selectedNode.location.startLine,
     selectedNode.location.endLine,
   );
@@ -450,7 +481,7 @@ function Inspector({
         {selectedNode.location.endLine}
       </p>
       <pre className="source-snippet">
-        <code>{sourceSnippet}</code>
+        <code>{sourceSnippet ?? 'Source text is unavailable for this projected location.'}</code>
       </pre>
       <div className="evidence-list">
         <p className="panel-kicker">Relationship evidence</p>
@@ -500,7 +531,7 @@ function RelationshipInspector({
   }
 
   const sourceSnippet = getSourceSnippet(
-    flow.source.text,
+    sourceTextFor(flow, evidence.location.filePath),
     evidence.location.startLine,
     evidence.location.endLine,
   );
@@ -518,7 +549,7 @@ function RelationshipInspector({
         {evidence.location.endLine}
       </p>
       <pre className="source-snippet">
-        <code>{sourceSnippet}</code>
+        <code>{sourceSnippet ?? 'Source text is unavailable for this evidence location.'}</code>
       </pre>
       <div className="evidence-list">
         <p className="panel-kicker">Selected evidence</p>
@@ -579,7 +610,8 @@ function EvidenceItem({ edge }: { edge: FlowEdge }) {
       </div>
       <p>{evidence.reason}</p>
       <small>
-        {evidence.source} · L{evidence.location.startLine}
+        {evidence.source} · {evidence.location.filePath}:L
+        {evidence.location.startLine}
       </small>
     </article>
   );
@@ -636,6 +668,24 @@ function getProjectionStatus(flow: FlowProjection): ProjectionStatus {
     );
   }
 
+  if (flow.analysis.status === 'partial') {
+    const visibleIssues = flow.analysis.issues.slice(0, 3);
+    reasons.push(
+      ...visibleIssues.map((issue) =>
+        issue.filePath === undefined
+          ? issue.message
+          : `${issue.filePath}: ${issue.message}`,
+      ),
+    );
+    if (flow.analysis.issues.length > visibleIssues.length) {
+      reasons.push(
+        `${flow.analysis.issues.length - visibleIssues.length} additional analysis issue${
+          flow.analysis.issues.length - visibleIssues.length === 1 ? '' : 's'
+        } not shown.`,
+      );
+    }
+  }
+
   return reasons.length > 0 ? { kind: 'partial', reasons } : { kind: 'ready' };
 }
 
@@ -648,11 +698,22 @@ function compareFlowNodes(left: FlowNode, right: FlowNode): number {
   );
 }
 
+function sourceTextFor(flow: FlowProjection, filePath: string): string | null {
+  return (
+    flow.sources.find((source) => source.filePath === filePath)?.text ??
+    (flow.source.filePath === filePath ? flow.source.text : null)
+  );
+}
+
 function getSourceSnippet(
-  source: string,
+  source: string | null,
   startLine: number,
   endLine: number,
-): string {
+): string | null {
+  if (source === null) {
+    return null;
+  }
+
   return source
     .split('\n')
     .slice(startLine - 1, endLine)

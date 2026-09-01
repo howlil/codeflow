@@ -64,7 +64,8 @@ select {
 }
 
 button:focus-visible,
-input:focus-visible {
+input:focus-visible,
+select:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 3px;
 }
@@ -116,6 +117,97 @@ h2 {
 .state-panel {
   color: var(--text-secondary);
   font-size: 0.82rem;
+}
+
+.repository-input {
+  display: grid;
+  gap: 14px;
+  width: min(100%, 1440px);
+  margin: 0 auto 16px;
+  padding: 16px;
+  background: var(--surface-workspace);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-panel);
+}
+
+.repository-input-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.repository-input-heading .panel-kicker {
+  margin-bottom: 3px;
+}
+
+.repository-input-heading > span,
+.repository-selection-note,
+.repository-input-error {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.repository-input-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.2fr) minmax(220px, 1fr) minmax(180px, 0.8fr) auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.repository-input-grid label {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.repository-input-grid input,
+.repository-input-grid select {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  color: var(--text-primary);
+  background: var(--surface-workspace);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-control);
+}
+
+.file-control input {
+  padding: 6px 8px;
+  text-transform: none;
+}
+
+.primary-action {
+  min-height: 38px;
+  padding: 8px 14px;
+  color: var(--surface-workspace);
+  white-space: nowrap;
+  background: var(--text-primary);
+  border: 1px solid var(--text-primary);
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+.primary-action:disabled {
+  color: var(--text-subtle);
+  background: var(--surface-muted);
+  border-color: var(--border-default);
+  cursor: not-allowed;
+}
+
+.repository-selection-note,
+.repository-input-error {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.repository-input-error {
+  color: var(--text-secondary);
+  font-weight: 600;
 }
 
 .workspace-grid {
@@ -272,8 +364,11 @@ h2 {
 }
 
 .search-results > button span {
+  overflow: hidden;
   color: var(--text-muted);
   font-size: 0.7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .focus-toggle {
@@ -370,8 +465,11 @@ h2 {
 
 .flow-node > span:last-child,
 .node-kind {
+  overflow: hidden;
   color: var(--text-muted);
   font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .node-kind {
@@ -529,7 +627,7 @@ h2 {
 
 .state-panel {
   width: min(100%, 720px);
-  margin: 80px auto;
+  margin: 48px auto;
   padding: 20px;
   background: var(--surface-workspace);
   border: 1px solid var(--border-default);
@@ -539,6 +637,16 @@ h2 {
 .state-panel span {
   display: block;
   margin-top: 8px;
+}
+
+@media (max-width: 1100px) {
+  .repository-input-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .primary-action {
+    justify-self: start;
+  }
 }
 
 @media (max-width: 960px) {
@@ -567,8 +675,11 @@ h2 {
   }
 
   .workspace-header,
+  .repository-input-heading,
+  .repository-input-grid,
   .comprehension-controls {
     display: grid;
+    grid-template-columns: 1fr;
     gap: 12px;
   }
 
@@ -576,7 +687,8 @@ h2 {
     width: 100%;
   }
 
-  .focus-toggle {
+  .focus-toggle,
+  .primary-action {
     justify-self: start;
   }
 

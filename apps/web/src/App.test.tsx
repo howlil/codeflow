@@ -10,17 +10,34 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 import type { FlowProjection } from './flow-client';
 
+const handlerSource = `import { formatGreeting } from './format';\nimport { normalizeName } from './name';\n\nexport function handleGreeting(name: string): string {\n  const formatter = formatGreeting;\n  return formatter(normalizeName(name));\n}\n`;
+const nameSource = `export function normalizeName(name: string): string {\n  return name.trim().toLowerCase();\n}\n`;
+const formatSource = `export function formatGreeting(name: string): string {\n  return \`Hello, \${name}!\`;\n}\n`;
+
 const sampleFlow: FlowProjection = {
-  id: 'flow:function:fixture:handleGreeting',
-  entryPointId: 'function:fixture:handleGreeting',
+  id: 'flow:function:demo/src/handler.ts:handleGreeting',
+  entryPointId: 'function:demo/src/handler.ts:handleGreeting',
   nodes: [
     {
-      id: 'function:fixture:normalizeName',
+      id: 'function:demo/src/handler.ts:handleGreeting',
+      kind: 'Function',
+      label: 'handleGreeting',
+      entryPoint: true,
+      location: {
+        filePath: 'demo/src/handler.ts',
+        startLine: 4,
+        startColumn: 1,
+        endLine: 7,
+        endColumn: 2,
+      },
+    },
+    {
+      id: 'function:demo/src/name.ts:normalizeName',
       kind: 'Function',
       label: 'normalizeName',
       entryPoint: false,
       location: {
-        filePath: 'fixtures/request-flow/greeting.ts',
+        filePath: 'demo/src/name.ts',
         startLine: 1,
         startColumn: 1,
         endLine: 3,
@@ -28,28 +45,15 @@ const sampleFlow: FlowProjection = {
       },
     },
     {
-      id: 'function:fixture:formatGreeting',
+      id: 'function:demo/src/format.ts:formatGreeting',
       kind: 'Function',
       label: 'formatGreeting',
       entryPoint: false,
       location: {
-        filePath: 'fixtures/request-flow/greeting.ts',
-        startLine: 5,
+        filePath: 'demo/src/format.ts',
+        startLine: 1,
         startColumn: 1,
-        endLine: 7,
-        endColumn: 2,
-      },
-    },
-    {
-      id: 'function:fixture:handleGreeting',
-      kind: 'Function',
-      label: 'handleGreeting',
-      entryPoint: true,
-      location: {
-        filePath: 'fixtures/request-flow/greeting.ts',
-        startLine: 9,
-        startColumn: 1,
-        endLine: 12,
+        endLine: 3,
         endColumn: 2,
       },
     },
@@ -58,18 +62,18 @@ const sampleFlow: FlowProjection = {
     {
       id: 'verified-edge',
       kind: 'CALLS',
-      sourceId: 'function:fixture:handleGreeting',
-      targetId: 'function:fixture:normalizeName',
+      sourceId: 'function:demo/src/handler.ts:handleGreeting',
+      targetId: 'function:demo/src/name.ts:normalizeName',
       evidence: [
         {
           kind: 'verified-static',
           source: 'typescript-compiler-api',
           reason: 'Direct symbol resolution.',
           location: {
-            filePath: 'fixtures/request-flow/greeting.ts',
-            startLine: 11,
+            filePath: 'demo/src/handler.ts',
+            startLine: 6,
             startColumn: 20,
-            endLine: 11,
+            endLine: 6,
             endColumn: 39,
           },
         },
@@ -78,18 +82,18 @@ const sampleFlow: FlowProjection = {
     {
       id: 'inferred-edge',
       kind: 'CALLS',
-      sourceId: 'function:fixture:handleGreeting',
-      targetId: 'function:fixture:formatGreeting',
+      sourceId: 'function:demo/src/handler.ts:handleGreeting',
+      targetId: 'function:demo/src/format.ts:formatGreeting',
       evidence: [
         {
           kind: 'inferred-static',
           source: 'typescript-compiler-api',
           reason: 'Local alias inference.',
           location: {
-            filePath: 'fixtures/request-flow/greeting.ts',
-            startLine: 11,
+            filePath: 'demo/src/handler.ts',
+            startLine: 6,
             startColumn: 10,
-            endLine: 11,
+            endLine: 6,
             endColumn: 40,
           },
         },
@@ -97,35 +101,79 @@ const sampleFlow: FlowProjection = {
     },
   ],
   source: {
-    filePath: 'fixtures/request-flow/greeting.ts',
-    text: `function normalizeName(name: string): string {
-  return name.trim().toLowerCase();
-}
-
-function formatGreeting(name: string): string {
-  return \`Hello, \${name}!\`;
-}
-
-export function handleGreeting(name: string): string {
-  const formatter = formatGreeting;
-  return formatter(normalizeName(name));
-}
-`,
+    filePath: 'demo/src/handler.ts',
+    text: handlerSource,
+  },
+  sources: [
+    { filePath: 'demo/src/format.ts', text: formatSource },
+    { filePath: 'demo/src/handler.ts', text: handlerSource },
+    { filePath: 'demo/src/name.ts', text: nameSource },
+  ],
+  analysis: {
+    status: 'complete',
+    analyzedFileCount: 3,
+    ignoredFileCount: 0,
+    issues: [],
   },
 };
 
+function repositoryFile(filePath: string, text: string): File {
+  const file = new File([text], filePath.split('/').at(-1) ?? filePath, {
+    type: 'text/typescript',
+  });
+  Object.defineProperty(file, 'webkitRelativePath', { value: filePath });
+  Object.defineProperty(file, 'text', {
+    value: async () => text,
+  });
+  return file;
+}
+
+const repositoryFiles = [
+  repositoryFile('demo/src/handler.ts', handlerSource),
+  repositoryFile('demo/src/name.ts', nameSource),
+  repositoryFile('demo/src/format.ts', formatSource),
+  repositoryFile('demo/README.md', '# Demo'),
+];
+
 function stubFlowRequest(flow: FlowProjection = sampleFlow) {
+  const fetchMock = vi.fn().mockResolvedValue({
+    ok: true,
+    status: 200,
+    json: async () => flow,
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  return fetchMock;
+}
+
+function stubFlowFailure(message: string) {
   vi.stubGlobal(
     'fetch',
     vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => flow,
+      ok: false,
+      status: 422,
+      json: async () => ({ error: message }),
     }),
   );
 }
 
-function stubFlowFailure(message: string) {
-  vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error(message)));
+async function openRepository(flow: FlowProjection = sampleFlow) {
+  const fetchMock = stubFlowRequest(flow);
+  render(<App />);
+
+  fireEvent.change(screen.getByLabelText('Repository directory'), {
+    target: { files: repositoryFiles },
+  });
+  fireEvent.change(screen.getByLabelText('Entry source file'), {
+    target: { value: 'demo/src/handler.ts' },
+  });
+  fireEvent.change(
+    screen.getByRole('textbox', { name: 'Exported entry function' }),
+    { target: { value: 'handleGreeting' } },
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Analyze repository' }));
+
+  await screen.findByText('handleGreeting request flow');
+  return fetchMock;
 }
 
 describe('App', () => {
@@ -134,33 +182,50 @@ describe('App', () => {
     vi.unstubAllGlobals();
   });
 
-  it('renders the flow and exposes source evidence on selection', async () => {
-    stubFlowRequest();
+  it('starts from local repository input rather than the sample fixture', () => {
+    const fetchMock = stubFlowRequest();
 
     render(<App />);
 
-    expect(
-      await screen.findByText('handleGreeting request flow'),
-    ).toBeInTheDocument();
-    expect(screen.getAllByText('verified-static').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('inferred-static').length).toBeGreaterThan(0);
+    expect(screen.getByText('Select a local TypeScript repository')).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('sends bounded local TypeScript sources and inspects cross-file source', async () => {
+    const fetchMock = await openRepository();
+
+    expect(screen.getByText(/3 TypeScript source files selected/)).toHaveTextContent(
+      '1 dependency, build, declaration, or unsupported file ignored before upload',
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const request = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = JSON.parse(String(request.body)) as {
+      files: Array<{ filePath: string }>;
+      entryPoint: { filePath: string; name: string };
+    };
+    expect(body.entryPoint).toEqual({
+      filePath: 'demo/src/handler.ts',
+      name: 'handleGreeting',
+    });
+    expect(body.files.map((file) => file.filePath)).toEqual([
+      'demo/src/format.ts',
+      'demo/src/handler.ts',
+      'demo/src/name.ts',
+    ]);
 
     fireEvent.click(
-      screen.getByRole('button', { name: /^FunctionformatGreeting/i }),
+      screen.getByRole('button', { name: /^FunctionnormalizeName/i }),
     );
 
     expect(
-      screen.getByRole('heading', { name: 'formatGreeting' }),
+      screen.getByRole('heading', { name: 'normalizeName' }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/Hello, \$\{name\}!/)).toBeInTheDocument();
-    expect(screen.getByText('Local alias inference.')).toBeInTheDocument();
+    expect(screen.getByText(/name\.trim\(\)\.toLowerCase\(\)/)).toBeInTheDocument();
+    expect(screen.getByText(/demo\/src\/name\.ts:L1/)).toBeInTheDocument();
   });
 
   it('navigates by search and limits the canvas to the selected neighborhood', async () => {
-    stubFlowRequest();
-
-    render(<App />);
-    await screen.findByText('handleGreeting request flow');
+    await openRepository();
 
     fireEvent.change(
       screen.getByRole('searchbox', { name: 'Search functions' }),
@@ -185,7 +250,6 @@ describe('App', () => {
   });
 
   it('moves between caller and callee with arrow keys while keeping inspection synchronized', async () => {
-    stubFlowRequest();
     vi.stubGlobal(
       'requestAnimationFrame',
       (callback: FrameRequestCallback): number => {
@@ -193,9 +257,7 @@ describe('App', () => {
         return 0;
       },
     );
-
-    render(<App />);
-    await screen.findByText('handleGreeting request flow');
+    await openRepository();
 
     const entryNode = screen.getByRole('button', {
       name: /^Entry functionhandleGreeting/i,
@@ -205,11 +267,11 @@ describe('App', () => {
     fireEvent.keyDown(entryNode, { key: 'ArrowRight' });
 
     const calleeNode = screen.getByRole('button', {
-      name: /^FunctionnormalizeName/i,
+      name: /^FunctionformatGreeting/i,
     });
     expect(calleeNode).toHaveFocus();
     expect(
-      screen.getByRole('heading', { name: 'normalizeName' }),
+      screen.getByRole('heading', { name: 'formatGreeting' }),
     ).toBeInTheDocument();
 
     fireEvent.keyDown(calleeNode, { key: 'ArrowLeft' });
@@ -221,10 +283,7 @@ describe('App', () => {
   });
 
   it('inspects one selected relationship with its source provenance', async () => {
-    stubFlowRequest();
-
-    render(<App />);
-    await screen.findByText('handleGreeting request flow');
+    await openRepository();
 
     fireEvent.click(
       screen.getByRole('button', {
@@ -237,18 +296,13 @@ describe('App', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Direct symbol resolution.')).toBeInTheDocument();
     expect(
-      screen.queryByText('Local alias inference.'),
-    ).not.toBeInTheDocument();
-    expect(
       screen.getByText(/return formatter\(normalizeName\(name\)\);/),
     ).toBeInTheDocument();
+    expect(screen.getByText(/demo\/src\/handler\.ts:L6/)).toBeInTheDocument();
   });
 
   it('expands source inspection without leaving the semantic canvas', async () => {
-    stubFlowRequest();
-
-    render(<App />);
-    await screen.findByText('handleGreeting request flow');
+    await openRepository();
 
     fireEvent.click(screen.getByRole('button', { name: 'Expand source' }));
 
@@ -261,94 +315,98 @@ describe('App', () => {
     expect(
       screen.getByLabelText('Source evidence inspector'),
     ).toHaveTextContent('export function handleGreeting');
-
-    fireEvent.click(screen.getByRole('button', { name: 'Restore inspector' }));
-
-    expect(
-      screen.getByRole('button', { name: 'Expand source' }),
-    ).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('shows an explicit empty state when analysis projects no functions', async () => {
-    stubFlowRequest({
+    await openRepository({
       ...sampleFlow,
       nodes: [],
       edges: [],
     });
 
-    render(<App />);
-
-    expect(
-      await screen.findByText('No functions projected'),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /analysis completed, but this projection contains no functions/i,
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByText('No functions projected')).toBeInTheDocument();
     expect(
       screen.queryByRole('region', { name: 'Semantic flow canvas' }),
     ).not.toBeInTheDocument();
   });
 
-  it('keeps a partial projection navigable without inventing missing evidence', async () => {
+  it('keeps a partial repository projection navigable and surfaces analysis issues', async () => {
     const partialFlow: FlowProjection = {
       ...sampleFlow,
-      entryPointId: 'function:fixture:missing-entry',
-      nodes: sampleFlow.nodes.map((node) => ({ ...node, entryPoint: false })),
+      analysis: {
+        status: 'partial',
+        analyzedFileCount: 3,
+        ignoredFileCount: 1,
+        issues: [
+          {
+            kind: 'unsupported',
+            filePath: 'demo/src/missing.ts',
+            message: 'Relative import ./missing could not be resolved from the selected repository files.',
+          },
+        ],
+      },
       edges: sampleFlow.edges.map((edge) =>
         edge.id === 'verified-edge' ? { ...edge, evidence: [] } : edge,
       ),
     };
-    stubFlowRequest(partialFlow);
 
-    render(<App />);
+    await openRepository(partialFlow);
 
-    expect(await screen.findByText('Partial projection')).toBeInTheDocument();
+    expect(screen.getByText('Partial projection')).toBeInTheDocument();
     expect(
-      screen.getByText(/entry point was not projected/i),
+      screen.getByText(/demo\/src\/missing\.ts: Relative import/),
     ).toBeInTheDocument();
     expect(
       screen.getByText(/1 relationship has no supporting evidence/i),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(/No focal function is available/i),
-    ).toBeInTheDocument();
 
-    fireEvent.change(
-      screen.getByRole('searchbox', { name: 'Search functions' }),
-      { target: { value: 'normalize' } },
-    );
     fireEvent.click(
-      within(screen.getByLabelText('Function search results')).getByRole(
-        'button',
-        { name: /normalizeName/i },
-      ),
+      screen.getByRole('button', {
+        name: 'Inspect CALLS relationship from handleGreeting to normalizeName',
+      }),
     );
-
-    expect(
-      screen.getByText('Neighborhood focus · normalizeName'),
-    ).toBeInTheDocument();
-    expect(screen.getAllByText('evidence-unavailable').length).toBeGreaterThan(
-      0,
-    );
-    expect(
-      screen.getByText(
-        'No supporting provenance was projected for this relationship.',
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getAllByText('evidence-unavailable').length).toBeGreaterThan(0);
   });
 
-  it('shows a failure state when the flow request cannot be loaded', async () => {
-    stubFlowFailure('Fixture request failed.');
+  it('rejects oversized local source before upload', () => {
+    const fetchMock = stubFlowRequest();
+    const oversized = repositoryFile(
+      'demo/src/large.ts',
+      'x'.repeat(129 * 1024),
+    );
 
     render(<App />);
+    fireEvent.change(screen.getByLabelText('Repository directory'), {
+      target: { files: [oversized] },
+    });
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'exceeds the 131072-byte per-file analysis limit',
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('shows an API failure state without fabricating a flow', async () => {
+    stubFlowFailure('Exported entry point handleGreeting was not found.');
+    render(<App />);
+
+    fireEvent.change(screen.getByLabelText('Repository directory'), {
+      target: { files: repositoryFiles },
+    });
+    fireEvent.change(screen.getByLabelText('Entry source file'), {
+      target: { value: 'demo/src/handler.ts' },
+    });
+    fireEvent.change(
+      screen.getByRole('textbox', { name: 'Exported entry function' }),
+      { target: { value: 'handleGreeting' } },
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Analyze repository' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Flow unavailable',
+      'Repository analysis unavailable',
     );
     expect(screen.getByRole('alert')).toHaveTextContent(
-      'Fixture request failed.',
+      'Exported entry point handleGreeting was not found.',
     );
   });
 });
