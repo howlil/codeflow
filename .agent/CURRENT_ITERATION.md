@@ -59,6 +59,7 @@ Integrated into `master`:
 - M1 first evidence-backed TypeScript flow
 - M2.1 search + neighborhood focus
 - M2.2 relationship evidence inspection
+- repository-local SWE workflow alignment to milestone planning + continuous slice delivery
 
 Verified but not yet integrated into `master` (legacy stacked-branch sequence created before the current continuous-delivery rule):
 
@@ -71,7 +72,7 @@ These open PRs are historical execution state, not the workflow to repeat.
 
 ## Delta
 
-M2 has four verified slices pending integration. The repository workflow is being aligned so future approved slices no longer create sprint-per-change or stacked-branch chains.
+M2 has four verified slices pending integration. The repository workflow is now aligned so future approved slices no longer create sprint-per-change or stacked-branch chains.
 
 Remaining M2 capability after the verified stack is integrated:
 
@@ -88,12 +89,11 @@ After all required M2 slices are integrated, run the M2 milestone gate against `
 
 ## Evidence
 
-Known integration evidence before this state update:
-
 - PR #4 / M2.2 merged to `master`
 - PR #5 CI passed for source split inspection
 - PR #6 CI passed for explicit analysis states
 - PR #7 CI passed for semantic keyboard navigation
 - PR #8 CI passed for responsive automatic layout
+- PR #9 agent-workflow alignment passed CI run #61 and was squash-merged to `master`
 
-Do not claim those open PRs are integrated until `master` actually contains them.
+Do not claim PR #5–#8 are integrated until `master` actually contains them.
