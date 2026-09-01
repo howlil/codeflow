@@ -88,12 +88,17 @@ export function buildApp(): FastifyInstance {
   return app;
 }
 
-function parseAnalyzeRepositoryPayload(body: unknown): AnalyzeRepositoryPayload {
+function parseAnalyzeRepositoryPayload(
+  body: unknown,
+): AnalyzeRepositoryPayload {
   if (!isRecord(body) || !Array.isArray(body.files)) {
     throw new InputError(400, 'Repository analysis requires a files array.');
   }
   if (body.files.length === 0) {
-    throw new InputError(400, 'Repository analysis requires at least one file.');
+    throw new InputError(
+      400,
+      'Repository analysis requires at least one file.',
+    );
   }
   if (body.files.length > MAX_FILE_RECORDS) {
     throw new InputError(
@@ -177,7 +182,8 @@ function prepareRepositoryInput(payload: AnalyzeRepositoryPayload): {
       issues.push({
         kind: 'ignored',
         filePath: file.filePath,
-        message: 'Dependency, build, generated, or VCS directory is outside the M3 analysis scope.',
+        message:
+          'Dependency, build, generated, or VCS directory is outside the M3 analysis scope.',
       });
       continue;
     }
@@ -186,7 +192,8 @@ function prepareRepositoryInput(payload: AnalyzeRepositoryPayload): {
       issues.push({
         kind: 'unsupported',
         filePath: file.filePath,
-        message: 'M3 analyzes .ts and .tsx source files only; declaration files are excluded.',
+        message:
+          'M3 analyzes .ts and .tsx source files only; declaration files are excluded.',
       });
       continue;
     }
@@ -253,7 +260,8 @@ function mergeInputIssues(
     analysis: {
       ...projection.analysis,
       status: 'partial',
-      ignoredFileCount: projection.analysis.ignoredFileCount + inputIssues.length,
+      ignoredFileCount:
+        projection.analysis.ignoredFileCount + inputIssues.length,
       issues,
     },
   };

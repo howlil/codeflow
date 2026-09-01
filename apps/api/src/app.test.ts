@@ -75,9 +75,10 @@ describe('CodeFlow API', () => {
     expect(flow.edges[0]?.evidence[0]?.location.filePath).toBe(
       'demo/src/handler.ts',
     );
-    expect(flow.nodes.find((node) => node.label === 'normalizeName')?.location.filePath).toBe(
-      'demo/src/name.ts',
-    );
+    expect(
+      flow.nodes.find((node) => node.label === 'normalizeName')?.location
+        .filePath,
+    ).toBe('demo/src/name.ts');
     expect(flow.sources.map((source) => source.filePath)).toEqual([
       'demo/src/handler.ts',
       'demo/src/name.ts',

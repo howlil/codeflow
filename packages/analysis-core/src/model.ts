@@ -64,11 +64,7 @@ export interface ProjectionSource {
   text: string;
 }
 
-export type AnalysisIssueKind =
-  | 'ignored'
-  | 'unsupported'
-  | 'invalid'
-  | 'limit';
+export type AnalysisIssueKind = 'ignored' | 'unsupported' | 'invalid' | 'limit';
 
 export interface AnalysisIssue {
   kind: AnalysisIssueKind;

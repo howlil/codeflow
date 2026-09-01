@@ -481,7 +481,10 @@ function Inspector({
         {selectedNode.location.endLine}
       </p>
       <pre className="source-snippet">
-        <code>{sourceSnippet ?? 'Source text is unavailable for this projected location.'}</code>
+        <code>
+          {sourceSnippet ??
+            'Source text is unavailable for this projected location.'}
+        </code>
       </pre>
       <div className="evidence-list">
         <p className="panel-kicker">Relationship evidence</p>
@@ -549,7 +552,10 @@ function RelationshipInspector({
         {evidence.location.endLine}
       </p>
       <pre className="source-snippet">
-        <code>{sourceSnippet ?? 'Source text is unavailable for this evidence location.'}</code>
+        <code>
+          {sourceSnippet ??
+            'Source text is unavailable for this evidence location.'}
+        </code>
       </pre>
       <div className="evidence-list">
         <p className="panel-kicker">Selected evidence</p>

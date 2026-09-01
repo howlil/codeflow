@@ -172,7 +172,11 @@ async function openRepository(flow: FlowProjection = sampleFlow) {
   );
   fireEvent.click(screen.getByRole('button', { name: 'Analyze repository' }));
 
-  await screen.findByText('handleGreeting request flow');
+  await screen.findByText(
+    flow.nodes.length === 0
+      ? 'No functions projected'
+      : 'handleGreeting request flow',
+  );
   return fetchMock;
 }
 
@@ -187,14 +191,18 @@ describe('App', () => {
 
     render(<App />);
 
-    expect(screen.getByText('Select a local TypeScript repository')).toBeInTheDocument();
+    expect(
+      screen.getByText('Select a local TypeScript repository'),
+    ).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('sends bounded local TypeScript sources and inspects cross-file source', async () => {
     const fetchMock = await openRepository();
 
-    expect(screen.getByText(/3 TypeScript source files selected/)).toHaveTextContent(
+    expect(
+      screen.getByText(/3 TypeScript source files selected/),
+    ).toHaveTextContent(
       '1 dependency, build, declaration, or unsupported file ignored before upload',
     );
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -220,8 +228,13 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { name: 'normalizeName' }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/name\.trim\(\)\.toLowerCase\(\)/)).toBeInTheDocument();
-    expect(screen.getByText(/demo\/src\/name\.ts:L1/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/name\.trim\(\)\.toLowerCase\(\)/),
+    ).toBeInTheDocument();
+    const inspector = screen.getByLabelText('Source evidence inspector');
+    expect(
+      within(inspector).getAllByText(/demo\/src\/name\.ts:L1/).length,
+    ).toBeGreaterThan(0);
   });
 
   it('navigates by search and limits the canvas to the selected neighborhood', async () => {
@@ -298,7 +311,10 @@ describe('App', () => {
     expect(
       screen.getByText(/return formatter\(normalizeName\(name\)\);/),
     ).toBeInTheDocument();
-    expect(screen.getByText(/demo\/src\/handler\.ts:L6/)).toBeInTheDocument();
+    const inspector = screen.getByLabelText('Source evidence inspector');
+    expect(
+      within(inspector).getAllByText(/demo\/src\/handler\.ts:L6/).length,
+    ).toBeGreaterThan(0);
   });
 
   it('expands source inspection without leaving the semantic canvas', async () => {
@@ -341,7 +357,8 @@ describe('App', () => {
           {
             kind: 'unsupported',
             filePath: 'demo/src/missing.ts',
-            message: 'Relative import ./missing could not be resolved from the selected repository files.',
+            message:
+              'Relative import ./missing could not be resolved from the selected repository files.',
           },
         ],
       },
@@ -365,7 +382,9 @@ describe('App', () => {
         name: 'Inspect CALLS relationship from handleGreeting to normalizeName',
       }),
     );
-    expect(screen.getAllByText('evidence-unavailable').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('evidence-unavailable').length).toBeGreaterThan(
+      0,
+    );
   });
 
   it('rejects oversized local source before upload', () => {

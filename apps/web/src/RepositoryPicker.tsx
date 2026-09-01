@@ -106,7 +106,10 @@ export function RepositoryPicker({
   }
 
   return (
-    <form className="repository-input" onSubmit={(event) => void handleSubmit(event)}>
+    <form
+      className="repository-input"
+      onSubmit={(event) => void handleSubmit(event)}
+    >
       <div className="repository-input-heading">
         <div>
           <p className="panel-kicker">Repository input</p>
@@ -209,7 +212,10 @@ function getSelectionError(candidates: SelectedSource[]): string | null {
     return `${oversized.filePath} exceeds the ${MAX_FILE_BYTES}-byte per-file analysis limit.`;
   }
 
-  const totalBytes = candidates.reduce((total, { file }) => total + file.size, 0);
+  const totalBytes = candidates.reduce(
+    (total, { file }) => total + file.size,
+    0,
+  );
   if (totalBytes > MAX_TOTAL_SOURCE_BYTES) {
     return `Selected TypeScript source exceeds the ${MAX_TOTAL_SOURCE_BYTES}-byte analysis budget. Choose a narrower directory.`;
   }
@@ -220,10 +226,9 @@ function getSelectionError(candidates: SelectedSource[]): string | null {
 function repositoryPathOf(file: File): string {
   const relativePath = (file as File & { webkitRelativePath?: string })
     .webkitRelativePath;
-  return (relativePath && relativePath !== '' ? relativePath : file.name).replaceAll(
-    '\\',
-    '/',
-  );
+  return (
+    relativePath && relativePath !== '' ? relativePath : file.name
+  ).replaceAll('\\', '/');
 }
 
 function isIgnoredPath(filePath: string): boolean {

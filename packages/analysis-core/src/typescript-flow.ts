@@ -335,7 +335,9 @@ function collectAnalysisIssues(
       continue;
     }
 
-    for (const diagnostic of program.getSyntacticDiagnostics(sourceFile).slice(0, 3)) {
+    for (const diagnostic of program
+      .getSyntacticDiagnostics(sourceFile)
+      .slice(0, 3)) {
       issues.push({
         kind: 'invalid',
         filePath: displayFilePath,
@@ -352,7 +354,9 @@ function collectAnalysisIssues(
         continue;
       }
 
-      if (checker.getSymbolAtLocation(statement.moduleSpecifier) === undefined) {
+      if (
+        checker.getSymbolAtLocation(statement.moduleSpecifier) === undefined
+      ) {
         issues.push({
           kind: 'unsupported',
           filePath: displayFilePath,
@@ -413,7 +417,9 @@ function projectRepositoryFlow(
   );
 
   if (source === undefined) {
-    throw new Error(`Entry source ${entryPointInput.filePath} was not analyzed.`);
+    throw new Error(
+      `Entry source ${entryPointInput.filePath} was not analyzed.`,
+    );
   }
 
   return {
