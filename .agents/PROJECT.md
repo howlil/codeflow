@@ -50,15 +50,7 @@ local repository selection
 
 ## Current Milestone
 
-### M3 — Real Repository Analysis
-
-Goal: move CodeFlow from a sample-only semantic proof to an end-to-end path that analyzes a bounded user-selected local TypeScript repository and opens the evidence-backed result in the existing semantic workspace.
-
-M3 validates the existing semantic model, API boundary, evidence model, and M2 workspace against real multi-file repository input before deeper data-flow semantics are added.
-
-The approved M3 input mode is browser local-directory/file selection with bounded in-memory API analysis. Git-host import/auth, server-side cloning, persistence, and runtime execution are not part of this milestone.
-
-The detailed slice plan, execution position, and verification evidence belong in `.agents/CURRENT_ITERATION.md`.
+None. M3 — Real Repository Analysis is complete and release ready. No subsequent milestone is active until explicitly authorized.
 
 ## Completed Product Foundations
 
@@ -94,6 +86,21 @@ Established a semantic workspace that preserves comprehension as the visible gra
 - truthful unavailable-evidence handling rather than fabricated confidence.
 
 Relationship filters/lenses remain deferred because the implemented relationship contract currently exposes only `CALLS`; adding a filter before multiple meaningful relationship kinds exist would create a no-op product control.
+
+### M3 — Real Repository Analysis
+
+Established the first real-repository product path:
+
+- browser local-directory/file selection for TypeScript repositories;
+- client-side prefiltering and resource bounds before upload;
+- bounded request-scoped `POST /api/flows/analyze` analysis;
+- multi-file TypeScript semantic analysis with supported cross-file imported function calls;
+- repository-relative source and evidence provenance across analyzed files;
+- explicit ignored, unsupported, invalid, partial, bounded, and failure behavior where applicable;
+- reuse of M2 search, focus, selection, keyboard navigation, source inspection, evidence inspection, and responsive layout;
+- no repository code execution, Git hosting auth/clone, persistence, or runtime subsystem.
+
+The deterministic sample API remains a fixture/demo compatibility path rather than the default product journey.
 
 ## Deferred Product Work
 
