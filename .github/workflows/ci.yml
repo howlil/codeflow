@@ -30,4 +30,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Verify repository
-        run: pnpm check
+        run: |
+          pnpm format
+          git diff --color=never
+          pnpm lint
+          pnpm build
+          pnpm test
