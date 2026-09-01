@@ -48,11 +48,15 @@ repository / fixture
 
 ## Current Milestone
 
-No product milestone is currently active.
+### M3 — Real Repository Analysis
 
-M2 — Canvas Comprehension is release ready. Live execution state and the milestone gate result belong in `.agents/CURRENT_ITERATION.md` until a new explicitly authorized milestone replaces it.
+Goal: move CodeFlow from a sample-only semantic proof to an end-to-end path that accepts one explicitly approved form of real TypeScript repository input, analyzes it within bounded untrusted-input constraints, and opens the evidence-backed result in the existing semantic workspace.
 
-Do not implicitly activate M3 or other deferred work from M2 completion.
+M3 should validate the existing semantic model, API boundary, evidence model, and M2 workspace against real multi-file repository input before deeper data-flow semantics are added.
+
+The detailed slice plan, decision gate, execution position, and verification evidence belong in `.agents/CURRENT_ITERATION.md`.
+
+The repository-input mode remains a material open product/API/security decision until explicitly approved. Milestone activation does not itself authorize local upload, Git hosting import/auth, server filesystem access, or another input mechanism.
 
 ## Completed Product Foundations
 
@@ -91,9 +95,9 @@ Relationship filters/lenses remain deferred because the implemented relationship
 
 ## Deferred Product Work
 
-The following direction is intentionally deferred until an explicit milestone makes it current scope.
+The following direction remains intentionally deferred until an explicit milestone makes it current scope.
 
-### M3 — Data Flow & Static Simulation
+### M4 — Data Flow & Static Simulation
 
 Potential scope:
 
@@ -104,23 +108,23 @@ Potential scope:
 - deterministic branch/failure metadata;
 - step-through static simulation without fabricated runtime values.
 
-### M4 — Go Adapter Proof
+### M5 — Go Adapter Proof
 
 Goal: prove the semantic model is not accidentally TypeScript-shaped while preserving the same consumer model in API/UI.
 
-### M5 — Multi-Application Repository View
+### M6 — Multi-Application Repository View
 
 Potential scope includes application discovery, cross-application relationships, System projection, grouping, repository scope selection, and abstraction-level navigation.
 
-### M6 — Infrastructure Semantics
+### M7 — Infrastructure Semantics
 
 Add only infrastructure/configuration semantics justified by actual target repositories or fixtures.
 
-### M7 — Grounded AI Explanation
+### M8 — Grounded AI Explanation
 
 AI explanation may use selected semantic context, graph paths, evidence, and minimal source snippets. AI must not become the source of canonical semantic edges, and CodeFlow must remain useful when AI is disabled.
 
-### M8 — Runtime Evidence Spike
+### M9 — Runtime Evidence Spike
 
 Validate whether runtime observations can map reliably to semantic IDs and how observed evidence coexists with static/inferred evidence before building a runtime subsystem.
 
@@ -165,6 +169,6 @@ Do not treat these as current product scope merely because they appear in histor
 
 ## Material Open Questions
 
-No new material product decision is authorized by M2 completion.
+M3 requires an explicit repository-input decision before implementation locks the user-facing/API/security contract. Candidate directions include bounded local directory/file input or a remote Git repository import path; authentication, server-side clone/process behavior, private repository handling, and persistence must not be inferred from milestone activation.
 
-Future milestones may require explicit decisions about repository import/auth, durable persistence, runtime execution, AI/private-source handling, multi-user isolation, and production deployment. Those remain open until the user approves the relevant scope and boundary.
+Future milestones may additionally require explicit decisions about durable persistence, runtime execution, AI/private-source handling, multi-user isolation, and production deployment. Those remain open until the user approves the relevant scope and boundary.
