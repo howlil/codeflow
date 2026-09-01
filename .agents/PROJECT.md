@@ -26,6 +26,7 @@ A developer who needs to understand an unfamiliar or complex codebase quickly an
 
 CodeFlow should:
 
+- accept bounded user-selected local TypeScript repository source for request-scoped static analysis;
 - derive semantic entities and relationships from repository evidence;
 - preserve provenance for relationships that may be verified, inferred, configured, observed at runtime, or user-asserted;
 - render bounded semantic projections instead of exposing a raw AST or entire symbol graph by default;
@@ -37,26 +38,27 @@ CodeFlow should:
 ### Current Product Journey
 
 ```text
-repository / fixture
- -> semantic analysis
+local repository selection
+ -> bounded TypeScript source input
+ -> multi-file semantic analysis
  -> evidence-backed flow projection
  -> semantic workspace
  -> search/focus/navigation
  -> select node or relationship
- -> inspect source + provenance
+ -> inspect cross-file source + provenance
 ```
 
 ## Current Milestone
 
 ### M3 — Real Repository Analysis
 
-Goal: move CodeFlow from a sample-only semantic proof to an end-to-end path that accepts one explicitly approved form of real TypeScript repository input, analyzes it within bounded untrusted-input constraints, and opens the evidence-backed result in the existing semantic workspace.
+Goal: move CodeFlow from a sample-only semantic proof to an end-to-end path that analyzes a bounded user-selected local TypeScript repository and opens the evidence-backed result in the existing semantic workspace.
 
-M3 should validate the existing semantic model, API boundary, evidence model, and M2 workspace against real multi-file repository input before deeper data-flow semantics are added.
+M3 validates the existing semantic model, API boundary, evidence model, and M2 workspace against real multi-file repository input before deeper data-flow semantics are added.
 
-The detailed slice plan, decision gate, execution position, and verification evidence belong in `.agents/CURRENT_ITERATION.md`.
+The approved M3 input mode is browser local-directory/file selection with bounded in-memory API analysis. Git-host import/auth, server-side cloning, persistence, and runtime execution are not part of this milestone.
 
-The repository-input mode remains a material open product/API/security decision until explicitly approved. Milestone activation does not itself authorize local upload, Git hosting import/auth, server filesystem access, or another input mechanism.
+The detailed slice plan, execution position, and verification evidence belong in `.agents/CURRENT_ITERATION.md`.
 
 ## Completed Product Foundations
 
@@ -145,9 +147,11 @@ Repository input is untrusted and may be confidential.
 Committed expectations:
 
 - ordinary static analysis does not execute arbitrary repository code;
-- repository scope/path handling must prevent traversal or symlink escape when user-controlled repository input is supported;
-- resource usage must be bounded as repository input expands;
+- browser-side filtering minimizes source sent, but API validation remains authoritative;
+- repository-relative path handling must reject traversal/unsafe paths;
+- resource usage must be bounded by file count, per-file size, total source size, and request size as repository input expands;
 - dependency/vendor/build directories should be ignored where appropriate;
+- current repository analysis is request-scoped/in-memory and does not persist source by default;
 - logs/errors/analytics/AI context must not expose arbitrary private source without explicit need;
 - future runtime execution requires a separately approved sandbox design covering CPU, memory, filesystem, processes, network, timeout, and secret isolation.
 
@@ -169,6 +173,4 @@ Do not treat these as current product scope merely because they appear in histor
 
 ## Material Open Questions
 
-M3 requires an explicit repository-input decision before implementation locks the user-facing/API/security contract. Candidate directions include bounded local directory/file input or a remote Git repository import path; authentication, server-side clone/process behavior, private repository handling, and persistence must not be inferred from milestone activation.
-
-Future milestones may additionally require explicit decisions about durable persistence, runtime execution, AI/private-source handling, multi-user isolation, and production deployment. Those remain open until the user approves the relevant scope and boundary.
+Git-host import/auth, private repository handling, saved analyses/persistence, runtime execution, AI/private-source handling, multi-user isolation, and production deployment remain open until a future authorized milestone requires those boundaries.
