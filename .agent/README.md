@@ -1,128 +1,120 @@
 # CodeFlow Agent Workspace
 
-`.agent/` holds repository-local product/engineering context without turning delivery into documentation ceremony.
+`.agent/` externalizes enough repository-local truth and live execution state for an engineering agent to work without reconstructing context from chat history.
 
-The workspace separates **durable product/system truth** from **temporary execution state** and uses progressive disclosure so agents load only the context needed for the current change.
+Keep this workspace lean. Durable product/system truth and temporary iteration state have different owners.
+
+## Canonical files
+
+```text
+.agent/
+  AGENTS.md            operating rules and SWE lifecycle
+  PROJECT.md           concise durable product/system truth
+  CURRENT_ITERATION.md canonical live milestone/slice state
+  DEVELOPMENT.md       commands, testing, verification mechanics
+  CODE_PATTERNS.md     repository-specific implementation patterns
+  GIT_STRATEGY.md      trunk/integration guidance
+```
+
+Concern-specific durable sources remain:
+
+```text
+.agent/requirements/   detailed product outcomes, acceptance, non-goals
+.agent/specs/          material architecture/system decisions
+DESIGN.md              durable visual/interaction/workspace language
+```
+
+Historical planning/checkpoint directories may remain for decision/history context, but they are **not live iteration state**.
 
 ## Source-of-truth hierarchy
 
-1. Runtime code + tests — actual implemented behavior.
-2. `.agent/requirements/` — durable product outcomes, scope, acceptance criteria, and non-goals.
-3. `.agent/specs/` — durable material product/system design decisions and constraints.
-4. `DESIGN.md` — canonical durable visual, interaction, workspace, and interface language.
-5. `.agent/rules.md` — canonical engineering execution policy.
-6. `AGENTS.md` — progressive entry-point adapter + CodeFlow-specific invariants.
-7. `.agent/plan.md` — short-lived Feature Compass/current execution state.
-8. `.agent/plans/` / `.agent/checkpoints/` — temporary sequencing/continuity evidence only when useful.
+Use the owner that matches the question:
 
-If code and old execution prose disagree because implementation has moved forward, update/supersede the stale execution prose. If the disagreement concerns product intent or a material design decision, surface it instead of silently choosing one source.
+- actual implemented behavior: source code + tests
+- engineering operating policy: `.agent/AGENTS.md`
+- concise durable project context: `.agent/PROJECT.md`
+- detailed product roadmap/acceptance: `.agent/requirements/`
+- material architecture decisions: `.agent/specs/`
+- durable visual/interaction decisions: `DESIGN.md`
+- current milestone/slice position: `.agent/CURRENT_ITERATION.md`
+- development commands/verification: `.agent/DEVELOPMENT.md`
+- implementation conventions: `.agent/CODE_PATTERNS.md`
+- Git/integration mechanics: `.agent/GIT_STRATEGY.md`
 
-`DESIGN.md` supersedes visual/interaction guidance inside older specs when they conflict; material product/system architecture remains owned by the relevant spec.
+If implementation and stale temporary prose disagree because work moved forward, update the temporary state. If the disagreement concerns durable product intent or a material architecture decision, surface the conflict rather than silently choosing.
 
 ## Read progressively
 
-Start with `AGENTS.md`, `.agent/plan.md`, and `.agent/rules.md`.
+For ordinary engineering work start with:
 
-Then load only the concern-specific durable source that the change actually touches:
+1. root `AGENTS.md`;
+2. `.agent/CURRENT_ITERATION.md` when the task belongs to active milestone work;
+3. only the relevant canonical file for the concern.
 
-- requirements for product behavior/scope
-- specs for material architecture/contracts/security/data decisions
-- `DESIGN.md` for durable visual/interaction/workspace language
-- source/tests for implementation ownership and current behavior
-- CI/release files only when integration/release mechanics matter
+Examples:
 
-Do not perform repository-wide reconnaissance or load the entire `.agent/` tree by default.
+- product scope/why -> `PROJECT.md` + relevant requirement
+- architecture/contracts/security/data ownership -> relevant spec
+- local implementation -> `CODE_PATTERNS.md` + source/tests
+- commands/gates -> `DEVELOPMENT.md`
+- branch/PR/merge -> `GIT_STRATEGY.md`
+- durable UI/interaction language -> `DESIGN.md`
 
-## Durable knowledge
+Do not load the entire `.agent/` tree or repository by default.
 
-Do **not** delete durable product/system knowledge merely because:
+## Current iteration rule
 
-- an iteration completed
-- implementation moved forward
-- workflow changed
-- a document is old
-- fewer process files would look cleaner
+`.agent/CURRENT_ITERATION.md` is the single source of truth for active execution state.
 
-Durable knowledge includes:
-
-- product goals/outcomes
-- product requirements and user journeys
-- acceptance criteria/non-goals
-- semantic/domain constraints
-- architecture decisions/invariants
-- security/privacy constraints
-- public/semantic/API contracts
-- validated design decisions
-
-When durable knowledge changes, update it or explicitly supersede it with the replacement needed to understand the current decision.
-
-## Temporary execution artifacts
-
-Temporary artifacts may be deleted when stale and when they contain no unique durable product/design truth, for example:
-
-- duplicated task plans
-- retry/final/review-fix plans
-- stale checkpoints/status snapshots
-- superseded process instructions
-- task sequencing that no longer helps execution
-
-For mixed documents:
+It should make it possible to answer:
 
 ```text
-durable product/system knowledge?
- -> preserve or migrate
-
-temporary execution/process only?
- -> delete when stale
-
-mixed?
- -> migrate durable truth first, then remove obsolete shell
+active milestone
+ -> approved scope/non-goals
+ -> active or next slice/logical change
+ -> integrated work
+ -> verified pending integration
+ -> evidence
+ -> single next meaningful action
 ```
+
+Keep it concise. It is not a sprint diary, changelog, or commit log.
+
+Do not duplicate live status into `plan.md`, checkpoints, PR descriptions, and multiple state documents.
+
+## Milestone planning rule
+
+Plan at milestone boundaries, then execute approved slices continuously:
+
+```text
+Milestone -> Slice -> Logical Change -> Commit
+```
+
+Increase the planning horizon, not the integration batch size.
+
+Do not create a new sprint plan for each slice. Do not create milestone/sprint branches. Integrate verified logical changes continuously according to `.agent/GIT_STRATEGY.md`.
+
+## Durable knowledge rule
+
+Preserve/update durable knowledge when its underlying truth changes:
+
+- product outcomes/scope/acceptance/non-goals
+- semantic/domain constraints
+- architecture decisions/invariants
+- public/API/semantic contracts
+- security/privacy/data ownership constraints
+- validated durable design decisions
+
+Do not delete durable truth merely because an iteration completed or workflow changed.
 
 ## Artifact creation rule
 
-Create an artifact only when it reduces meaningful ambiguity, delivery risk, or repeated rediscovery.
+Create/update an artifact only when it owns necessary truth or materially reduces ambiguity/risk/rediscovery.
 
-- update requirements when product intent/scope/acceptance changes
-- update a spec when a material architecture, contract, security, privacy, persistence, or data-ownership decision changes
-- update `DESIGN.md` when durable visual, interaction, workspace, or interface language changes
-- create a task plan only when sequencing across boundaries materially helps execution
-- create a checkpoint only when another session would otherwise need to rediscover important evidence
-- do not create a spec/plan/checkpoint merely because work is non-trivial
+Do not create specs, plans, checkpoints, retrospectives, or state files as ceremony.
 
-A small bounded change normally needs no new planning document.
+Historical `.agent/plans/` and `.agent/checkpoints/` are not the default surface for new work. New sequencing should normally live as compact milestone/slice state in `CURRENT_ITERATION.md`; create a separate durable spec only for a genuinely material decision.
 
-## Feature Compass
+## Compatibility files
 
-`.agent/plan.md` is the preferred orientation surface.
-
-Keep it compact enough to answer:
-
-```text
-Feature Shape
- -> Current Position
- -> Delta
- -> Next Move
-```
-
-It should make clear what the feature will become, what differs from current state, what is done/in progress, and the single next meaningful action. Do not duplicate the full requirement/specification there.
-
-## Planning preference
-
-When sequencing genuinely matters, prefer a small vertical slice:
-
-```text
-fixture/input
- -> analysis/domain behavior
- -> contract/boundary
- -> consumer/UI
- -> evidence/verification
-```
-
-over horizontal scaffolding such as building all parsers, then all APIs, then all UI before integration.
-
-## Execution policy
-
-The canonical lifecycle, authority boundary, minimum-change rule, testing-by-risk, documentation/dependency policy, Feature Compass behavior, retrospective rule, quality gates, and stop conditions live in `.agent/rules.md`.
-
-Do not restate those rules in new process documents.
+`.agent/rules.md` and `.agent/plan.md` are retained as compatibility pointers for older references. They must not contain an independent competing policy/state.
