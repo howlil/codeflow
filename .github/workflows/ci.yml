@@ -29,8 +29,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Print canonical agent formatting diff
-        run: |
-          pnpm exec prettier --write .agents
-          git diff -- .agents
-          exit 1
+      - name: Verify repository
+        run: pnpm check
