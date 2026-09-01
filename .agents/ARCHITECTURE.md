@@ -8,8 +8,8 @@ CodeFlow is a small TypeScript monorepo.
 
 ```text
 apps/
-  web/            React/Vite user workspace
-  api/            Fastify HTTP boundary and orchestration
+  web/            React/Vite user workspace + local repository selection
+  api/            Fastify HTTP boundary, repository-input validation, orchestration
 packages/
   analysis-core/  semantic model, TypeScript analysis, evidence, projections
 ```
@@ -18,19 +18,24 @@ The current repository contains exactly those two applications and the `analysis
 
 ## High-Level Flow
 
-The current architectural direction is:
+The current real-repository path is:
 
 ```text
-repository / fixture input
- -> deterministic analysis
+local directory/file selection
+ -> browser filters/bounds supported TypeScript source
+ -> bounded POST /api/flows/analyze
+ -> API validates paths + resource scope
+ -> deterministic multi-file TypeScript analysis
  -> semantic entities + relationships + evidence
- -> bounded projection
- -> API boundary
+ -> bounded projection + analysis issues
  -> web semantic workspace
- -> source/evidence inspection
+ -> search/focus/navigation
+ -> source/evidence inspection across analyzed files
 ```
 
-Future adapters and projections extend this model rather than bypassing it.
+`GET /api/flows/sample` remains a deterministic fixture/demo path; it is not the primary user-facing product path.
+
+Future adapters and projections extend the semantic model rather than bypassing it.
 
 ## Core Boundary — Universal Semantic Model
 
@@ -61,7 +66,7 @@ user-asserted
 Evidence should retain, when available:
 
 - analyzer/config/runtime source;
-- supporting source location/range or runtime reference;
+- supporting repository-relative source location/range or runtime reference;
 - concise rationale;
 - semantic source/target identity.
 
@@ -73,25 +78,29 @@ Heuristic confidence must not be presented as precise factual probability.
 
 `packages/analysis-core` owns semantic analysis and model/projection behavior.
 
-Current TypeScript analysis uses TypeScript semantic/compiler tooling. Future language adapters should use the strongest practical semantic source available while emitting the shared semantic model.
+Current TypeScript analysis can build an in-memory multi-file TypeScript program from the bounded source set supplied by the API and resolve supported function/call relationships across selected files/modules. Future language adapters should use the strongest practical semantic source available while emitting the shared semantic model.
 
-Adapter-specific parser objects must remain behind the analysis boundary.
+Adapter-specific compiler/parser objects must remain behind the analysis boundary.
 
 An adapter may support only the capabilities it can establish honestly; unsupported semantics should not be fabricated for completeness.
 
 ## API Boundary
 
-`apps/api` owns HTTP transport/orchestration.
+`apps/api` owns HTTP transport/orchestration and authoritative validation of user-controlled repository input.
 
 The API consumes `analysis-core`; semantic analysis logic should not migrate into transport handlers merely for convenience.
 
+Current repository analysis is `POST /api/flows/analyze`: it accepts a bounded set of repository-relative TypeScript source records plus an exported entry-point identity, rejects unsafe paths/invalid input, applies file/count/byte scope limits, and returns a semantic projection with explicit complete/partial analysis metadata.
+
 HTTP contracts expose semantic/projection data rather than raw parser-specific AST structures.
 
-Repository import/auth and durable analysis lifecycle APIs are not assumed to exist until explicitly implemented.
+The API does not clone repositories, authenticate to Git hosts, persist source/analyses, or execute repository code in the current architecture.
 
 ## Web Boundary
 
-`apps/web` owns user-facing semantic workspace state and interaction.
+`apps/web` owns user-facing semantic workspace state, local repository selection, and interaction.
+
+For M3, the browser filters the selected local directory to the supported bounded TypeScript source set before reading/sending source. These client checks improve UX and data minimization; they are not a security boundary and do not replace API validation.
 
 The web application consumes semantic/API projections. It does not become a source parser or canonical semantic graph owner.
 
@@ -121,7 +130,7 @@ Any future repository execution requires an explicitly approved sandbox architec
 
 There is no current production persistence or graph database requirement in the implemented architecture.
 
-Semantic analysis may remain in-memory/deterministic for the current scope.
+M3 repository source and analysis are request-scoped/in-memory. The browser sends the selected bounded source set for analysis; CodeFlow does not persist repository source or analysis history as part of the current product path.
 
 If durable SaaS metadata becomes necessary, persistence design is a new material decision. Historical preference is relational persistence such as PostgreSQL before graph-specific storage, but no persistence choice is activated merely by this document.
 
@@ -142,10 +151,12 @@ These are not forbidden forever; introducing them requires a current requirement
 
 Repository source is untrusted input and may be confidential.
 
+Current M3 input applies bounded file count, per-file bytes, total source bytes, supported extensions, ignored dependency/build/VCS directories, and repository-relative path validation. The server revalidates scope even when the browser prefilters input.
+
 Architecture must preserve:
 
 - no arbitrary repository code execution during ordinary static analysis;
-- deliberate path/scope/symlink handling when repository input becomes user-controlled;
+- deliberate path/scope handling for user-controlled repository input;
 - bounded resource usage as analysis scope expands;
 - no raw private source in logs/analytics by default;
 - minimal source/context sent to future AI explanation;

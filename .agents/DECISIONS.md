@@ -57,3 +57,11 @@
 **Why:** Product truth must remain reproducible from repository analysis/evidence and should not depend on how a user arranged or inspected the graph.
 
 **Consequences:** UI interaction can change presentation and inspection context but cannot create or reclassify semantic relationships by itself.
+
+## D-009 — M3 repository input is local, bounded, and in-memory
+
+**Decision:** The first real-repository input path uses browser local-directory/file selection. The web client sends only the bounded supported source set plus the selected exported entry point to `apps/api`, which validates the request again and performs in-memory static analysis.
+
+**Why:** This proves the real-repository product path without introducing Git-host authentication, server-side clone/process execution, persistence, or a wider remote-network trust boundary before those capabilities are required.
+
+**Consequences:** Repository source remains user-selected and ephemeral for M3; both client and API apply scope/resource limits; API path validation is authoritative; ordinary analysis does not execute repository code. Public/private Git import, repository auth, saved analyses, and server-side repository acquisition remain separate future product/security decisions.
