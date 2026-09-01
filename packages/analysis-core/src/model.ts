@@ -59,13 +59,38 @@ export interface FlowEdge {
   evidence: Evidence[];
 }
 
+export interface ProjectionSource {
+  filePath: string;
+  text: string;
+}
+
+export type AnalysisIssueKind =
+  | 'ignored'
+  | 'unsupported'
+  | 'invalid'
+  | 'limit';
+
+export interface AnalysisIssue {
+  kind: AnalysisIssueKind;
+  message: string;
+  filePath?: string;
+}
+
+export interface AnalysisSummary {
+  status: 'complete' | 'partial';
+  analyzedFileCount: number;
+  ignoredFileCount: number;
+  issues: AnalysisIssue[];
+}
+
 export interface FlowProjection {
   id: string;
   entryPointId: string;
   nodes: FlowNode[];
   edges: FlowEdge[];
-  source: {
-    filePath: string;
-    text: string;
-  };
+  /** Entry-point source retained for the existing single-source consumer contract. */
+  source: ProjectionSource;
+  /** All analyzed repository sources required for cross-file inspection. */
+  sources: ProjectionSource[];
+  analysis: AnalysisSummary;
 }

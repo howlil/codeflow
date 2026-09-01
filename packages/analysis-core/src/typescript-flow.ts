@@ -1,6 +1,7 @@
 import ts from 'typescript';
 
 import type {
+  AnalysisIssue,
   Evidence,
   EvidenceKind,
   FlowProjection,
@@ -16,6 +17,19 @@ export interface AnalyzeTypeScriptFlowInput {
   entryPointName: string;
 }
 
+export interface TypeScriptSourceInput {
+  filePath: string;
+  sourceText: string;
+}
+
+export interface AnalyzeTypeScriptRepositoryInput {
+  files: TypeScriptSourceInput[];
+  entryPoint: {
+    filePath: string;
+    name: string;
+  };
+}
+
 interface FunctionRecord {
   declaration: ts.FunctionDeclaration;
   entity: SemanticEntity;
@@ -24,80 +38,140 @@ interface FunctionRecord {
 export function analyzeTypeScriptFlow(
   input: AnalyzeTypeScriptFlowInput,
 ): FlowProjection {
-  const compilerPath = input.filePath.startsWith('/')
-    ? input.filePath
-    : `/${input.filePath}`;
-  const sourceFile = ts.createSourceFile(
-    compilerPath,
-    input.sourceText,
-    ts.ScriptTarget.Latest,
-    true,
-    ts.ScriptKind.TS,
-  );
-  const checker = createTypeChecker(compilerPath, input.sourceText, sourceFile);
-  const functions = collectFunctions(sourceFile, input.filePath);
-  const relationships = collectCallRelationships(
-    sourceFile,
-    checker,
-    functions,
-    input.filePath,
-  );
-  const graph: SemanticGraph = {
-    entities: [...functions.values()].map(({ entity }) => entity),
-    relationships,
-  };
-
-  return projectFlow(graph, input, input.entryPointName);
+  return analyzeTypeScriptRepository({
+    files: [{ filePath: input.filePath, sourceText: input.sourceText }],
+    entryPoint: {
+      filePath: input.filePath,
+      name: input.entryPointName,
+    },
+  });
 }
 
-function createTypeChecker(
-  filePath: string,
-  sourceText: string,
-  sourceFile: ts.SourceFile,
-): ts.TypeChecker {
+export function analyzeTypeScriptRepository(
+  input: AnalyzeTypeScriptRepositoryInput,
+): FlowProjection {
+  if (input.files.length === 0) {
+    throw new Error('At least one TypeScript source file is required.');
+  }
+
+  const files = [...input.files].sort((left, right) =>
+    left.filePath.localeCompare(right.filePath),
+  );
+  const { program, displayPathByCompilerPath } = createProgram(files);
+  const checker = program.getTypeChecker();
+  const functions: FunctionRecord[] = [];
+  const declarationToFunction = new Map<ts.Declaration, FunctionRecord>();
+
+  for (const sourceFile of program.getSourceFiles()) {
+    const displayFilePath = displayPathByCompilerPath.get(sourceFile.fileName);
+    if (displayFilePath === undefined) {
+      continue;
+    }
+
+    for (const record of collectFunctions(sourceFile, displayFilePath)) {
+      functions.push(record);
+      declarationToFunction.set(record.declaration, record);
+    }
+  }
+
+  const graph: SemanticGraph = {
+    entities: functions.map(({ entity }) => entity),
+    relationships: collectCallRelationships(
+      checker,
+      functions,
+      declarationToFunction,
+    ),
+  };
+  const issues = collectAnalysisIssues(
+    program,
+    checker,
+    displayPathByCompilerPath,
+  );
+
+  return projectRepositoryFlow(graph, files, input.entryPoint, issues);
+}
+
+function createProgram(files: TypeScriptSourceInput[]): {
+  program: ts.Program;
+  displayPathByCompilerPath: Map<string, string>;
+} {
   const options: ts.CompilerOptions = {
+    allowJs: false,
+    jsx: ts.JsxEmit.Preserve,
     module: ts.ModuleKind.ESNext,
+    moduleResolution: ts.ModuleResolutionKind.Bundler,
     noEmit: true,
+    noLib: true,
     skipLibCheck: true,
     strict: true,
     target: ts.ScriptTarget.ES2023,
   };
-  const defaultHost = ts.createCompilerHost(options, true);
-  const host: ts.CompilerHost = {
-    ...defaultHost,
-    fileExists: (requestedPath) =>
-      requestedPath === filePath || defaultHost.fileExists(requestedPath),
-    getSourceFile: (requestedPath, languageVersion, onError, shouldCreate) => {
-      if (requestedPath === filePath) {
-        return sourceFile;
-      }
+  const sourceFiles = new Map<string, ts.SourceFile>();
+  const displayPathByCompilerPath = new Map<string, string>();
 
-      return defaultHost.getSourceFile(
-        requestedPath,
-        languageVersion,
-        onError,
-        shouldCreate,
-      );
-    },
-    readFile: (requestedPath) =>
-      requestedPath === filePath
-        ? sourceText
-        : defaultHost.readFile(requestedPath),
+  for (const file of files) {
+    const compilerPath = compilerPathFor(file.filePath);
+    sourceFiles.set(
+      compilerPath,
+      ts.createSourceFile(
+        compilerPath,
+        file.sourceText,
+        ts.ScriptTarget.Latest,
+        true,
+        file.filePath.toLowerCase().endsWith('.tsx')
+          ? ts.ScriptKind.TSX
+          : ts.ScriptKind.TS,
+      ),
+    );
+    displayPathByCompilerPath.set(compilerPath, file.filePath);
+  }
+
+  const host: ts.CompilerHost = {
+    directoryExists: (directoryName) =>
+      directoryExists(directoryName, sourceFiles.keys()),
+    fileExists: (fileName) => sourceFiles.has(fileName),
+    getCanonicalFileName: (fileName) => fileName,
+    getCurrentDirectory: () => '/',
+    getDefaultLibFileName: () => '/lib.d.ts',
+    getDirectories: () => [],
+    getNewLine: () => '\n',
+    getSourceFile: (fileName) => sourceFiles.get(fileName),
+    readFile: (fileName) => sourceFiles.get(fileName)?.text,
+    realpath: (fileName) => fileName,
+    useCaseSensitiveFileNames: () => true,
+    writeFile: () => undefined,
   };
   const program = ts.createProgram({
-    rootNames: [filePath],
+    rootNames: [...sourceFiles.keys()],
     options,
     host,
   });
 
-  return program.getTypeChecker();
+  return { program, displayPathByCompilerPath };
+}
+
+function directoryExists(
+  directoryName: string,
+  fileNames: IterableIterator<string>,
+): boolean {
+  const prefix = directoryName.endsWith('/')
+    ? directoryName
+    : `${directoryName}/`;
+
+  for (const fileName of fileNames) {
+    if (fileName.startsWith(prefix)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function collectFunctions(
   sourceFile: ts.SourceFile,
   displayFilePath: string,
-): Map<string, FunctionRecord> {
-  const functions = new Map<string, FunctionRecord>();
+): FunctionRecord[] {
+  const functions: FunctionRecord[] = [];
 
   for (const statement of sourceFile.statements) {
     if (
@@ -121,24 +195,20 @@ function collectFunctions(
       attributes: { exported },
     };
 
-    functions.set(name, { declaration: statement, entity });
+    functions.push({ declaration: statement, entity });
   }
 
   return functions;
 }
 
 function collectCallRelationships(
-  sourceFile: ts.SourceFile,
   checker: ts.TypeChecker,
-  functions: Map<string, FunctionRecord>,
-  displayFilePath: string,
+  functions: FunctionRecord[],
+  declarationToFunction: Map<ts.Declaration, FunctionRecord>,
 ): SemanticRelationship[] {
   const relationships: SemanticRelationship[] = [];
-  const declarationToFunction = new Map<ts.Declaration, FunctionRecord>(
-    [...functions.values()].map((record) => [record.declaration, record]),
-  );
 
-  for (const sourceFunction of functions.values()) {
+  for (const sourceFunction of functions) {
     const body = sourceFunction.declaration.body;
     if (body === undefined) {
       continue;
@@ -149,6 +219,8 @@ function collectCallRelationships(
       checker,
       declarationToFunction,
     );
+    const sourceFile = sourceFunction.declaration.getSourceFile();
+    const displayFilePath = sourceFunction.entity.location.filePath;
 
     const visit = (node: ts.Node): void => {
       if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
@@ -235,7 +307,12 @@ function resolveDirectFunction(
     return undefined;
   }
 
-  for (const declaration of symbol.declarations ?? []) {
+  const resolvedSymbol =
+    (symbol.flags & ts.SymbolFlags.Alias) !== 0
+      ? checker.getAliasedSymbol(symbol)
+      : symbol;
+
+  for (const declaration of resolvedSymbol.declarations ?? []) {
     const target = declarationToFunction.get(declaration);
     if (target !== undefined) {
       return target;
@@ -245,17 +322,66 @@ function resolveDirectFunction(
   return undefined;
 }
 
-function projectFlow(
+function collectAnalysisIssues(
+  program: ts.Program,
+  checker: ts.TypeChecker,
+  displayPathByCompilerPath: Map<string, string>,
+): AnalysisIssue[] {
+  const issues: AnalysisIssue[] = [];
+
+  for (const sourceFile of program.getSourceFiles()) {
+    const displayFilePath = displayPathByCompilerPath.get(sourceFile.fileName);
+    if (displayFilePath === undefined) {
+      continue;
+    }
+
+    for (const diagnostic of program.getSyntacticDiagnostics(sourceFile).slice(0, 3)) {
+      issues.push({
+        kind: 'invalid',
+        filePath: displayFilePath,
+        message: ts.flattenDiagnosticMessageText(diagnostic.messageText, ' '),
+      });
+    }
+
+    for (const statement of sourceFile.statements) {
+      if (
+        !ts.isImportDeclaration(statement) ||
+        !ts.isStringLiteralLike(statement.moduleSpecifier) ||
+        !statement.moduleSpecifier.text.startsWith('.')
+      ) {
+        continue;
+      }
+
+      if (checker.getSymbolAtLocation(statement.moduleSpecifier) === undefined) {
+        issues.push({
+          kind: 'unsupported',
+          filePath: displayFilePath,
+          message: `Relative import ${statement.moduleSpecifier.text} could not be resolved from the selected repository files.`,
+        });
+      }
+    }
+  }
+
+  return issues;
+}
+
+function projectRepositoryFlow(
   graph: SemanticGraph,
-  input: AnalyzeTypeScriptFlowInput,
-  entryPointName: string,
+  files: TypeScriptSourceInput[],
+  entryPointInput: AnalyzeTypeScriptRepositoryInput['entryPoint'],
+  issues: AnalysisIssue[],
 ): FlowProjection {
   const entryPoint = graph.entities.find(
-    (entity) => entity.name === entryPointName && entity.attributes.exported,
+    (entity) =>
+      entity.name === entryPointInput.name &&
+      entity.location.filePath === entryPointInput.filePath &&
+      entity.attributes.exported,
   );
 
   if (entryPoint === undefined) {
-    throw new Error(`Exported entry point ${entryPointName} was not found.`);
+    throw new Error(
+      `Exported entry point ${entryPointInput.name} was not found in ${entryPointInput.filePath}.`,
+    );
   }
 
   const reachable = new Set<string>([entryPoint.id]);
@@ -278,6 +404,18 @@ function projectFlow(
     }
   }
 
+  const sources = files.map(({ filePath, sourceText }) => ({
+    filePath,
+    text: sourceText,
+  }));
+  const source = sources.find(
+    (candidate) => candidate.filePath === entryPointInput.filePath,
+  );
+
+  if (source === undefined) {
+    throw new Error(`Entry source ${entryPointInput.filePath} was not analyzed.`);
+  }
+
   return {
     id: `flow:${entryPoint.id}`,
     entryPointId: entryPoint.id,
@@ -295,11 +433,23 @@ function projectFlow(
         reachable.has(relationship.sourceId) &&
         reachable.has(relationship.targetId),
     ),
-    source: {
-      filePath: input.filePath,
-      text: input.sourceText,
+    source,
+    sources,
+    analysis: {
+      status: issues.length > 0 ? 'partial' : 'complete',
+      analyzedFileCount: files.length,
+      ignoredFileCount: 0,
+      issues,
     },
   };
+}
+
+function compilerPathFor(filePath: string): string {
+  const normalized = filePath
+    .replaceAll('\\', '/')
+    .replace(/^\.\//, '')
+    .replace(/^\/+/, '');
+  return `/${normalized}`;
 }
 
 function functionId(filePath: string, name: string): string {
