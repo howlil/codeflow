@@ -48,19 +48,11 @@ repository / fixture
 
 ## Current Milestone
 
-M2 — Canvas Comprehension is the active committed milestone. Live execution state belongs only in `.agents/CURRENT_ITERATION.md`.
+No product milestone is currently active.
 
-The committed M2 outcome is that a graph large enough to create clutter remains understandable without manual diagram editing.
+M2 — Canvas Comprehension is release ready. Live execution state and the milestone gate result belong in `.agents/CURRENT_ITERATION.md` until a new explicitly authorized milestone replaces it.
 
-M2 product capabilities are:
-
-- focus/neighborhood mode;
-- relationship filters/lenses when supported relationship kinds justify them;
-- search/navigation;
-- source split/snippet inspection;
-- stable automatic layout;
-- explicit loading/empty/partial/error states;
-- keyboard-accessible primary interactions.
+Do not implicitly activate M3 or other deferred work from M2 completion.
 
 ## Completed Product Foundations
 
@@ -82,6 +74,20 @@ Established:
 Established one evidence-backed TypeScript flow from deterministic analysis through API projection to the web workspace and source/evidence inspection.
 
 The product can distinguish verified and inferred semantic evidence in that flow.
+
+### M2 — Canvas Comprehension
+
+Established a semantic workspace that preserves comprehension as the visible graph grows through:
+
+- search and neighborhood focus;
+- selectable relationship evidence inspection;
+- source split inspection that keeps canvas context visible;
+- explicit loading, empty, partial, and error states;
+- keyboard traversal of projected caller/callee semantics;
+- stable responsive automatic relationship layout;
+- truthful unavailable-evidence handling rather than fabricated confidence.
+
+Relationship filters/lenses remain deferred because the implemented relationship contract currently exposes only `CALLS`; adding a filter before multiple meaningful relationship kinds exist would create a no-op product control.
 
 ## Deferred Product Work
 
@@ -159,6 +165,6 @@ Do not treat these as current product scope merely because they appear in histor
 
 ## Material Open Questions
 
-No new material product decision is authorized by this document migration.
+No new material product decision is authorized by M2 completion.
 
 Future milestones may require explicit decisions about repository import/auth, durable persistence, runtime execution, AI/private-source handling, multi-user isolation, and production deployment. Those remain open until the user approves the relevant scope and boundary.
