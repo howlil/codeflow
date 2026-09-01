@@ -6,7 +6,7 @@ Canonical source of truth for durable CodeFlow visual, interaction, workspace, a
 
 This document supersedes the **Canvas UX** and **Visual Design System** guidance inside `.agent/specs/2026-08-25-codeflow-foundation-design.md` where they conflict. The foundation spec remains authoritative for product thesis, semantic architecture, IR, adapters, projections, API, security, and other material system decisions.
 
-Feature-specific behavior still belongs in requirements/specs. Current iteration state still belongs in `.agent/plan.md`.
+Feature-specific behavior still belongs in requirements/specs. Current iteration state belongs in `.agent/CURRENT_ITERATION.md`.
 
 ## Design Intent
 
