@@ -1,5 +1,9 @@
 import { Check, ChevronDown } from 'lucide-react';
-import { Checkbox as RadixCheckbox, Select as RadixSelect, Slot } from 'radix-ui';
+import {
+  Checkbox as RadixCheckbox,
+  Select as RadixSelect,
+  Slot,
+} from 'radix-ui';
 import {
   forwardRef,
   type ButtonHTMLAttributes,
@@ -14,10 +18,13 @@ type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 type ButtonSize = 'sm' | 'md' | 'icon';
 
 const buttonVariantClasses: Record<ButtonVariant, string> = {
-  primary: 'border-cs-primary bg-cs-primary text-cs-primary-contrast hover:opacity-90',
+  primary:
+    'border-cs-primary bg-cs-primary text-cs-primary-contrast hover:opacity-90',
   secondary: 'border-cs-border bg-cs-control text-cs-text hover:bg-cs-hover',
-  ghost: 'border-transparent bg-transparent text-cs-muted hover:bg-cs-hover hover:text-cs-text',
-  danger: 'border-red-400/20 bg-red-500/[0.08] text-cs-danger hover:bg-red-500/[0.14]',
+  ghost:
+    'border-transparent bg-transparent text-cs-muted hover:bg-cs-hover hover:text-cs-text',
+  danger:
+    'border-red-400/20 bg-red-500/[0.08] text-cs-danger hover:bg-red-500/[0.14]',
 };
 
 const buttonSizeClasses: Record<ButtonSize, string> = {
@@ -32,71 +39,81 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   asChild?: boolean;
 }
 
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  {
-    variant = 'secondary',
-    size = 'sm',
-    className,
-    type = 'button',
-    asChild = false,
-    children,
-    ...props
-  },
-  ref,
-) {
-  const classes = cn(
-    'inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md border font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cs-focus/50 disabled:pointer-events-none disabled:opacity-45',
-    buttonVariantClasses[variant],
-    buttonSizeClasses[size],
-    className,
-  );
-
-  if (asChild) {
-    return (
-      <Slot.Root ref={ref} className={classes} {...props}>
-        {children}
-      </Slot.Root>
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  function Button(
+    {
+      variant = 'secondary',
+      size = 'sm',
+      className,
+      type = 'button',
+      asChild = false,
+      children,
+      ...props
+    },
+    ref,
+  ) {
+    const classes = cn(
+      'inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md border font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cs-focus/50 disabled:pointer-events-none disabled:opacity-45',
+      buttonVariantClasses[variant],
+      buttonSizeClasses[size],
+      className,
     );
-  }
 
-  return (
-    <button ref={ref} type={type} className={classes} {...props}>
-      {children}
-    </button>
-  );
-});
+    if (asChild) {
+      return (
+        <Slot.Root ref={ref} className={classes} {...props}>
+          {children}
+        </Slot.Root>
+      );
+    }
 
-export const IconButton = forwardRef<HTMLButtonElement, ButtonProps>(function IconButton(
-  { className, ...props },
-  ref,
-) {
-  return <Button ref={ref} size="icon" variant="ghost" className={className} {...props} />;
-});
-
-const controlClass =
-  'h-7 min-w-0 rounded-md border border-cs-border bg-cs-control px-2 text-[11px] text-cs-text outline-none transition-colors placeholder:text-cs-subtle focus:border-cs-focus focus:ring-1 focus:ring-cs-focus/20 disabled:cursor-not-allowed disabled:opacity-50';
-
-export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(function Input(
-  { className, ...props },
-  ref,
-) {
-  return <input ref={ref} className={cn(controlClass, className)} {...props} />;
-});
-
-export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<HTMLTextAreaElement>>(
-  function Textarea({ className, ...props }, ref) {
     return (
-      <textarea
+      <button ref={ref} type={type} className={classes} {...props}>
+        {children}
+      </button>
+    );
+  },
+);
+
+export const IconButton = forwardRef<HTMLButtonElement, ButtonProps>(
+  function IconButton({ className, ...props }, ref) {
+    return (
+      <Button
         ref={ref}
-        className={cn(
-          'min-w-0 rounded-md border border-cs-border bg-cs-control px-2.5 py-2 text-[11px] leading-5 text-cs-text outline-none transition-colors placeholder:text-cs-subtle focus:border-cs-focus focus:ring-1 focus:ring-cs-focus/20 disabled:cursor-not-allowed disabled:opacity-50',
-          className,
-        )}
+        size="icon"
+        variant="ghost"
+        className={className}
         {...props}
       />
     );
   },
 );
+
+const controlClass =
+  'h-7 min-w-0 rounded-md border border-cs-border bg-cs-control px-2 text-[11px] text-cs-text outline-none transition-colors placeholder:text-cs-subtle focus:border-cs-focus focus:ring-1 focus:ring-cs-focus/20 disabled:cursor-not-allowed disabled:opacity-50';
+
+export const Input = forwardRef<
+  HTMLInputElement,
+  InputHTMLAttributes<HTMLInputElement>
+>(function Input({ className, ...props }, ref) {
+  return <input ref={ref} className={cn(controlClass, className)} {...props} />;
+});
+
+export const Textarea = forwardRef<
+  HTMLTextAreaElement,
+  TextareaHTMLAttributes<HTMLTextAreaElement>
+>(function Textarea({ className, ...props }, ref) {
+  return (
+    <textarea
+      ref={ref}
+      className={cn(
+        'min-w-0 rounded-md border border-cs-border bg-cs-control px-2.5 py-2 text-[11px] leading-5 text-cs-text outline-none transition-colors placeholder:text-cs-subtle focus:border-cs-focus focus:ring-1 focus:ring-cs-focus/20 disabled:cursor-not-allowed disabled:opacity-50',
+        className,
+      )}
+      {...props}
+    />
+  );
+});
 
 export interface SelectOption {
   value: string;
@@ -131,7 +148,9 @@ export function Select({
     <RadixSelect.Root
       value={radixValue(value)}
       disabled={disabled}
-      onValueChange={(next) => onValueChange(next === EMPTY_SELECT_VALUE ? '' : next)}
+      onValueChange={(next) =>
+        onValueChange(next === EMPTY_SELECT_VALUE ? '' : next)
+      }
     >
       <RadixSelect.Trigger
         aria-label={ariaLabel}
@@ -207,18 +226,35 @@ export function Checkbox({
 }
 
 export function Panel({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('rounded-lg border border-cs-border bg-cs-control', className)} {...props} />;
-}
-
-export function SectionLabel({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn('text-[9px] font-semibold uppercase tracking-[0.14em] text-cs-subtle', className)}
+      className={cn(
+        'rounded-lg border border-cs-border bg-cs-control',
+        className,
+      )}
       {...props}
     />
   );
 }
 
-export function Muted({ className, ...props }: HTMLAttributes<HTMLSpanElement>) {
+export function SectionLabel({
+  className,
+  ...props
+}: HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      className={cn(
+        'text-[9px] font-semibold uppercase tracking-[0.14em] text-cs-subtle',
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+export function Muted({
+  className,
+  ...props
+}: HTMLAttributes<HTMLSpanElement>) {
   return <span className={cn('text-cs-muted', className)} {...props} />;
 }
