@@ -65,3 +65,11 @@
 **Why:** This proves the real-repository product path without introducing Git-host authentication, server-side clone/process execution, persistence, or a wider remote-network trust boundary before those capabilities are required.
 
 **Consequences:** Repository source remains user-selected and ephemeral for M3; both client and API apply scope/resource limits; API path validation is authoritative; ordinary analysis does not execute repository code. Public/private Git import, repository auth, saved analyses, and server-side repository acquisition remain separate future product/security decisions.
+
+## D-010 — Production deployment uses one Compose stack with a single public web origin
+
+**Decision:** The production deployment baseline is Docker Compose with two containers: an Nginx web container serving the built Vite application and reverse-proxying `/api` plus `/health`, and an internal Node/Fastify API container. Only the web container publishes a host port.
+
+**Why:** The existing browser client already uses same-origin `/api` requests. A single public origin avoids a new CORS/public-API boundary while keeping the current web/API process ownership intact and making VPS/PaaS deployment straightforward.
+
+**Consequences:** Compose packaging does not turn CodeFlow into a microservice architecture; it deploys the existing modular monolith processes together. The API listens on `0.0.0.0:3001` inside the Compose network, is not published to the host, and remains reachable publicly only through the web proxy. `CODEFLOW_PORT` controls the published web port and defaults to `8080`. Deployment changes must preserve the repository security/input bounds and must pass Compose configuration, image-build, startup, and proxied health verification.
