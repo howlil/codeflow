@@ -139,10 +139,10 @@ Durable interaction and visual behavior belongs in `.agents/DESIGN.md`.
 The production baseline is one Docker Compose stack that packages the existing web and API process boundaries without introducing a new product/service architecture.
 
 ```text
-host/public route
+platform-managed public route
       |
       v
-web container (Nginx :8080)
+web container (Nginx 0.0.0.0:8080)
   - serves Vite static build
   - /api/* -> api:3001
   - /health -> api:3001/health
@@ -154,13 +154,13 @@ api container (Node/Fastify :3001, Compose network only)
 analysis-core in the API process
 ```
 
-Only the web container publishes a host port. `CODEFLOW_PORT` controls that host port and defaults to `8080`. The API binds to `0.0.0.0:3001` inside the Compose network and is intentionally not published to the host.
+The web container listens on and exposes container port `8080`, but the repository Compose file does not publish a host port. External host-port assignment and the public route are owned by the deployment platform; on MyPaaS the public service is `web` on container port `8080`. The API binds to `0.0.0.0:3001` inside the Compose network and is intentionally not exposed as a public service. `CODEFLOW_PORT` remains preserved in `.env.example` for deployment compatibility and should remain `8080` on MyPaaS.
 
 This packaging keeps browser requests same-origin and avoids creating a separate public CORS/API surface. It does not change D-003: CodeFlow remains a modular monolith with two deployable process roles, not independently evolved microservices.
 
 The Nginx request-body limit must stay at or above the API request limit so the reverse proxy does not reject requests that the authoritative API boundary would otherwise accept.
 
-Production deployment verification must exercise the actual Compose path: configuration rendering, image builds, stack startup, and a health request through the public web container to the internal API.
+Production deployment verification must exercise the actual Compose path: configuration rendering, image builds, stack startup, and a health request through the web container to the internal API without requiring repository-owned host-port publishing.
 
 ## Static vs Runtime Boundary
 
@@ -217,7 +217,7 @@ Architecture must preserve:
 - no raw private source in logs/analytics by default;
 - minimal source/context sent to future AI explanation;
 - a separately designed sandbox before runtime execution;
-- no direct host exposure of the API in the default Compose deployment.
+- no direct public exposure of the API in the default Compose deployment.
 
 ## Performance Direction
 
@@ -245,6 +245,6 @@ The following are material and should not change casually:
 6. ordinary static analysis does not execute arbitrary repository code;
 7. static step-through never presents possible source paths as observed runtime execution;
 8. architecture remains a modular monolith unless a measured current requirement justifies a material boundary change;
-9. default production deployment exposes one public web origin and keeps the API internal to the Compose network.
+9. default production deployment exposes one public web origin through the deployment platform and keeps the API internal to the Compose network.
 
 Material changes to these invariants, public contracts, data ownership, security/trust boundaries, persistence model, or runtime topology require explicit user approval.
