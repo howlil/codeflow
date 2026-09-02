@@ -53,11 +53,11 @@ The production Compose path is also verified in CI:
 docker compose config
  -> build production images
  -> start api + web
- -> request /health through the published web origin
+ -> request /health through the web container
  -> tear down stack
 ```
 
-The smoke test uses a non-default host port in CI to avoid accidental runner conflicts. A successful health request must traverse Nginx to the internal API; image build alone is not sufficient deployment evidence.
+The smoke test does not publish a host port. It executes the health request from inside the web container so the request still traverses Nginx to the internal API; image build alone is not sufficient deployment evidence.
 
 ## Focused Verification
 
@@ -104,8 +104,9 @@ Deployment or container changes require targeted verification of the actual prod
 - the API starts on the internal Compose network;
 - the web container serves the built SPA;
 - `/api` and `/health` proxying use the internal API service rather than a host-only address;
-- the public health request succeeds after stack startup;
-- the API remains unexposed to the host unless a future approved deployment requirement changes that boundary.
+- the web-container health request succeeds after stack startup;
+- the web service exposes container port `8080` without a repository-owned host-port mapping;
+- the API remains non-public unless a future approved deployment requirement changes that boundary.
 
 ## High-Risk Boundaries
 
