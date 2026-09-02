@@ -32,8 +32,10 @@ jobs:
       - name: Install dependencies and refresh lockfile
         run: pnpm install --no-frozen-lockfile
 
-      - name: Format repository
-        run: pnpm format
+      - name: Stabilize repository formatting
+        run: |
+          pnpm format
+          pnpm format
 
       - name: Commit generated dependency state
         if: github.event_name == 'pull_request'
