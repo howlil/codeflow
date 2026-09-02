@@ -45,11 +45,11 @@ Show the smallest meaningful projection for the current task and reveal detail o
 
 ### Preserve orientation
 
-Search, focus, source inspection, relationship navigation, and future semantic zoom should move the user within one coherent mental model rather than opening disconnected surfaces.
+Search, focus, source inspection, relationship navigation, data-flow inspection, and future semantic zoom should move the user within one coherent mental model rather than opening disconnected surfaces.
 
 ### Interaction follows semantics
 
-Coordinates, panels, selection, focus, source expansion, and animation are view state. Semantic entities, relationships, evidence, and source provenance remain product truth.
+Coordinates, panels, selection, focus, source expansion, relationship lenses, static-step position, and animation are view state. Semantic entities, relationships, evidence, and source provenance remain product truth.
 
 ## Workspace Model
 
@@ -78,6 +78,14 @@ Search is spatial navigation. Selecting a result should select/focus the semanti
 Focus reduces irrelevant context without changing canonical semantic relationships.
 
 Depth/extra controls should only be introduced when graph complexity makes them useful.
+
+### Relationship Lenses
+
+A relationship lens reduces the visible inspection set without creating or reclassifying semantics.
+
+Only offer a lens for semantic relationship kinds that actually exist in the current projection. Do not show fixed no-op categories merely for visual consistency.
+
+Changing a lens should preserve the selected function and surrounding workspace context. Relationship evidence/provenance remains inspectable under every lens.
 
 ### Semantic Zoom
 
@@ -121,7 +129,9 @@ solid   -> verified/static/configured relationship
  dashed -> inferred relationship
 ```
 
-Observed runtime and active simulation may receive separate treatment later, but runtime evidence must remain distinguishable from static simulation.
+Multiple static semantic kinds such as calls, reads, writes, mutations, argument passing, returns, and value flow should be distinguished primarily through explicit labels/kinds and evidence—not a rainbow palette.
+
+Observed runtime and static simulation may receive separate treatment later, but runtime evidence must remain distinguishable from static simulation.
 
 ### Selection
 
@@ -145,9 +155,25 @@ failure paths
 other derived metadata
 ```
 
+Function input/output data and argument mappings belong in the inspector because they explain the selected semantic entity rather than changing the canvas graph.
+
 Do not fill absent information with speculative copy.
 
 Source expansion should increase source visibility without replacing the semantic workspace or losing the current semantic selection.
+
+## Static Step-through
+
+Static step-through is an evidence-oriented navigation aid over deterministic source-backed steps. It is not a runtime debugger or execution playback UI.
+
+The interaction should:
+
+- expose current step kind, concise value/source expression when available, provenance, and source location;
+- allow forward/reverse navigation without replacing the canvas or source context;
+- synchronize the selected function when a step crosses a supported function boundary;
+- label branches and failures as **possible static paths**, never as executed outcomes;
+- avoid fabricated runtime values, timing, frequency, probability, or confidence percentages.
+
+Do not use playback metaphors, live pulses, animated traces, or runtime-looking status treatments unless actual runtime evidence is later introduced and visibly distinguished from static analysis.
 
 ## Interaction States
 
@@ -220,6 +246,7 @@ A future theme may remap tokens; do not introduce another theme until product be
 - text/boundary contrast must remain readable;
 - relationship/evidence meaning cannot depend only on color;
 - native semantics are preferred when native controls are sufficient;
+- disabled previous/next step controls must reflect actual static-step bounds;
 - reduced-motion behavior is required when animated traces are introduced.
 
 ## Implementation Ownership
