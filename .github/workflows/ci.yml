@@ -31,3 +31,24 @@ jobs:
 
       - name: Verify repository
         run: pnpm check
+
+      - name: Validate production Compose
+        run: docker compose config
+
+      - name: Smoke test production Compose
+        run: |
+          export CODEFLOW_PORT=18080
+          trap 'docker compose down --remove-orphans' EXIT
+
+          docker compose up -d --build
+
+          for attempt in {1..30}; do
+            if curl --fail --silent "http://127.0.0.1:${CODEFLOW_PORT}/health" >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+
+          docker compose ps
+          docker compose logs
+          exit 1
