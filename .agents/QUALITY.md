@@ -8,7 +8,8 @@ Current root tooling:
 
 - Node.js `>=24 <25`;
 - pnpm `11.21.0`;
-- TypeScript / ESM monorepo.
+- TypeScript / ESM monorepo;
+- Docker Engine with Docker Compose v2 for production packaging verification.
 
 Package manifests and the lockfile are authoritative for exact versions.
 
@@ -26,11 +27,14 @@ pnpm build
 pnpm typecheck
 pnpm test
 pnpm check
+docker compose config
+docker compose up -d --build
+docker compose down
 ```
 
 ## Repository Integration Gate
 
-`pnpm check` is the standard repository-wide verification gate:
+`pnpm check` is the standard repository-wide application verification gate:
 
 ```text
 format:check
@@ -42,6 +46,18 @@ format:check
 Each package build already runs the TypeScript compiler, so running the repository-wide `typecheck` again inside `pnpm check` would duplicate the same compiler work. Keep `pnpm typecheck` available for focused/manual type verification when a full build is unnecessary.
 
 GitHub Actions runs `pnpm install --frozen-lockfile` followed by `pnpm check` for pull requests and pushes to `master`.
+
+The production Compose path is also verified in CI:
+
+```text
+docker compose config
+ -> build production images
+ -> start api + web
+ -> request /health through the published web origin
+ -> tear down stack
+```
+
+The smoke test uses a non-default host port in CI to avoid accidental runner conflicts. A successful health request must traverse Nginx to the internal API; image build alone is not sufficient deployment evidence.
 
 ## Focused Verification
 
@@ -78,6 +94,18 @@ Important CodeFlow interaction confidence includes:
 - static/inferred/unavailable evidence presentation.
 
 Presentation-only layout changes do not require a new automated test when existing tests plus direct visual/diff verification provide the relevant confidence.
+
+### Deployment Changes
+
+Deployment or container changes require targeted verification of the actual production path:
+
+- `docker compose config` succeeds;
+- both production image targets build from a clean context;
+- the API starts on the internal Compose network;
+- the web container serves the built SPA;
+- `/api` and `/health` proxying use the internal API service rather than a host-only address;
+- the public health request succeeds after stack startup;
+- the API remains unexposed to the host unless a future approved deployment requirement changes that boundary.
 
 ## High-Risk Boundaries
 
@@ -117,6 +145,7 @@ A logical change is release-ready when:
 - relevant focused verification passes;
 - `pnpm check` passes when required by the integration path;
 - any risk-specific checks pass;
+- deployment changes pass the production Compose config/build/start/health smoke path;
 - no known in-scope blocker remains;
 - canonical project/architecture/current-state documentation is updated only when its owned truth changed.
 
