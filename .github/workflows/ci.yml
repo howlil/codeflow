@@ -2,20 +2,20 @@ name: CI
 
 on:
   pull_request:
+  push:
+    branches:
+      - master
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Check out PR branch
+      - name: Check out repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
-          fetch-depth: 0
 
       - name: Enable Corepack
         run: corepack enable
@@ -29,89 +29,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Apply M4 verification fixes
-        shell: bash
-        run: |
-          python <<'PY'
-          from pathlib import Path
-
-          panel = Path('apps/web/src/StaticFlowPanel.tsx')
-          text = panel.read_text()
-          text = text.replace(
-              "type RelationshipLens = 'ALL' | 'CALLS' | StaticFlowRelationshipKind;\n",
-              "type RelationshipLens = 'ALL' | 'CALLS' | StaticFlowRelationshipKind;\n\nconst EMPTY_STATIC_STEPS: NonNullable<FlowProjection['staticFlow']>['steps'] = [];\nconst EMPTY_STATIC_RELATIONSHIPS: NonNullable<\n  FlowProjection['staticFlow']\n>['relationships'] = [];\n",
-          )
-          text = text.replace(
-              "  const functionDataSet = flow.functionData ?? [];\n  const staticFlow = flow.staticFlow ?? { steps: [], relationships: [] };\n  const functionData = useMemo(\n    () =>\n      selectedNode === null\n        ? null\n        : (functionDataSet.find(\n            (candidate) => candidate.functionId === selectedNode.id,\n          ) ?? null),\n    [functionDataSet, selectedNode],\n  );",
-              "  const staticSteps = flow.staticFlow?.steps ?? EMPTY_STATIC_STEPS;\n  const staticRelationships =\n    flow.staticFlow?.relationships ?? EMPTY_STATIC_RELATIONSHIPS;\n  const functionData = useMemo(\n    () =>\n      selectedNode === null\n        ? null\n        : (flow.functionData?.find(\n            (candidate) => candidate.functionId === selectedNode.id,\n          ) ?? null),\n    [flow.functionData, selectedNode],\n  );",
-          )
-          text = text.replace(
-              'for (const relationship of staticFlow.relationships)',
-              'for (const relationship of staticRelationships)',
-          )
-          text = text.replace(
-              '}, [flow.edges, staticFlow.relationships]);',
-              '}, [flow.edges, staticRelationships]);',
-          )
-          text = text.replace(
-              'const staticRelationships = staticFlow.relationships\n      .filter(',
-              'const visibleStaticRelationships = staticRelationships\n      .filter(',
-          )
-          text = text.replace(
-              'return [...calls, ...staticRelationships].filter(',
-              'return [...calls, ...visibleStaticRelationships].filter(',
-          )
-          text = text.replace(
-              '}, [flow, lens, selectedNode, staticFlow.relationships]);\n  const steps = staticFlow.steps;',
-              '}, [flow, lens, selectedNode, staticRelationships]);\n  const steps = staticSteps;',
-          )
-          panel.write_text(text)
-
-          test = Path('apps/web/src/StaticFlowPanel.test.tsx')
-          text = test.read_text()
-          text = text.replace(
-              "import { fireEvent, render, screen } from '@testing-library/react';\nimport { describe, expect, it, vi } from 'vitest';",
-              "import { cleanup, fireEvent, render, screen } from '@testing-library/react';\nimport { afterEach, describe, expect, it, vi } from 'vitest';",
-          )
-          text = text.replace(
-              "describe('StaticFlowPanel', () => {",
-              "afterEach(cleanup);\n\ndescribe('StaticFlowPanel', () => {",
-          )
-          text = text.replace(
-              "expect(screen.getByText('string')).toBeInTheDocument();",
-              "expect(screen.getAllByText('string')).not.toHaveLength(0);",
-          )
-          text = text.replace(
-              "expect(screen.getByText('trimmed → value')).toBeInTheDocument();",
-              "expect(screen.getAllByText('trimmed → value')).not.toHaveLength(0);",
-          )
-          text = text.replace(
-              "expect(screen.getByText('Mutate result.value')).toBeInTheDocument();\n    expect(onSelectNode).toHaveBeenLastCalledWith('handler');",
-              "expect(screen.getAllByText('Mutate result.value')).not.toHaveLength(0);\n    expect(screen.getByText(/Step 2\\/3/)).toBeInTheDocument();\n    expect(onSelectNode).toHaveBeenLastCalledWith('handler');",
-          )
-          test.write_text(text)
-
-          api_test = Path('apps/api/src/m4.test.ts')
-          text = api_test.read_text().replace(
-              "    expect(relationshipKinds).toEqual(\n      expect.objectContaining({\n        size: expect.any(Number),\n      }),\n    );\n",
-              '',
-          )
-          api_test.write_text(text)
-          PY
-
-          pnpm prettier --write \
-            apps/api/src/m4.test.ts \
-            apps/web/src/StaticFlowPanel.test.tsx \
-            apps/web/src/StaticFlowPanel.tsx \
-            packages/analysis-core/src/typescript-flow.ts
-          git show origin/master:.github/workflows/ci.yml > .github/workflows/ci.yml
-          git diff --check
-          pnpm prettier --check .
-
-      - name: Commit verified formatting fixes
-        run: |
-          git config user.name "${GITHUB_ACTOR}"
-          git config user.email "${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
-          git add .github/workflows/ci.yml apps/api/src/m4.test.ts apps/web/src/StaticFlowPanel.test.tsx apps/web/src/StaticFlowPanel.tsx packages/analysis-core/src/typescript-flow.ts
-          git commit -m "fix: stabilize M4 verification"
-          git push origin HEAD:${{ github.head_ref }}
+      - name: Verify repository
+        run: pnpm check

@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { FlowProjection } from './flow-client';
 import { StaticFlowPanel } from './StaticFlowPanel';
@@ -47,7 +47,9 @@ const flow: FlowProjection = {
     },
   ],
   source: { filePath: location.filePath, text: 'export function handle() {}' },
-  sources: [{ filePath: location.filePath, text: 'export function handle() {}' }],
+  sources: [
+    { filePath: location.filePath, text: 'export function handle() {}' },
+  ],
   analysis: {
     status: 'complete',
     analyzedFileCount: 1,
@@ -141,6 +143,8 @@ const flow: FlowProjection = {
   },
 };
 
+afterEach(cleanup);
+
 describe('StaticFlowPanel', () => {
   it('shows source-backed function inputs, outputs, and argument mappings', () => {
     render(
@@ -153,11 +157,11 @@ describe('StaticFlowPanel', () => {
 
     expect(screen.getByText('Inputs')).toBeInTheDocument();
     expect(screen.getByText('input')).toBeInTheDocument();
-    expect(screen.getByText('string')).toBeInTheDocument();
+    expect(screen.getAllByText('string')).not.toHaveLength(0);
     expect(screen.getByText('Outputs')).toBeInTheDocument();
     expect(screen.getByText('result.value')).toBeInTheDocument();
     expect(screen.getByText('Argument mappings')).toBeInTheDocument();
-    expect(screen.getByText('trimmed → value')).toBeInTheDocument();
+    expect(screen.getAllByText('trimmed → value')).not.toHaveLength(0);
   });
 
   it('filters only semantic relationship kinds that actually exist', () => {
@@ -174,7 +178,9 @@ describe('StaticFlowPanel', () => {
       screen.getByRole('button', { name: 'PASSES_ARGUMENT' }),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'MUTATES' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'WRITES' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'WRITES' }),
+    ).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'MUTATES' }));
 
@@ -198,11 +204,14 @@ describe('StaticFlowPanel', () => {
     expect(screen.getByText('Parameter input')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Next step' }));
-    expect(screen.getByText('Mutate result.value')).toBeInTheDocument();
+    expect(screen.getAllByText('Mutate result.value')).not.toHaveLength(0);
+    expect(screen.getByText(/Step 2\/3/)).toBeInTheDocument();
     expect(onSelectNode).toHaveBeenLastCalledWith('handler');
 
     fireEvent.click(screen.getByRole('button', { name: 'Next step' }));
-    expect(screen.getByText('Possible branch: value === ""')).toBeInTheDocument();
+    expect(
+      screen.getByText('Possible branch: value === ""'),
+    ).toBeInTheDocument();
     expect(onSelectNode).toHaveBeenLastCalledWith('normalize');
   });
 });

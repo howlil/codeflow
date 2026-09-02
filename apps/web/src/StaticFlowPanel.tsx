@@ -8,6 +8,12 @@ import type {
 
 type RelationshipLens = 'ALL' | 'CALLS' | StaticFlowRelationshipKind;
 
+const EMPTY_STATIC_STEPS: NonNullable<FlowProjection['staticFlow']>['steps'] =
+  [];
+const EMPTY_STATIC_RELATIONSHIPS: NonNullable<
+  FlowProjection['staticFlow']
+>['relationships'] = [];
+
 export function StaticFlowPanel({
   flow,
   selectedNode,
@@ -19,27 +25,28 @@ export function StaticFlowPanel({
 }) {
   const [lens, setLens] = useState<RelationshipLens>('ALL');
   const [stepIndex, setStepIndex] = useState(0);
-  const functionDataSet = flow.functionData ?? [];
-  const staticFlow = flow.staticFlow ?? { steps: [], relationships: [] };
+  const staticSteps = flow.staticFlow?.steps ?? EMPTY_STATIC_STEPS;
+  const staticRelationships =
+    flow.staticFlow?.relationships ?? EMPTY_STATIC_RELATIONSHIPS;
   const functionData = useMemo(
     () =>
       selectedNode === null
         ? null
-        : (functionDataSet.find(
+        : (flow.functionData?.find(
             (candidate) => candidate.functionId === selectedNode.id,
           ) ?? null),
-    [functionDataSet, selectedNode],
+    [flow.functionData, selectedNode],
   );
   const availableLenses = useMemo(() => {
     const kinds = new Set<RelationshipLens>();
     if (flow.edges.length > 0) {
       kinds.add('CALLS');
     }
-    for (const relationship of staticFlow.relationships) {
+    for (const relationship of staticRelationships) {
       kinds.add(relationship.kind);
     }
     return ['ALL', ...Array.from(kinds).sort()] as RelationshipLens[];
-  }, [flow.edges, staticFlow.relationships]);
+  }, [flow.edges, staticRelationships]);
   const visibleRelationships = useMemo(() => {
     const selectedNodeId = selectedNode?.id ?? null;
     const calls = flow.edges
@@ -58,7 +65,7 @@ export function StaticFlowPanel({
         )}`,
         evidence: edge.evidence[0] ?? null,
       }));
-    const staticRelationships = staticFlow.relationships
+    const visibleStaticRelationships = staticRelationships
       .filter(
         (relationship) =>
           selectedNodeId === null || relationship.functionId === selectedNodeId,
@@ -70,11 +77,11 @@ export function StaticFlowPanel({
         evidence: relationship.evidence[0] ?? null,
       }));
 
-    return [...calls, ...staticRelationships].filter(
+    return [...calls, ...visibleStaticRelationships].filter(
       (relationship) => lens === 'ALL' || relationship.kind === lens,
     );
-  }, [flow, lens, selectedNode, staticFlow.relationships]);
-  const steps = staticFlow.steps;
+  }, [flow, lens, selectedNode, staticRelationships]);
+  const steps = staticSteps;
   const boundedStepIndex = Math.min(stepIndex, Math.max(steps.length - 1, 0));
   const activeStep = steps[boundedStepIndex] ?? null;
 
@@ -173,7 +180,8 @@ export function StaticFlowPanel({
                           `parameter ${mapping.argumentIndex + 1}`}
                       </p>
                       <small>
-                        {mapping.location.filePath}:L{mapping.location.startLine}
+                        {mapping.location.filePath}:L
+                        {mapping.location.startLine}
                       </small>
                     </article>
                   ))}

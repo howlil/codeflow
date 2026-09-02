@@ -73,9 +73,9 @@ describe('M4 static data flow', () => {
     expect(handleData?.parameters.map((parameter) => parameter.name)).toEqual([
       'input',
     ]);
-    expect(handleData?.returns.map((returnPath) => returnPath.expressionText)).toEqual([
-      'result.value',
-    ]);
+    expect(
+      handleData?.returns.map((returnPath) => returnPath.expressionText),
+    ).toEqual(['result.value']);
     expect(handleData?.callArguments).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -101,11 +101,6 @@ describe('M4 static data flow', () => {
     );
     const stepKinds = new Set(flow.staticFlow.steps.map((step) => step.kind));
 
-    expect(relationshipKinds).toEqual(
-      expect.objectContaining({
-        size: expect.any(Number),
-      }),
-    );
     expect(relationshipKinds.has('PASSES_ARGUMENT')).toBe(true);
     expect(relationshipKinds.has('FLOWS_TO')).toBe(true);
     expect(relationshipKinds.has('READS')).toBe(true);
@@ -129,7 +124,9 @@ describe('M4 static data flow', () => {
       flow.staticFlow.steps.find((step) => step.kind === 'failure')?.label,
     ).toMatch(/^Possible failure:/);
     expect(
-      flow.staticFlow.steps.flatMap((step) => step.evidence).map((evidence) => evidence.kind),
+      flow.staticFlow.steps
+        .flatMap((step) => step.evidence)
+        .map((evidence) => evidence.kind),
     ).not.toContain('observed-runtime');
   });
 

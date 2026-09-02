@@ -126,7 +126,11 @@ export function analyzeTypeScriptRepository(
     entities: functions.map(({ entity }) => entity),
     relationships: callAnalysis.relationships,
   };
-  const staticData = buildStaticDataAnalysis(checker, functions, callAnalysis.calls);
+  const staticData = buildStaticDataAnalysis(
+    checker,
+    functions,
+    callAnalysis.calls,
+  );
   const issues = collectAnalysisIssues(
     program,
     checker,
@@ -713,7 +717,8 @@ function buildStaticDataAnalysis(
       }
 
       if (
-        (ts.isPrefixUnaryExpression(node) || ts.isPostfixUnaryExpression(node)) &&
+        (ts.isPrefixUnaryExpression(node) ||
+          ts.isPostfixUnaryExpression(node)) &&
         (node.operator === ts.SyntaxKind.PlusPlusToken ||
           node.operator === ts.SyntaxKind.MinusMinusToken)
       ) {
@@ -766,7 +771,8 @@ function buildStaticDataAnalysis(
       }
 
       if (ts.isReturnStatement(node)) {
-        const readIds = node.expression === undefined ? [] : addReads(node.expression);
+        const readIds =
+          node.expression === undefined ? [] : addReads(node.expression);
         const inputIds =
           node.expression === undefined
             ? []
@@ -858,7 +864,8 @@ function buildStaticDataAnalysis(
       }
 
       if (ts.isThrowStatement(node)) {
-        const readIds = node.expression === undefined ? [] : addReads(node.expression);
+        const readIds =
+          node.expression === undefined ? [] : addReads(node.expression);
         const position = node.getStart(sourceFile);
         const stepId = `step:failure:${record.entity.id}:${position}`;
         steps.push({
@@ -902,7 +909,10 @@ function buildStaticDataAnalysis(
     const bindingHistory =
       bindingHistoryByFunction.get(callerId) ??
       new Map<ts.Symbol, Array<{ position: number; stepId: string }>>();
-    const localSymbols = collectLocalSymbols(checker, callRecord.sourceFunction);
+    const localSymbols = collectLocalSymbols(
+      checker,
+      callRecord.sourceFunction,
+    );
 
     steps.push({
       id: callStepId,
@@ -1044,8 +1054,8 @@ function buildFunctionDataProjection(
 ): FunctionDataProjection {
   const sourceFile = record.declaration.getSourceFile();
   const filePath = record.entity.location.filePath;
-  const parameters: FunctionParameterProjection[] = record.declaration.parameters.map(
-    (parameter, index) => ({
+  const parameters: FunctionParameterProjection[] =
+    record.declaration.parameters.map((parameter, index) => ({
       id: `parameter:${record.entity.id}:${index}`,
       name: parameter.name.getText(sourceFile),
       typeText: parameter.type?.getText(sourceFile) ?? null,
@@ -1059,24 +1069,23 @@ function buildFunctionDataProjection(
           'The parameter is declared directly on this TypeScript function.',
         ),
       ],
-    }),
-  );
-  const returns: FunctionReturnProjection[] = collectReturnStatements(record).map(
-    (statement) => ({
-      id: `return:${record.entity.id}:${statement.getStart(sourceFile)}`,
-      expressionText: statement.expression?.getText(sourceFile) ?? null,
-      location: locationOf(sourceFile, statement, filePath),
-      evidence: [
-        evidenceAt(
-          sourceFile,
-          statement,
-          filePath,
-          'verified-static',
-          'This return path is declared directly in source.',
-        ),
-      ],
-    }),
-  );
+    }));
+  const returns: FunctionReturnProjection[] = collectReturnStatements(
+    record,
+  ).map((statement) => ({
+    id: `return:${record.entity.id}:${statement.getStart(sourceFile)}`,
+    expressionText: statement.expression?.getText(sourceFile) ?? null,
+    location: locationOf(sourceFile, statement, filePath),
+    evidence: [
+      evidenceAt(
+        sourceFile,
+        statement,
+        filePath,
+        'verified-static',
+        'This return path is declared directly in source.',
+      ),
+    ],
+  }));
   const callArguments: CallArgumentMapping[] = calls
     .filter((call) => call.sourceFunction.entity.id === record.entity.id)
     .flatMap((call) => {
@@ -1262,7 +1271,9 @@ function parameterNameFor(
   index: number,
 ): string | null {
   const parameter = targetFunction.declaration.parameters[index];
-  return parameter?.name.getText(targetFunction.declaration.getSourceFile()) ?? null;
+  return (
+    parameter?.name.getText(targetFunction.declaration.getSourceFile()) ?? null
+  );
 }
 
 function parameterStepId(functionIdValue: string, index: number): string {
@@ -1402,9 +1413,7 @@ function projectRepositoryFlow(
 
   const projectedSteps = staticData.staticFlow.steps
     .filter((step) => reachable.has(step.functionId))
-    .sort((left, right) =>
-      compareStaticSteps(left, right, functionOrder),
-    );
+    .sort((left, right) => compareStaticSteps(left, right, functionOrder));
   const projectedStepIds = new Set(projectedSteps.map((step) => step.id));
 
   return {
