@@ -1,90 +1,55 @@
 # Current Iteration
 
-Status: ACTIVE
+Status: IDLE
 
-Active Milestone: M4 — Data Flow & Static Simulation
+Active Milestone: None
 
-Last Completed: M3 — Real Repository Analysis (`RELEASE READY`)
+Last Completed: M4 — Data Flow & Static Simulation (`RELEASE READY`)
 
-Goal: Extend CodeFlow from function/call topology into evidence-backed TypeScript data movement and deterministic static step-through while keeping static semantics distinct from observed runtime behavior.
+Goal: No engineering outcome is currently active.
+
+Why: M4 is integrated and verified on `master`; do not implicitly continue into M5 without explicit user intent.
 
 ## Feature Compass
 
-Shape:
-
-```text
-bounded TypeScript repository
- -> function inputs / outputs
- -> local value flow / transforms
- -> reads / writes / mutations
- -> branch / failure possibilities
- -> additive static-flow projection
- -> API
- -> inspector + relationship lens + static step-through
-```
+Shape: No active feature.
 
 Position:
 
-- M4.1–M4.4 are implemented and verified on PR #19.
-- Existing M2/M3 canvas, repository input, search/focus, keyboard navigation, source, and call-evidence behavior remain intact.
-- The M4 projection is additive: existing function nodes and `CALLS` edges remain canonical while `functionData` and `staticFlow` expose source-backed data semantics.
-- Canonical PR CI #94 passed after formatting/test-isolation fixes, and final implementation/docs head CI #96 also passed.
+- M0 — Executable Foundation: integrated.
+- M1 — First Semantic Vertical Slice: integrated.
+- M2 — Canvas Comprehension: integrated.
+- M3 — Real Repository Analysis: integrated and release ready.
+- M4 — Data Flow & Static Simulation: integrated and release ready.
+- PR #19 delivered M4.1–M4.4 and was squash-merged to `master` as `ae88c01c997b4c405ff715f333a39669cd3c06aa`.
+- Post-merge master CI run #98 passed the repository gate.
 
-Delta: Integration and post-merge verification only.
+Delta: None.
 
-Next Move: Squash-merge PR #19, verify the resulting `master` commit, then record the M4 milestone gate.
-
-## Slices
-
-### M4.1 — Function Inputs & Outputs — VERIFIED
-
-- declared function parameters and explicit return paths retain repository-relative provenance;
-- supported call arguments map to callee parameters;
-- function inputs, outputs, and argument mappings are exposed in the inspector.
-
-### M4.2 — Local Value Flow & Transformations — VERIFIED
-
-- supported declarations, lexical reads/writes, transforms, and value dependencies are projected;
-- lexical flow does not pretend runtime branch selection is known;
-- supported value flow crosses existing resolved call boundaries without inventing parser/UI semantics.
-
-### M4.3 — Reads, Writes, Mutations & Relationship Lenses — VERIFIED
-
-- static relationships include `READS`, `WRITES`, `MUTATES`, `FLOWS_TO`, `PASSES_ARGUMENT`, and `RETURNS_TO` alongside the existing `CALLS` graph;
-- evidence remains source-backed and repository-relative;
-- relationship lenses expose only semantic kinds present in the projection.
-
-### M4.4 — Deterministic Static Step-through & Failure Paths — VERIFIED
-
-- ordered source-backed static steps support forward/reverse exploration and semantic selection synchronization;
-- branch and throw paths are explicitly labeled as static possibilities;
-- runtime values, timing, frequency, probability, and branch outcomes are not fabricated.
-
-## Boundaries Preserved
-
-M4 adds no runtime execution/tracing, framework-specific persistence/event inference, Git-host auth/import, persistence, AI explanation, another language adapter, queue/worker, Redis, graph database, or distributed architecture.
-
-Static-flow evidence remains static evidence and is never presented as `observed-runtime`.
+Next Move: Await explicit user intent before activating another milestone.
 
 ## Verification / Evidence
 
-PR #19 canonical CI evidence:
+M4 milestone gate evidence:
 
-- CI #94: `pnpm check` success after formatter/test-isolation correction;
-- CI #96: final implementation + architecture/design head `pnpm check` success;
-- formatting: Prettier clean;
-- lint: clean;
-- `analysis-core`, web, and API builds: pass;
-- web: 13/13 tests pass — 10 existing M2/M3 regressions + 3 M4 inspector/lens/step-through tests;
-- API: 10/10 tests pass — 7 existing M3 regressions + 3 M4 function-data/static-flow/determinism tests;
-- M4 tests verify no `observed-runtime` evidence is fabricated by static step-through.
+- PR #19 final head CI run #97: success;
+- PR #19 squash merge: `ae88c01c997b4c405ff715f333a39669cd3c06aa`;
+- post-merge `master` CI run #98: success;
+- repository gate covered formatting, lint, all builds, web tests, and API tests;
+- web suite: 13/13 passed;
+- API suite: 10/10 passed;
+- verified behavior includes function inputs/outputs, caller argument mapping, source-backed local value flow, reads/writes/mutations, relationship lenses, branch/failure possibilities, and deterministic static step-through;
+- static analysis does not fabricate `observed-runtime` evidence, runtime values, timing, probability, frequency, or chosen branch outcomes.
 
-Post-merge `master` CI is still required before M4 can be marked `RELEASE READY`.
+## Deferred
+
+- M5 — Go Adapter Proof remains inactive until explicitly authorized.
+- Git-host import/auth, persistence, runtime execution, AI explanation, multi-application semantics, and infrastructure semantics remain outside current active scope.
 
 ## Risks / Blockers
 
-No product, architecture, implementation, or PR-head verification blocker remains inside the approved M4 scope.
+None for completed M4.
 
 ## Next Action
 
-Integrate PR #19, verify merged `master`, perform the M4 milestone gate, then STOP.
+STOP.
