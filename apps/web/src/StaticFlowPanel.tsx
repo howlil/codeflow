@@ -19,25 +19,27 @@ export function StaticFlowPanel({
 }) {
   const [lens, setLens] = useState<RelationshipLens>('ALL');
   const [stepIndex, setStepIndex] = useState(0);
+  const functionDataSet = flow.functionData ?? [];
+  const staticFlow = flow.staticFlow ?? { steps: [], relationships: [] };
   const functionData = useMemo(
     () =>
       selectedNode === null
         ? null
-        : (flow.functionData.find(
+        : (functionDataSet.find(
             (candidate) => candidate.functionId === selectedNode.id,
           ) ?? null),
-    [flow.functionData, selectedNode],
+    [functionDataSet, selectedNode],
   );
   const availableLenses = useMemo(() => {
     const kinds = new Set<RelationshipLens>();
     if (flow.edges.length > 0) {
       kinds.add('CALLS');
     }
-    for (const relationship of flow.staticFlow.relationships) {
+    for (const relationship of staticFlow.relationships) {
       kinds.add(relationship.kind);
     }
     return ['ALL', ...Array.from(kinds).sort()] as RelationshipLens[];
-  }, [flow.edges, flow.staticFlow.relationships]);
+  }, [flow.edges, staticFlow.relationships]);
   const visibleRelationships = useMemo(() => {
     const selectedNodeId = selectedNode?.id ?? null;
     const calls = flow.edges
@@ -56,7 +58,7 @@ export function StaticFlowPanel({
         )}`,
         evidence: edge.evidence[0] ?? null,
       }));
-    const staticRelationships = flow.staticFlow.relationships
+    const staticRelationships = staticFlow.relationships
       .filter(
         (relationship) =>
           selectedNodeId === null || relationship.functionId === selectedNodeId,
@@ -71,8 +73,8 @@ export function StaticFlowPanel({
     return [...calls, ...staticRelationships].filter(
       (relationship) => lens === 'ALL' || relationship.kind === lens,
     );
-  }, [flow, lens, selectedNode]);
-  const steps = flow.staticFlow.steps;
+  }, [flow, lens, selectedNode, staticFlow.relationships]);
+  const steps = staticFlow.steps;
   const boundedStepIndex = Math.min(stepIndex, Math.max(steps.length - 1, 0));
   const activeStep = steps[boundedStepIndex] ?? null;
 
