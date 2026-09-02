@@ -31,6 +31,7 @@ CodeFlow should:
 - preserve provenance for relationships that may be verified, inferred, configured, observed at runtime, or user-asserted;
 - render bounded semantic projections instead of exposing a raw AST or entire symbol graph by default;
 - let users navigate from system meaning toward functions/source evidence;
+- expose supported static data movement without fabricating runtime execution outcomes;
 - keep uncertainty visible rather than presenting inferred or missing information as fact;
 - remain useful without AI explanation;
 - keep static analysis useful without executing arbitrary repository code.
@@ -41,16 +42,24 @@ CodeFlow should:
 local repository selection
  -> bounded TypeScript source input
  -> multi-file semantic analysis
- -> evidence-backed flow projection
+ -> evidence-backed semantic/data-flow projection
  -> semantic workspace
  -> search/focus/navigation
- -> select node or relationship
- -> inspect cross-file source + provenance
+ -> inspect calls + data movement + source provenance
+ -> deterministic static step-through where supported
 ```
 
 ## Current Milestone
 
-None. M3 — Real Repository Analysis is complete and release ready. No subsequent milestone is active until explicitly authorized.
+### M4 — Data Flow & Static Simulation
+
+Goal: extend CodeFlow from function/call topology into evidence-backed TypeScript data movement and deterministic static step-through.
+
+M4 is limited to semantics that can be established honestly from bounded static TypeScript analysis. It includes supported function inputs/outputs, argument/return mapping, local value flow and transforms, reads/writes/mutations, branch/failure metadata, relationship lenses once multiple semantic kinds exist, and a static step-through interaction delivered through the existing API/workspace path.
+
+Static simulation is not runtime execution. M4 must not fabricate concrete runtime values, branch outcomes, timing, frequency, latency, or probability. Unsupported/partial semantics remain explicit.
+
+Detailed slices, execution position, and milestone-gate evidence belong in `.agents/CURRENT_ITERATION.md`.
 
 ## Completed Product Foundations
 
@@ -85,7 +94,7 @@ Established a semantic workspace that preserves comprehension as the visible gra
 - stable responsive automatic relationship layout;
 - truthful unavailable-evidence handling rather than fabricated confidence.
 
-Relationship filters/lenses remain deferred because the implemented relationship contract currently exposes only `CALLS`; adding a filter before multiple meaningful relationship kinds exist would create a no-op product control.
+Relationship filters/lenses were deferred while the implemented relationship contract exposed only `CALLS`; M4 may activate them only after multiple meaningful relationship kinds are actually present.
 
 ### M3 — Real Repository Analysis
 
@@ -105,17 +114,6 @@ The deterministic sample API remains a fixture/demo compatibility path rather th
 ## Deferred Product Work
 
 The following direction remains intentionally deferred until an explicit milestone makes it current scope.
-
-### M4 — Data Flow & Static Simulation
-
-Potential scope:
-
-- parameters/returns;
-- assignments/transforms;
-- request payload through application values to persistence/event shape;
-- read/write/mutation semantics;
-- deterministic branch/failure metadata;
-- step-through static simulation without fabricated runtime values.
 
 ### M5 — Go Adapter Proof
 
@@ -180,4 +178,4 @@ Do not treat these as current product scope merely because they appear in histor
 
 ## Material Open Questions
 
-Git-host import/auth, private repository handling, saved analyses/persistence, runtime execution, AI/private-source handling, multi-user isolation, and production deployment remain open until a future authorized milestone requires those boundaries.
+Git-host import/auth, private repository handling, saved analyses/persistence, runtime execution, AI/private-source handling, multi-user isolation, production deployment, and framework-specific persistence/event semantic ownership remain open until a future authorized milestone requires those boundaries.
