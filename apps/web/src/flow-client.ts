@@ -47,6 +47,80 @@ export interface AnalysisIssue {
   filePath?: string;
 }
 
+export interface FunctionParameterProjection {
+  id: string;
+  name: string;
+  typeText: string | null;
+  location: SourceLocation;
+  evidence: FlowEvidence[];
+}
+
+export interface FunctionReturnProjection {
+  id: string;
+  expressionText: string | null;
+  location: SourceLocation;
+  evidence: FlowEvidence[];
+}
+
+export interface CallArgumentMapping {
+  id: string;
+  callerFunctionId: string;
+  calleeFunctionId: string;
+  argumentIndex: number;
+  argumentText: string;
+  parameterName: string | null;
+  location: SourceLocation;
+  evidence: FlowEvidence[];
+}
+
+export interface FunctionDataProjection {
+  functionId: string;
+  parameters: FunctionParameterProjection[];
+  returns: FunctionReturnProjection[];
+  callArguments: CallArgumentMapping[];
+}
+
+export type StaticFlowStepKind =
+  | 'parameter'
+  | 'argument'
+  | 'declaration'
+  | 'assignment'
+  | 'transform'
+  | 'read'
+  | 'write'
+  | 'mutation'
+  | 'return'
+  | 'branch'
+  | 'failure';
+
+export type StaticFlowRelationshipKind =
+  | 'PASSES_ARGUMENT'
+  | 'FLOWS_TO'
+  | 'READS'
+  | 'WRITES'
+  | 'MUTATES'
+  | 'RETURNS_TO';
+
+export interface StaticFlowStep {
+  id: string;
+  functionId: string;
+  kind: StaticFlowStepKind;
+  label: string;
+  valueText: string | null;
+  location: SourceLocation;
+  evidence: FlowEvidence[];
+}
+
+export interface StaticFlowRelationship {
+  id: string;
+  kind: StaticFlowRelationshipKind;
+  functionId: string;
+  sourceStepId: string | null;
+  targetStepId: string | null;
+  label: string;
+  evidence: FlowEvidence[];
+}
+
 export interface FlowProjection {
   id: string;
   entryPointId: string;
@@ -59,6 +133,11 @@ export interface FlowProjection {
     analyzedFileCount: number;
     ignoredFileCount: number;
     issues: AnalysisIssue[];
+  };
+  functionData: FunctionDataProjection[];
+  staticFlow: {
+    steps: StaticFlowStep[];
+    relationships: StaticFlowRelationship[];
   };
 }
 
