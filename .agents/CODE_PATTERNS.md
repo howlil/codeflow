@@ -24,11 +24,11 @@ semantic/domain behavior
 -> verification
 ```
 
-A semantic/backend capability intended to be observable by the user is not complete merely because `analysis-core` or the API supports it. The corresponding UI must expose the capability truthfully in the same milestone/slice unless the authorized work is explicitly infrastructure-only, contract-only, migration-only, or an exploratory spike.
+A semantic/backend capability intended to be observable by the user is not complete merely because `analysis-core` or the API supports it. The corresponding UI must expose the capability truthfully in the same coherent vertical slice unless the authorized work is explicitly infrastructure-only, contract-only, migration-only, or an exploratory spike.
 
 Do not accumulate hidden backend product features for a later generic frontend phase. Do not build UI that invents semantic behavior not supported by analysis/API truth.
 
-Apply `.agents/skills/frontend/SKILL.md` for web ownership and `.agents/skills/backend/SKILL.md` for API/analysis ownership. Apply both for cross-stack user-facing slices.
+Apply `.agents/skills/frontend/SKILL.md` for web ownership and `.agents/skills/backend/SKILL.md` for API/analysis ownership. Apply both for cross-stack user-facing work.
 
 ## Semantic Model Pattern
 
