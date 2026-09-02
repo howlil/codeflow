@@ -6,143 +6,93 @@ Active Milestone: M4 — Data Flow & Static Simulation
 
 Last Completed: M3 — Real Repository Analysis (`RELEASE READY`)
 
-Goal: Extend CodeFlow from function/call topology into evidence-backed TypeScript data movement and deterministic static step-through, while keeping static semantics clearly distinct from observed runtime behavior.
-
-Why: M3 proved the real-repository path. The next product gap is understanding what data enters a function, how it is transformed and passed, what state it reads or mutates, what can be returned or fail, and how those facts connect back to source evidence.
+Goal: Extend CodeFlow from function/call topology into evidence-backed TypeScript data movement and deterministic static step-through while keeping static semantics distinct from observed runtime behavior.
 
 ## Feature Compass
 
 Shape:
 
 ```text
-bounded real TypeScript repository
+bounded TypeScript repository
  -> function inputs / outputs
- -> value assignments / transforms / call argument mapping
- -> read / write / mutation semantics
- -> branch / failure metadata
- -> bounded static-flow projection
+ -> local value flow / transforms
+ -> reads / writes / mutations
+ -> branch / failure possibilities
+ -> additive static-flow projection
  -> API
- -> semantic workspace + inspector
- -> deterministic static step-through
+ -> inspector + relationship lens + static step-through
 ```
 
 Position:
 
-- M0 — Executable Foundation: integrated.
-- M1 — First Semantic Vertical Slice: integrated.
-- M2 — Canvas Comprehension: integrated.
-- M3 — Real Repository Analysis: integrated and release ready.
-- M4 is now the active milestone.
+- M4.1–M4.4 are implemented on PR #19.
+- Existing M2/M3 canvas, repository input, search/focus, keyboard navigation, source, and call-evidence behavior remain intact.
+- The M4 projection is additive: existing function nodes and `CALLS` edges remain canonical while `functionData` and `staticFlow` expose source-backed data semantics.
+- Final standard `pnpm check` / PR CI and post-merge `master` CI are still required before the milestone can close.
 
-Delta: Deliver data-flow semantics vertically from `analysis-core` through projection/API to the existing workspace, then close the milestone only after representative real-repository acceptance and repository gates pass.
+Delta: Verification and integration only; no remaining approved M4 feature slice is intentionally deferred.
 
-Next Move: Execute M4.1 — Function Inputs & Outputs as the first vertical slice.
+Next Move: Pass the standard PR gate, integrate PR #19, verify merged `master`, then record the M4 milestone gate.
 
-## Scope
+## Scope Delivered
 
-In scope:
+### M4.1 — Function Inputs & Outputs — IMPLEMENTED
 
-- TypeScript-only static data-flow semantics over the bounded repository input established in M3;
-- function parameters, call arguments, returns, and supported caller/callee value mapping;
-- supported local declarations, assignments, property/value transforms, and deterministic value-flow relationships;
-- explicit read, write, and mutation semantics where source evidence establishes them;
-- deterministic branch and failure-path metadata needed for static step-through;
-- bounded static-flow projection and API contract extensions;
-- user-visible workspace/inspector presentation for every semantic capability introduced;
-- meaningful relationship lenses/filters once multiple semantic relationship kinds exist;
-- deterministic static step-through that shows source-backed possibilities rather than fabricated runtime values or execution timing;
-- truthful unsupported/partial analysis behavior;
-- focused analysis/API/web regression tests and the repository quality gate.
+- declared function parameters and type text where explicitly present;
+- explicit return paths with repository-relative source evidence;
+- supported call argument → callee parameter mappings;
+- function inputs, outputs, and argument mappings exposed in the web inspector.
 
-Out of scope unless separately authorized:
+### M4.2 — Local Value Flow & Transformations — IMPLEMENTED
 
-- runtime execution, tracing, concrete runtime values, latency, or probabilities;
-- framework-specific database/event/message semantics that cannot be established from the current generic TypeScript semantic owner;
-- Go or other language adapters;
-- Git-host import/auth, durable persistence, saved analyses, accounts, or collaboration;
-- queues, workers, Redis, graph databases, or distributed architecture;
-- AI explanation.
+- supported local declarations and lexical binding writes;
+- local reads connected to the latest earlier supported lexical write without pretending branch execution is known;
+- source-backed transform/value-dependency steps;
+- supported value flow through existing resolved function-call boundaries.
 
-## Slices
+### M4.3 — Reads, Writes, Mutations & Relationship Lenses — IMPLEMENTED
 
-### M4.1 — Function Inputs & Outputs
+- static relationship kinds include `READS`, `WRITES`, `MUTATES`, `FLOWS_TO`, `PASSES_ARGUMENT`, and `RETURNS_TO` in addition to the existing `CALLS` graph;
+- each projected relationship retains evidence/provenance;
+- the web relationship lens exposes only relationship kinds actually present in the current projection.
 
-Establish source-backed function data contracts through the complete product path:
+### M4.4 — Deterministic Static Step-through & Failure Paths — IMPLEMENTED
 
-```text
-parameters + call arguments + returns
- -> semantic model / evidence
- -> projection + API
- -> workspace / inspector
- -> tests
-```
+- deterministic ordered static-flow steps tied to repository-relative source;
+- forward/reverse step controls synchronize the selected function while preserving the workspace;
+- `if`/`switch` and `throw` paths are labeled as static possibilities;
+- no runtime values, timing, frequency, probability, or selected branch outcome is fabricated.
 
-Acceptance:
+## Boundaries Preserved
 
-- selected functions expose supported parameters and return paths with source provenance;
-- supported call arguments map to callee parameters deterministically;
-- supported returned values remain traceable back toward the caller;
-- UI does not invent input/output information absent from analysis truth.
+M4 does not add runtime execution/tracing, framework-specific persistence/event inference, Git-host auth/import, persistence, AI explanation, another language adapter, queues/workers, Redis, graph databases, or distributed architecture.
 
-### M4.2 — Local Value Flow & Transformations
-
-Trace supported values through local declarations, assignments, aliases, property access, and deterministic transforms within/across already-supported function calls.
-
-Acceptance:
-
-- a user can follow a supported value path rather than only a call path;
-- each flow step retains source evidence and semantic identity;
-- unsupported expressions remain explicit instead of being guessed;
-- backend semantics and UI representation ship in the same slice.
-
-### M4.3 — Reads, Writes, Mutations & Relationship Lenses
-
-Introduce evidence-backed side-effect semantics and make the richer relationship set usable in the workspace.
-
-Acceptance:
-
-- supported reads, writes, and mutations are distinguishable from `CALLS` and from one another;
-- relationship evidence remains repository-relative and inspectable;
-- relationship lenses/filters become available only for semantic kinds that actually exist in the projection;
-- selection, search, focus, keyboard navigation, source inspection, and partial states remain coherent.
-
-### M4.4 — Deterministic Static Step-through & Failure Paths
-
-Project an ordered static explanation of supported flow from a selected entry point, including branch/failure possibilities where the source proves them.
-
-Acceptance:
-
-- users can advance/reverse through deterministic static-flow steps while retaining canvas/source context;
-- branches/failure possibilities are labeled as static possibilities, not observed execution;
-- no runtime values, timing, frequency, confidence percentages, or chosen branch outcomes are fabricated;
-- a representative multi-file repository case proves M4.1–M4.4 end-to-end;
-- required focused tests and `pnpm check`/CI pass.
-
-## Material Decisions
-
-No new infrastructure, persistence, runtime, or trust boundary is authorized by M4.
-
-The exact additive semantic schema for value/data relationships is an implementation design decision inside the existing universal semantic model. It must preserve evidence provenance, deterministic identity, API/web projection ownership, and the static-vs-runtime boundary. Any change that would break those architecture invariants remains a stop condition requiring explicit approval.
+Static-flow evidence remains `verified-static` / `inferred-static` as appropriate; it is never relabeled as `observed-runtime`.
 
 ## Verification / Evidence
 
-Not yet implemented.
+Evidence collected so far on PR #19:
 
-Milestone verification will require:
+- formatter output was generated with the repository's pinned Prettier and committed back to the branch;
+- `analysis-core`, web, and API TypeScript builds passed during CI #90;
+- existing web regression suite passed 10/10 during CI #90;
+- the first M4 web test run exposed only test cleanup/query ambiguity, which was corrected without changing product behavior;
+- temporary CI instrumentation has been removed and `.github/workflows/ci.yml` is again identical to `master` (`pnpm check`).
 
-- focused deterministic analysis tests for each supported semantic relationship/path;
-- API contract/error/partial-state regression coverage;
-- web behavior tests for new inspection/lens/step-through interactions;
-- preservation of M2/M3 navigation, source/evidence, and repository-input behavior;
-- repository `pnpm check` and required CI on the integrated milestone head;
-- post-merge `master` CI before marking M4 `RELEASE READY`.
+Still required before `RELEASE READY`:
+
+1. standard PR `pnpm check` passes from the canonical workflow;
+2. M4 API tests execute and pass, including deterministic output and the static-vs-runtime boundary;
+3. M4 web inspector/lens/step-through tests pass;
+4. PR #19 is squash-merged;
+5. post-merge `master` CI passes.
 
 ## Risks / Blockers
 
-Main risk: presenting static approximation as runtime truth. Every slice must preserve explicit evidence and unsupported/partial states and must not infer concrete execution outcomes that the source cannot establish.
+No product/architecture blocker remains inside the approved M4 scope.
 
-No product/architecture blocker exists for beginning M4.1 within the scope above.
+The remaining risk is verification correctness: static possibilities must not be presented as observed runtime truth. The milestone stays ACTIVE until final PR and post-merge gates pass.
 
 ## Next Action
 
-Implement M4.1 — Function Inputs & Outputs vertically and continue through the approved slices without introducing a separate backend-only or frontend-only delivery phase.
+Run the canonical PR gate for PR #19, fix any verified regression, integrate, verify `master`, close M4, then STOP.
