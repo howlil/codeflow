@@ -51,15 +51,7 @@ local repository selection
 
 ## Current Milestone
 
-### M4 — Data Flow & Static Simulation
-
-Goal: extend CodeFlow from function/call topology into evidence-backed TypeScript data movement and deterministic static step-through.
-
-M4 is limited to semantics that can be established honestly from bounded static TypeScript analysis. It includes supported function inputs/outputs, argument/return mapping, local value flow and transforms, reads/writes/mutations, branch/failure metadata, relationship lenses once multiple semantic kinds exist, and a static step-through interaction delivered through the existing API/workspace path.
-
-Static simulation is not runtime execution. M4 must not fabricate concrete runtime values, branch outcomes, timing, frequency, latency, or probability. Unsupported/partial semantics remain explicit.
-
-Detailed slices, execution position, and milestone-gate evidence belong in `.agents/CURRENT_ITERATION.md`.
+None. M4 — Data Flow & Static Simulation is complete and release ready. No subsequent milestone is active until explicitly authorized.
 
 ## Completed Product Foundations
 
@@ -94,7 +86,7 @@ Established a semantic workspace that preserves comprehension as the visible gra
 - stable responsive automatic relationship layout;
 - truthful unavailable-evidence handling rather than fabricated confidence.
 
-Relationship filters/lenses were deferred while the implemented relationship contract exposed only `CALLS`; M4 may activate them only after multiple meaningful relationship kinds are actually present.
+Relationship filters/lenses were deferred while the implemented relationship contract exposed only `CALLS` and became appropriate only after M4 introduced additional meaningful semantic kinds.
 
 ### M3 — Real Repository Analysis
 
@@ -110,6 +102,21 @@ Established the first real-repository product path:
 - no repository code execution, Git hosting auth/clone, persistence, or runtime subsystem.
 
 The deterministic sample API remains a fixture/demo compatibility path rather than the default product journey.
+
+### M4 — Data Flow & Static Simulation
+
+Extended the real-repository TypeScript path with evidence-backed static data movement:
+
+- declared function parameters and explicit return paths with repository-relative provenance;
+- supported caller argument to callee parameter mapping;
+- source-backed declarations, lexical reads/writes, transforms, aliases, and value dependencies;
+- explicit `READS`, `WRITES`, `MUTATES`, `PASSES_ARGUMENT`, `FLOWS_TO`, and `RETURNS_TO` static relationships;
+- relationship lenses that expose only semantic kinds present in the projection;
+- ordered deterministic static step-through synchronized with semantic/source context;
+- branch and failure possibilities labeled as static possibilities rather than observed execution;
+- no fabricated runtime values, chosen branch outcomes, timing, frequency, latency, probability, or `observed-runtime` evidence.
+
+M4 preserved the existing M3 function/call projection and added `functionData` and `staticFlow` as additive source-backed projections.
 
 ## Deferred Product Work
 
