@@ -1,6 +1,6 @@
 # CodeFlow Quality
 
-`QUALITY.md` defines the repository-specific verification strategy and release-ready gates.
+`QUALITY.md` defines CodeFlow-specific verification commands, CI behavior, and risk-specific gates. Generic testing lifecycle policy remains global agent policy and is not duplicated here.
 
 ## Toolchain
 
@@ -32,9 +32,79 @@ docker compose up -d --build
 docker compose down
 ```
 
+## Verification Selection
+
+Use the cheapest deterministic check that can observe the changed failure boundary.
+
+For each change:
+
+1. identify the behavior or contract that changed;
+2. identify where that behavior can fail;
+3. run the smallest check that observes that boundary;
+4. escalate only when meaningful residual risk remains.
+
+Do not require a fixed unit → integration → E2E → deployment ladder. Do not rerun the full repository gate after every file edit or tiny commit.
+
+## Focused Verification
+
+### Semantic / Analysis Changes
+
+Prefer small deterministic fixtures/tests that directly prove the changed semantics, especially for:
+
+- entity/relationship correctness;
+- symbol/reference resolution;
+- deterministic identity;
+- evidence provenance/classification;
+- partial/unsupported behavior;
+- projection output.
+
+Use a small representative repository fixture when it provides higher signal than a large external repository.
+
+### API Changes
+
+Verify the affected HTTP boundary and semantic projection contract. Current API boundary tests live in `apps/api/src/app.test.ts`; M4-specific regression coverage also exists in `apps/api/src/m4.test.ts`.
+
+### Web / Interaction Changes
+
+Verify the affected user-visible behavior and the regressions that protect it. Current web coverage includes `apps/web/src/App.test.tsx` and `apps/web/src/StaticFlowPanel.test.tsx`.
+
+Important behavior includes selection/source/evidence inspection, search/focus, keyboard navigation, explicit async/partial/error states, and truthful static/inferred/unavailable presentation.
+
+Presentation-only changes do not require new automated tests when existing behavioral coverage plus direct visual/diff inspection is sufficient evidence.
+
+### Documentation / Agent Knowledge Changes
+
+For `AGENTS.md` or `.agents/` changes:
+
+- verify ownership and references against the current repository;
+- remove stale or competing sources of truth;
+- ensure `CURRENT_ITERATION.md` contains current state rather than history;
+- use formatting/static checks where relevant;
+- rely on the integration CI gate rather than inventing additional documentation ceremony.
+
+### Deployment Changes
+
+Deployment/container changes require the actual production path:
+
+```text
+docker compose config
+ -> build production images
+ -> start api + web
+ -> request /health through web -> api
+ -> tear down stack
+```
+
+Verify that:
+
+- `web` listens on/exposes container port `8080` without repository-owned host-port publishing;
+- `api` remains internal on `3001`;
+- `/api` and `/health` proxy through the internal API service;
+- the production image targets build and start;
+- the health request succeeds through Nginx.
+
 ## Repository Integration Gate
 
-`pnpm check` is the standard repository-wide application verification gate:
+`pnpm check` is the current repository integration gate:
 
 ```text
 format:check
@@ -43,111 +113,38 @@ format:check
  -> test
 ```
 
-Each package build already runs the TypeScript compiler, so running the repository-wide `typecheck` again inside `pnpm check` would duplicate the same compiler work. Keep `pnpm typecheck` available for focused/manual type verification when a full build is unnecessary.
+Package builds already run TypeScript compilation, so `pnpm check` intentionally does not add a duplicate repository-wide `typecheck` pass.
 
-GitHub Actions runs `pnpm install --frozen-lockfile` followed by `pnpm check` for pull requests and pushes to `master`.
+Because the repository is currently small and this gate is fast, GitHub Actions runs `pnpm check` for pull requests and pushes to `master`. During implementation, prefer focused checks; run the full gate at the coherent integration boundary rather than repeatedly for every logical edit.
 
-The production Compose path is also verified in CI:
-
-```text
-docker compose config
- -> build production images
- -> start api + web
- -> request /health through the web container
- -> tear down stack
-```
-
-The smoke test does not publish a host port. It executes the health request from inside the web container so the request still traverses Nginx to the internal API; image build alone is not sufficient deployment evidence.
-
-## Focused Verification
-
-Before the repository-wide gate, use the smallest deterministic checks that exercise the changed surface.
-
-### Semantic / Analysis Changes
-
-Protect relevant behavior with small deterministic fixtures/tests, especially for:
-
-- semantic entity/relationship correctness;
-- symbol/reference resolution;
-- deterministic identity where required;
-- evidence provenance/classification;
-- partial/unsupported behavior;
-- projection output.
-
-A small representative repository fixture is preferred when it gives clearer evidence than a large external repository.
-
-### API Changes
-
-Verify the relevant HTTP boundary and semantic projection contract. Current API tests live in `apps/api/src/app.test.ts`.
-
-### Web / Interaction Changes
-
-Verify the affected user-visible flow and existing regressions that protect it. Current workspace regression coverage lives in `apps/web/src/App.test.tsx`.
-
-Important CodeFlow interaction confidence includes:
-
-- selection and source/evidence inspection;
-- search and neighborhood focus;
-- relationship evidence inspection;
-- explicit loading/empty/partial/error states;
-- keyboard-accessible semantic navigation;
-- static/inferred/unavailable evidence presentation.
-
-Presentation-only layout changes do not require a new automated test when existing tests plus direct visual/diff verification provide the relevant confidence.
-
-### Deployment Changes
-
-Deployment or container changes require targeted verification of the actual production path:
-
-- `docker compose config` succeeds;
-- both production image targets build from a clean context;
-- the API starts on the internal Compose network;
-- the web container serves the built SPA;
-- `/api` and `/health` proxying use the internal API service rather than a host-only address;
-- the web-container health request succeeds after stack startup;
-- the web service exposes container port `8080` without a repository-owned host-port mapping;
-- the API remains non-public unless a future approved deployment requirement changes that boundary.
+Docker Compose validation/smoke is conditional in CI and runs only when deployment surfaces change. Deployment surfaces include `Dockerfile`, `compose.yaml`, `deploy/**`, `.dockerignore`, `.env.example`, and the CI workflow that owns this detection/gate.
 
 ## High-Risk Boundaries
 
-Changes touching any of these require targeted verification beyond generic CI when relevant:
+Escalate verification when the changed behavior touches:
 
 - semantic IR/evidence contracts;
 - repository scope/path isolation;
 - public API contracts;
 - security/privacy behavior;
-- persisted-data/migration behavior when persistence exists;
+- persisted-data/migration behavior if persistence exists;
 - runtime repository execution;
 - concurrency/resource isolation;
 - deployment or irreversible operations.
 
-Material changes to product behavior, public contracts, architecture/data ownership, security boundaries, or runtime topology still require explicit user approval before implementation.
-
-## Documentation / Agent Knowledge Changes
-
-For `.agents/` or root documentation-only changes:
-
-- verify all referenced paths exist;
-- verify commands against current package/workflow configuration;
-- verify architecture claims against current code;
-- verify current iteration claims against repository/PR state;
-- remove stale/competing sources of truth;
-- run repository CI when it is triggered by the integration path.
+The deeper check must target the material risk; additional test count by itself is not evidence.
 
 ## Flaky Tests
 
-A flaky test is a defect. Do not treat repeated reruns until green as valid verification evidence.
+A flaky test is a defect. Repeated reruns until green are not valid confidence evidence.
 
-## Release-Ready Criteria
+## Release-Ready Evidence
 
-A logical change is release-ready when:
+For an integrated CodeFlow change, repository-specific evidence is sufficient when:
 
-- its authorized observable outcome is satisfied;
-- relevant focused verification passes;
-- `pnpm check` passes when required by the integration path;
-- any risk-specific checks pass;
-- deployment changes pass the production Compose config/build/start/health smoke path;
-- no known in-scope blocker remains;
-- canonical project/architecture/current-state documentation is updated only when its owned truth changed.
-
-A milestone is release-ready only when its required slices are integrated and its milestone acceptance/verification criteria are satisfied.
+- the authorized observable outcome is implemented;
+- the changed failure boundaries have appropriate focused evidence;
+- the required integration CI is green;
+- any risk-specific gate triggered by the changed surface is green;
+- repository state/docs are truthful in their owning files;
+- no known in-scope blocker remains.
