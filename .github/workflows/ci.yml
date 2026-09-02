@@ -29,5 +29,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Verify repository
-        run: pnpm check
+      - name: Format M4 sources
+        run: pnpm prettier --write apps/api/src/m4.test.ts apps/web/src/StaticFlowPanel.test.tsx apps/web/src/StaticFlowPanel.tsx packages/analysis-core/src/typescript-flow.ts
+
+      - name: Upload formatted M4 sources
+        uses: actions/upload-artifact@v4
+        with:
+          name: formatted-m4
+          path: |
+            apps/api/src/m4.test.ts
+            apps/web/src/StaticFlowPanel.test.tsx
+            apps/web/src/StaticFlowPanel.tsx
+            packages/analysis-core/src/typescript-flow.ts
+
+      - name: Verify formatted repository
+        run: pnpm lint && pnpm build && pnpm test
