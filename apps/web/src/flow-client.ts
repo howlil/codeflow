@@ -134,8 +134,10 @@ export interface FlowProjection {
     ignoredFileCount: number;
     issues: AnalysisIssue[];
   };
-  functionData: FunctionDataProjection[];
-  staticFlow: {
+  /** Added in M4. Optional so older deterministic fixtures remain readable. */
+  functionData?: FunctionDataProjection[];
+  /** Added in M4. Optional so older deterministic fixtures remain readable. */
+  staticFlow?: {
     steps: StaticFlowStep[];
     relationships: StaticFlowRelationship[];
   };
