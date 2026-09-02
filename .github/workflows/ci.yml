@@ -29,6 +29,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Format Compose diagnostic
+        run: |
+          pnpm exec prettier --write compose.yaml
+          git diff -- compose.yaml
+
       - name: Verify repository
         run: pnpm check
 
