@@ -136,61 +136,59 @@ function radixValue(value: string): string {
   return value === '' ? EMPTY_SELECT_VALUE : value;
 }
 
-export function Select({
+export const Select = ({
   value,
   options,
   onValueChange,
   className,
   disabled = false,
   'aria-label': ariaLabel,
-}: SelectProps) {
-  return (
-    <RadixSelect.Root
-      value={radixValue(value)}
-      disabled={disabled}
-      onValueChange={(next) =>
-        onValueChange(next === EMPTY_SELECT_VALUE ? '' : next)
-      }
+}: SelectProps) => (
+  <RadixSelect.Root
+    value={radixValue(value)}
+    disabled={disabled}
+    onValueChange={(next) =>
+      onValueChange(next === EMPTY_SELECT_VALUE ? '' : next)
+    }
+  >
+    <RadixSelect.Trigger
+      aria-label={ariaLabel}
+      className={cn(
+        controlClass,
+        'inline-flex w-full items-center justify-between gap-2 pr-2 text-left',
+        className,
+      )}
     >
-      <RadixSelect.Trigger
-        aria-label={ariaLabel}
-        className={cn(
-          controlClass,
-          'inline-flex w-full items-center justify-between gap-2 pr-2 text-left',
-          className,
-        )}
+      <RadixSelect.Value />
+      <RadixSelect.Icon className="shrink-0 text-cs-subtle">
+        <ChevronDown size={11} aria-hidden="true" />
+      </RadixSelect.Icon>
+    </RadixSelect.Trigger>
+    <RadixSelect.Portal>
+      <RadixSelect.Content
+        position="popper"
+        sideOffset={4}
+        className="z-[80] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-lg border border-cs-border bg-cs-surface p-1 text-cs-text shadow-[0_16px_48px_rgba(0,0,0,0.24)]"
       >
-        <RadixSelect.Value />
-        <RadixSelect.Icon className="shrink-0 text-cs-subtle">
-          <ChevronDown size={11} aria-hidden="true" />
-        </RadixSelect.Icon>
-      </RadixSelect.Trigger>
-      <RadixSelect.Portal>
-        <RadixSelect.Content
-          position="popper"
-          sideOffset={4}
-          className="z-[80] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-lg border border-cs-border bg-cs-surface p-1 text-cs-text shadow-[0_16px_48px_rgba(0,0,0,0.24)]"
-        >
-          <RadixSelect.Viewport>
-            {options.map((option) => (
-              <RadixSelect.Item
-                key={option.value}
-                value={radixValue(option.value)}
-                disabled={option.disabled ?? false}
-                className="relative flex h-7 cursor-default select-none items-center rounded px-7 pr-2 text-[10px] text-cs-muted outline-none data-[highlighted]:bg-cs-hover data-[highlighted]:text-cs-text data-[disabled]:pointer-events-none data-[disabled]:opacity-40"
-              >
-                <RadixSelect.ItemIndicator className="absolute left-2 grid place-items-center text-cs-text">
-                  <Check size={10} aria-hidden="true" />
-                </RadixSelect.ItemIndicator>
-                <RadixSelect.ItemText>{option.label}</RadixSelect.ItemText>
-              </RadixSelect.Item>
-            ))}
-          </RadixSelect.Viewport>
-        </RadixSelect.Content>
-      </RadixSelect.Portal>
-    </RadixSelect.Root>
-  );
-}
+        <RadixSelect.Viewport>
+          {options.map((option) => (
+            <RadixSelect.Item
+              key={option.value}
+              value={radixValue(option.value)}
+              disabled={option.disabled ?? false}
+              className="relative flex h-7 cursor-default select-none items-center rounded px-7 pr-2 text-[10px] text-cs-muted outline-none data-[highlighted]:bg-cs-hover data-[highlighted]:text-cs-text data-[disabled]:pointer-events-none data-[disabled]:opacity-40"
+            >
+              <RadixSelect.ItemIndicator className="absolute left-2 grid place-items-center text-cs-text">
+                <Check size={10} aria-hidden="true" />
+              </RadixSelect.ItemIndicator>
+              <RadixSelect.ItemText>{option.label}</RadixSelect.ItemText>
+            </RadixSelect.Item>
+          ))}
+        </RadixSelect.Viewport>
+      </RadixSelect.Content>
+    </RadixSelect.Portal>
+  </RadixSelect.Root>
+);
 
 interface CheckboxProps {
   checked: boolean;
