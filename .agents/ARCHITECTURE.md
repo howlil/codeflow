@@ -26,11 +26,13 @@ local directory/file selection
  -> bounded POST /api/flows/analyze
  -> API validates paths + resource scope
  -> deterministic multi-file TypeScript analysis
- -> semantic entities + relationships + evidence
+ -> function/call semantic graph + evidence
+ -> source-backed function data + static data-flow projection
  -> bounded projection + analysis issues
  -> web semantic workspace
  -> search/focus/navigation
- -> source/evidence inspection across analyzed files
+ -> source/evidence + data-flow inspection
+ -> relationship lenses / deterministic static step-through
 ```
 
 `GET /api/flows/sample` remains a deterministic fixture/demo path; it is not the primary user-facing product path.
@@ -78,9 +80,19 @@ Heuristic confidence must not be presented as precise factual probability.
 
 `packages/analysis-core` owns semantic analysis and model/projection behavior.
 
-Current TypeScript analysis can build an in-memory multi-file TypeScript program from the bounded source set supplied by the API and resolve supported function/call relationships across selected files/modules. Future language adapters should use the strongest practical semantic source available while emitting the shared semantic model.
+Current TypeScript analysis builds an in-memory multi-file TypeScript program from the bounded source set supplied by the API. It resolves supported function/call relationships across selected files/modules and can additionally project source-backed static data semantics for reachable functions, including:
 
-Adapter-specific compiler/parser objects must remain behind the analysis boundary.
+- declared parameters and explicit return paths;
+- supported caller argument → callee parameter mappings;
+- supported local declarations, lexical reads/writes, value dependencies, and transforms;
+- explicit property/index mutation where source establishes it;
+- conditional and throw possibilities required for deterministic static exploration.
+
+The existing function/call graph remains intact. M4 adds `functionData` and `staticFlow` projection data rather than turning parser AST/control-flow objects into the cross-system contract.
+
+A static-flow relationship may connect supported source-backed steps with verified or inferred-static evidence. Lexical value dependencies that cannot prove runtime branch selection remain inferred rather than being presented as executed facts.
+
+Future language adapters should use the strongest practical semantic source available while emitting the shared semantic model/projection concepts. Adapter-specific compiler/parser objects must remain behind the analysis boundary.
 
 An adapter may support only the capabilities it can establish honestly; unsupported semantics should not be fabricated for completeness.
 
@@ -92,7 +104,7 @@ The API consumes `analysis-core`; semantic analysis logic should not migrate int
 
 Current repository analysis is `POST /api/flows/analyze`: it accepts a bounded set of repository-relative TypeScript source records plus an exported entry-point identity, rejects unsafe paths/invalid input, applies file/count/byte scope limits, and returns a semantic projection with explicit complete/partial analysis metadata.
 
-HTTP contracts expose semantic/projection data rather than raw parser-specific AST structures.
+The projection may include the existing function nodes/`CALLS` edges plus M4 `functionData` and `staticFlow` data. This is additive to the current endpoint; the API still exposes semantic/projection data rather than raw parser-specific AST structures.
 
 The API does not clone repositories, authenticate to Git hosts, persist source/analyses, or execute repository code in the current architecture.
 
@@ -100,9 +112,9 @@ The API does not clone repositories, authenticate to Git hosts, persist source/a
 
 `apps/web` owns user-facing semantic workspace state, local repository selection, and interaction.
 
-For M3, the browser filters the selected local directory to the supported bounded TypeScript source set before reading/sending source. These client checks improve UX and data minimization; they are not a security boundary and do not replace API validation.
+The browser filters the selected local directory to the supported bounded TypeScript source set before reading/sending source. These client checks improve UX and data minimization; they are not a security boundary and do not replace API validation.
 
-The web application consumes semantic/API projections. It does not become a source parser or canonical semantic graph owner.
+The web application consumes semantic/API projections. It does not become a source parser, static-flow analyzer, or canonical semantic graph owner.
 
 View state includes concerns such as:
 
@@ -110,7 +122,13 @@ View state includes concerns such as:
 - search/focus state;
 - neighborhood presentation;
 - inspector/source expansion;
+- selected relationship lens;
+- current static step-through position;
 - layout coordinates and visual grouping.
+
+Relationship-lens availability is derived from semantic kinds actually present in the projection. The UI must not fabricate an unavailable relationship category merely to provide a fixed filter set.
+
+Static step-through is navigation over ordered source-backed projection steps. Advancing/reversing a step can synchronize semantic selection, but the web layer does not choose branch outcomes or calculate runtime values.
 
 View state must not mutate semantic truth or evidence classification.
 
@@ -122,7 +140,15 @@ Static analysis must remain useful without executing untrusted repository code.
 
 Static flow/simulation and future runtime-observed execution are separate evidence domains.
 
-Runtime observations may enrich projections but must retain `observed-runtime` provenance rather than silently rewriting static evidence.
+Current static step-through represents source-backed parameters, value dependencies, calls, reads/writes/mutations, returns, branches, and failure possibilities. It does **not** claim:
+
+- a concrete runtime value;
+- which branch/return/failure path executed;
+- execution frequency;
+- latency/timing;
+- probability/confidence of a path being taken.
+
+Runtime observations may enrich projections later but must retain `observed-runtime` provenance rather than silently rewriting static evidence.
 
 Any future repository execution requires an explicitly approved sandbox architecture before implementation.
 
@@ -130,7 +156,7 @@ Any future repository execution requires an explicitly approved sandbox architec
 
 There is no current production persistence or graph database requirement in the implemented architecture.
 
-M3 repository source and analysis are request-scoped/in-memory. The browser sends the selected bounded source set for analysis; CodeFlow does not persist repository source or analysis history as part of the current product path.
+Repository source and analysis are request-scoped/in-memory. The browser sends the selected bounded source set for analysis; CodeFlow does not persist repository source or analysis history as part of the current product path.
 
 If durable SaaS metadata becomes necessary, persistence design is a new material decision. Historical preference is relational persistence such as PostgreSQL before graph-specific storage, but no persistence choice is activated merely by this document.
 
@@ -151,7 +177,7 @@ These are not forbidden forever; introducing them requires a current requirement
 
 Repository source is untrusted input and may be confidential.
 
-Current M3 input applies bounded file count, per-file bytes, total source bytes, supported extensions, ignored dependency/build/VCS directories, and repository-relative path validation. The server revalidates scope even when the browser prefilters input.
+Current repository input applies bounded file count, per-file bytes, total source bytes, supported extensions, ignored dependency/build/VCS directories, and repository-relative path validation. The server revalidates scope even when the browser prefilters input.
 
 Architecture must preserve:
 
@@ -186,6 +212,7 @@ The following are material and should not change casually:
 4. static and runtime evidence remain distinguishable;
 5. API/web consume semantic projections rather than independently reconstructing source semantics;
 6. ordinary static analysis does not execute arbitrary repository code;
-7. architecture remains a modular monolith unless a measured current requirement justifies a material boundary change.
+7. static step-through never presents possible source paths as observed runtime execution;
+8. architecture remains a modular monolith unless a measured current requirement justifies a material boundary change.
 
 Material changes to these invariants, public contracts, data ownership, security/trust boundaries, persistence model, or runtime topology require explicit user approval.
