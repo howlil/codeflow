@@ -11,6 +11,7 @@ import {
   RepositoryPicker,
   type RepositorySelectionSummary,
 } from './RepositoryPicker';
+import { StaticFlowPanel } from './StaticFlowPanel';
 
 type ProjectionStatus =
   | { kind: 'ready' }
@@ -236,6 +237,11 @@ export function App() {
               onToggleSourceSplit={() =>
                 setSourceSplitMode((current) => !current)
               }
+            />
+            <StaticFlowPanel
+              flow={flow}
+              selectedNode={selectedNode}
+              onSelectNode={selectNode}
             />
           </aside>
         </div>
