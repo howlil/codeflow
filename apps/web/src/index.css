@@ -229,10 +229,9 @@ h2 {
 
 .repository-input-grid {
   display: grid;
-  grid-template-columns: minmax(210px, 1.2fr) minmax(210px, 1fr) minmax(
-      170px,
-      0.75fr
-    ) auto;
+  grid-template-columns:
+    minmax(210px, 1.2fr) minmax(210px, 1fr) minmax(170px, 0.75fr)
+    auto;
   gap: 8px;
   align-items: end;
 }
