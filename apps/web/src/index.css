@@ -470,10 +470,7 @@ h2 {
   min-height: 560px;
   padding: 24px;
   background-color: var(--color-cs-bg);
-  background-image: radial-gradient(
-    var(--canvas-grid) 1px,
-    transparent 1px
-  );
+  background-image: radial-gradient(var(--canvas-grid) 1px, transparent 1px);
   background-size: 18px 18px;
   border-radius: var(--radius-panel);
 }
