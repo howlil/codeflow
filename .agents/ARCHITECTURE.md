@@ -83,12 +83,12 @@ Heuristic confidence must not be presented as precise factual probability.
 Current TypeScript analysis builds an in-memory multi-file TypeScript program from the bounded source set supplied by the API. It resolves supported function/call relationships across selected files/modules and can additionally project source-backed static data semantics for reachable functions, including:
 
 - declared parameters and explicit return paths;
-- supported caller argument → callee parameter mappings;
+- supported caller argument -> callee parameter mappings;
 - supported local declarations, lexical reads/writes, value dependencies, and transforms;
 - explicit property/index mutation where source establishes it;
 - conditional and throw possibilities required for deterministic static exploration.
 
-The existing function/call graph remains intact. M4 adds `functionData` and `staticFlow` projection data rather than turning parser AST/control-flow objects into the cross-system contract.
+The existing function/call graph remains intact. The current projection also exposes `functionData` and `staticFlow` rather than turning parser AST/control-flow objects into the cross-system contract.
 
 A static-flow relationship may connect supported source-backed steps with verified or inferred-static evidence. Lexical value dependencies that cannot prove runtime branch selection remain inferred rather than being presented as executed facts.
 
@@ -104,7 +104,7 @@ The API consumes `analysis-core`; semantic analysis logic should not migrate int
 
 Current repository analysis is `POST /api/flows/analyze`: it accepts a bounded set of repository-relative TypeScript source records plus an exported entry-point identity, rejects unsafe paths/invalid input, applies file/count/byte scope limits, and returns a semantic projection with explicit complete/partial analysis metadata.
 
-The projection may include the existing function nodes/`CALLS` edges plus M4 `functionData` and `staticFlow` data. This is additive to the current endpoint; the API still exposes semantic/projection data rather than raw parser-specific AST structures.
+The projection may include the existing function nodes/`CALLS` edges plus `functionData` and `staticFlow` data. The API exposes semantic/projection data rather than raw parser-specific AST structures.
 
 The API does not clone repositories, authenticate to Git hosts, persist source/analyses, or execute repository code in the current architecture.
 

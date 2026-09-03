@@ -58,13 +58,13 @@
 
 **Consequences:** UI interaction can change presentation and inspection context but cannot create or reclassify semantic relationships by itself.
 
-## D-009 — M3 repository input is local, bounded, and in-memory
+## D-009 — Repository input is local, bounded, and in-memory
 
-**Decision:** The first real-repository input path uses browser local-directory/file selection. The web client sends only the bounded supported source set plus the selected exported entry point to `apps/api`, which validates the request again and performs in-memory static analysis.
+**Decision:** The real-repository input path uses browser local-directory/file selection. The web client sends only the bounded supported source set plus the selected exported entry point to `apps/api`, which validates the request again and performs in-memory static analysis.
 
 **Why:** This proves the real-repository product path without introducing Git-host authentication, server-side clone/process execution, persistence, or a wider remote-network trust boundary before those capabilities are required.
 
-**Consequences:** Repository source remains user-selected and ephemeral for M3; both client and API apply scope/resource limits; API path validation is authoritative; ordinary analysis does not execute repository code. Public/private Git import, repository auth, saved analyses, and server-side repository acquisition remain separate future product/security decisions.
+**Consequences:** Repository source remains user-selected and ephemeral; both client and API apply scope/resource limits; API path validation is authoritative; ordinary analysis does not execute repository code. Public/private Git import, repository auth, saved analyses, and server-side repository acquisition remain separate future product/security decisions.
 
 ## D-010 — Production deployment uses one Compose stack with a single public web origin
 
