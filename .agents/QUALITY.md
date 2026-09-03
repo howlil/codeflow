@@ -10,7 +10,9 @@ Optimize for:
 (correct signal x relevant coverage) / feedback time
 ```
 
-Fast CI is useful only when it preserves the checks that can observe the changed failure boundary. Accuracy means the verification level matches actual risk, not that every possible test runs for every change.
+Fast CI is useful only when it preserves the automated checks that can observe the changed failure boundary. Accuracy means the verification level matches actual risk, not that every possible test runs for every change.
+
+Manual acceptance testing, black-box/browser E2E testing, and human visual-review gates are not required for merge or release readiness. When an environment-specific behavior cannot be established deterministically, record residual risk rather than introducing a manual gate.
 
 ## Toolchain
 
@@ -50,11 +52,11 @@ For each logical change:
 
 1. identify the observable behavior or contract that changed;
 2. identify where that behavior can fail;
-3. run the smallest focused check that observes that boundary during implementation;
-4. escalate only for meaningful residual risk;
+3. run the smallest focused automated check that observes that boundary during implementation;
+4. escalate only for meaningful residual risk that another deterministic repository-owned layer can observe;
 5. run the required coherent integration gate once at the integration boundary.
 
-Do not require a fixed unit -> integration -> E2E -> deployment ladder. Do not rerun the full repository gate after every file edit or tiny commit. Do not skip a relevant test merely to shorten CI.
+Do not require a fixed unit -> integration -> browser E2E -> deployment ladder. Do not rerun the full repository gate after every file edit or tiny commit. Do not skip a relevant test merely to shorten CI.
 
 ## Confidence Layers
 
@@ -68,11 +70,7 @@ Use focused deterministic tests for local domain behavior, regressions, state tr
 
 ### Integration
 
-Use integration tests when correctness depends on a boundary between real owners such as analysis -> API projection or API -> web contract. Integration is justified by boundary risk, not by a policy that every slice must have one.
-
-### E2E / critical journey
-
-Use E2E only for high-value user journeys whose correctness cannot be established cheaply enough below the browser/system boundary. Do not turn E2E into the default gate for styling, local component work, or isolated semantics.
+Use integration tests when correctness depends on a boundary between real repository owners such as analysis -> API projection or API -> web contract. Integration is justified by boundary risk, not by a policy that every slice must have one.
 
 ### Deployment
 
@@ -90,15 +88,14 @@ Verify the affected HTTP boundary and semantic projection contract. Current API 
 
 ### Web / Interaction Changes
 
-Separate visual risk from interaction risk.
+Separate presentation risk from interaction risk.
 
 For pure CSS/token styling changes that do not alter behavior:
 
-- install from the frozen lockfile;
+- install from the frozen lockfile when dependency resolution is relevant;
 - run formatting/lint/build so CSS/Tailwind/Vite integration remains valid;
-- use direct visual/diff inspection for hierarchy, spacing, responsive behavior, dark/light tokens, and design-system consistency;
-- skip Vitest because component behavior is outside the changed failure domain;
-- do not add snapshots or interaction tests merely because styling changed.
+- skip Vitest when component behavior is outside the changed failure domain;
+- do not add snapshots, browser E2E, or manual visual-review requirements merely because styling changed.
 
 For changes to React/TSX behavior, Radix/native controls, selection, search, keyboard navigation, inspector synchronization, loading/empty/partial/error states, accessibility semantics, or other user interaction:
 
@@ -118,7 +115,7 @@ The lightweight agent gate must still:
 - verify the canonical repository-knowledge files exist;
 - verify retired `.agents/skills` mirrors have not returned.
 
-If any runtime, toolchain, workflow, or deployment file changes in the same PR/push change set, the corresponding stronger gate applies.
+If any runtime, toolchain, workflow, or deployment file changes in the same PR/push change set, the corresponding stronger automated gate applies.
 
 ### Shared / Toolchain Changes
 
@@ -172,7 +169,7 @@ When a test gate fails, CI uploads a one-day `test-output.log` diagnostic artifa
 
 ## High-Risk Boundaries
 
-Escalate verification when changed behavior touches semantic IR/evidence contracts, repository scope/path isolation, public API contracts, security/privacy, persistence/migrations, runtime repository execution, concurrency/resource isolation, deployment, or irreversible operations.
+Escalate automated verification when changed behavior touches semantic IR/evidence contracts, repository scope/path isolation, public API contracts, security/privacy, persistence/migrations, runtime repository execution, concurrency/resource isolation, deployment, or irreversible operations.
 
 The deeper check must target the material risk; additional test count by itself is not evidence.
 
@@ -185,8 +182,8 @@ A flaky test is a defect. Repeated reruns until green are not valid confidence e
 For an integrated CodeFlow change, repository-specific evidence is sufficient when:
 
 - the authorized observable outcome is implemented;
-- changed failure boundaries have appropriate focused evidence;
+- changed failure boundaries have appropriate focused automated evidence;
 - the required integration CI for the detected complete change set is green;
-- any risk-specific gate triggered by the changed surface is green;
+- any deterministic risk-specific gate triggered by the changed surface is green;
 - repository state/docs are truthful in their owning files;
 - no known in-scope blocker remains.
