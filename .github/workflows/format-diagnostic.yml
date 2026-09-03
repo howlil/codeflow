@@ -1,0 +1,54 @@
+name: Format diagnostic
+
+on:
+  push:
+    branches:
+      - design/chatspace-system
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format reported files
+        run: >-
+          pnpm exec prettier --write
+          apps/web/src/App.test.tsx
+          apps/web/src/App.tsx
+          apps/web/src/index.css
+          apps/web/src/StaticFlowPanel.tsx
+          apps/web/src/ui/primitives.tsx
+
+      - name: Package formatted files
+        run: |
+          tar -czf formatted-source.tgz \
+            apps/web/src/App.test.tsx \
+            apps/web/src/App.tsx \
+            apps/web/src/index.css \
+            apps/web/src/StaticFlowPanel.tsx \
+            apps/web/src/ui/primitives.tsx
+
+      - name: Upload formatted source
+        uses: actions/upload-artifact@v4
+        with:
+          name: formatted-source
+          path: formatted-source.tgz
+          if-no-files-found: error
