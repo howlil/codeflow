@@ -115,6 +115,86 @@ const sampleFlow: FlowProjection = {
     ignoredFileCount: 0,
     issues: [],
   },
+  functionData: [
+    {
+      functionId: 'function:demo/src/handler.ts:handleGreeting',
+      parameters: [
+        {
+          id: 'parameter:name',
+          name: 'name',
+          typeText: 'string',
+          location: {
+            filePath: 'demo/src/handler.ts',
+            startLine: 4,
+            startColumn: 32,
+            endLine: 4,
+            endColumn: 44,
+          },
+          evidence: [],
+        },
+      ],
+      returns: [
+        {
+          id: 'return:greeting',
+          expressionText: 'formatter(normalizeName(name))',
+          location: {
+            filePath: 'demo/src/handler.ts',
+            startLine: 6,
+            startColumn: 3,
+            endLine: 6,
+            endColumn: 43,
+          },
+          evidence: [],
+        },
+      ],
+      callArguments: [],
+    },
+  ],
+  staticFlow: {
+    steps: [
+      {
+        id: 'step:parameter',
+        functionId: 'function:demo/src/handler.ts:handleGreeting',
+        kind: 'parameter',
+        label: 'name parameter',
+        valueText: 'name',
+        location: {
+          filePath: 'demo/src/handler.ts',
+          startLine: 4,
+          startColumn: 32,
+          endLine: 4,
+          endColumn: 44,
+        },
+        evidence: [],
+      },
+      {
+        id: 'step:normalize',
+        functionId: 'function:demo/src/name.ts:normalizeName',
+        kind: 'transform',
+        label: 'normalize name',
+        valueText: 'name.trim().toLowerCase()',
+        location: {
+          filePath: 'demo/src/name.ts',
+          startLine: 2,
+          startColumn: 10,
+          endLine: 2,
+          endColumn: 35,
+        },
+        evidence: [],
+      },
+    ],
+    relationships: [
+      {
+        id: 'flow:name-normalized',
+        kind: 'FLOWS_TO',
+        functionId: 'function:demo/src/handler.ts:handleGreeting',
+        sourceStepId: 'step:parameter',
+        targetStepId: 'step:normalize',
+        label: 'name → normalized name',
+        evidence: [],
+      },
+    ],
+  },
 };
 
 function repositoryFile(filePath: string, text: string): File {
@@ -156,6 +236,13 @@ function stubFlowFailure(message: string) {
   );
 }
 
+function selectEntrySource(filePath: string) {
+  const trigger = screen.getByRole('combobox', { name: 'Entry source file' });
+  fireEvent.pointerDown(trigger, { button: 0, ctrlKey: false });
+  const option = screen.getByRole('option', { name: filePath });
+  fireEvent.pointerUp(option, { button: 0, ctrlKey: false });
+}
+
 async function openRepository(flow: FlowProjection = sampleFlow) {
   const fetchMock = stubFlowRequest(flow);
   render(<App />);
@@ -163,9 +250,7 @@ async function openRepository(flow: FlowProjection = sampleFlow) {
   fireEvent.change(screen.getByLabelText('Repository directory'), {
     target: { files: repositoryFiles },
   });
-  fireEvent.change(screen.getByLabelText('Entry source file'), {
-    target: { value: 'demo/src/handler.ts' },
-  });
+  selectEntrySource('demo/src/handler.ts');
   fireEvent.change(
     screen.getByRole('textbox', { name: 'Exported entry function' }),
     { target: { value: 'handleGreeting' } },
@@ -184,6 +269,8 @@ describe('App', () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
+    window.localStorage.clear();
+    delete document.documentElement.dataset.theme;
   });
 
   it('starts from local repository input rather than the sample fixture', () => {
@@ -197,14 +284,9 @@ describe('App', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('sends bounded local TypeScript sources and inspects cross-file source', async () => {
+  it('collapses setup into repository context and inspects cross-file source', async () => {
     const fetchMock = await openRepository();
 
-    expect(
-      screen.getByText(/3 TypeScript source files selected/),
-    ).toHaveTextContent(
-      '1 dependency, build, declaration, or unsupported file ignored before upload',
-    );
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const request = fetchMock.mock.calls[0]?.[1] as RequestInit;
     const body = JSON.parse(String(request.body)) as {
@@ -220,6 +302,12 @@ describe('App', () => {
       'demo/src/handler.ts',
       'demo/src/name.ts',
     ]);
+    expect(
+      screen.queryByLabelText('Repository directory'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Change repository' }),
+    ).toBeInTheDocument();
 
     fireEvent.click(
       screen.getByRole('button', { name: /^FunctionnormalizeName/i }),
@@ -232,22 +320,15 @@ describe('App', () => {
       screen.getByText(/name\.trim\(\)\.toLowerCase\(\)/),
     ).toBeInTheDocument();
     const inspector = screen.getByLabelText('Source evidence inspector');
-    expect(
-      within(inspector).getAllByText(/demo\/src\/name\.ts:L1/).length,
-    ).toBeGreaterThan(0);
+    expect(within(inspector).getByText(/demo\/src\/name\.ts:L1/)).toBeInTheDocument();
   });
 
-  it('navigates by search and limits the canvas to the selected neighborhood', async () => {
+  it('navigates search from the keyboard and returns to the entry flow truthfully', async () => {
     await openRepository();
 
-    fireEvent.change(
-      screen.getByRole('searchbox', { name: 'Search functions' }),
-      { target: { value: 'format' } },
-    );
-    const searchResults = screen.getByLabelText('Function search results');
-    fireEvent.click(
-      within(searchResults).getByRole('button', { name: /formatGreeting/i }),
-    );
+    const search = screen.getByRole('searchbox', { name: 'Search functions' });
+    fireEvent.change(search, { target: { value: 'format' } });
+    fireEvent.keyDown(search, { key: 'Enter' });
 
     expect(
       screen.getByText('Neighborhood focus · formatGreeting'),
@@ -257,7 +338,9 @@ describe('App', () => {
     ).toBeInTheDocument();
     expect(screen.queryByText('normalizeName')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Show full flow' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Back to entry flow' }),
+    );
 
     expect(screen.getByText('normalizeName')).toBeInTheDocument();
   });
@@ -295,7 +378,7 @@ describe('App', () => {
     ).toBeInTheDocument();
   });
 
-  it('inspects one selected relationship with its source provenance', async () => {
+  it('opens selected relationship evidence with source provenance', async () => {
     await openRepository();
 
     fireEvent.click(
@@ -308,13 +391,40 @@ describe('App', () => {
       screen.getByRole('heading', { name: 'handleGreeting → normalizeName' }),
     ).toBeInTheDocument();
     expect(screen.getByText('Direct symbol resolution.')).toBeInTheDocument();
+    expect(screen.getByText(/typescript-compiler-api/)).toBeInTheDocument();
     expect(
-      screen.getByText(/return formatter\(normalizeName\(name\)\);/),
+      screen.getByRole('tab', { name: 'Evidence' }),
+    ).toHaveAttribute('data-state', 'active');
+  });
+
+  it('separates data, evidence, and static steps into task-oriented inspector tabs', async () => {
+    await openRepository();
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Data' }));
+    expect(screen.getByText('string')).toBeInTheDocument();
+    expect(
+      screen.getByText('formatter(normalizeName(name))'),
     ).toBeInTheDocument();
-    const inspector = screen.getByLabelText('Source evidence inspector');
-    expect(
-      within(inspector).getAllByText(/demo\/src\/handler\.ts:L6/).length,
-    ).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Evidence' }));
+    expect(screen.getAllByText('CALLS').length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Steps' }));
+    expect(screen.getByText(/Step 1\/2/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Next step' }));
+    expect(screen.getByText(/Step 2\/2/)).toBeInTheDocument();
+    expect(screen.getByText('normalize name')).toBeInTheDocument();
+  });
+
+  it('persists explicit theme selection', () => {
+    render(<App />);
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Switch to light theme' }),
+    );
+
+    expect(document.documentElement.dataset.theme).toBe('light');
+    expect(window.localStorage.getItem('codeflow-theme')).toBe('light');
   });
 
   it('expands source inspection without leaving the semantic canvas', async () => {
@@ -412,9 +522,7 @@ describe('App', () => {
     fireEvent.change(screen.getByLabelText('Repository directory'), {
       target: { files: repositoryFiles },
     });
-    fireEvent.change(screen.getByLabelText('Entry source file'), {
-      target: { value: 'demo/src/handler.ts' },
-    });
+    selectEntrySource('demo/src/handler.ts');
     fireEvent.change(
       screen.getByRole('textbox', { name: 'Exported entry function' }),
       { target: { value: 'handleGreeting' } },
