@@ -118,6 +118,8 @@ Tests live close to the behavior they protect:
 
 Use small deterministic fixtures when they prove semantic behavior more clearly than a large external repository. Prefer observable behavior over framework internals, snapshots, or trivia. Verification selection belongs to `.agents/QUALITY.md`.
 
+Radix interaction tests in jsdom must preserve PointerEvent semantics that Radix actually branches on. In particular, do not alias `PointerEvent` directly to `MouseEvent`: the test environment must retain `pointerType` and `pointerId`, otherwise pointer-driven Select/Menu behavior can fail before the product interaction is exercised.
+
 ## Known Traps
 
 - Do not let visual completeness turn missing evidence into fabricated semantics.
