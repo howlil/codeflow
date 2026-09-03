@@ -7,9 +7,7 @@
 Optimize for:
 
 ```text
-correct signal
-x relevant coverage
-/ feedback time
+(correct signal x relevant coverage) / feedback time
 ```
 
 Fast CI is useful only when it preserves the checks that can observe the changed failure boundary. Accuracy means the verification level matches actual risk, not that every possible test runs for every change.
@@ -94,15 +92,17 @@ Verify the affected HTTP boundary and semantic projection contract. Current API 
 
 Separate visual risk from interaction risk.
 
-For styling/layout/token changes that do not alter behavior:
+For pure CSS/token styling changes that do not alter behavior:
 
-- run the affected build/static checks;
+- install from the frozen lockfile;
+- run formatting/lint/build so CSS/Tailwind/Vite integration remains valid;
 - use direct visual/diff inspection for hierarchy, spacing, responsive behavior, dark/light tokens, and design-system consistency;
-- do not add snapshot or interaction tests merely because CSS changed.
+- skip Vitest because component behavior is outside the changed failure domain;
+- do not add snapshots or interaction tests merely because styling changed.
 
-For changes to Radix/native controls, selection, search, keyboard navigation, inspector synchronization, loading/empty/partial/error states, accessibility semantics, or other user interaction:
+For changes to React/TSX behavior, Radix/native controls, selection, search, keyboard navigation, inspector synchronization, loading/empty/partial/error states, accessibility semantics, or other user interaction:
 
-- run the focused Testing Library/Vitest behavior that observes the changed interaction;
+- run focused `@codeflow/web` Testing Library/Vitest coverage when the change is web-owned;
 - add a regression test when a behavior bug could realistically recur;
 - keep semantic assertions independent from decorative markup where possible.
 
@@ -110,15 +110,19 @@ Existing behavioral coverage must not be removed or disabled to make a design-sy
 
 ### Documentation / Agent Knowledge Changes
 
-Changes limited to `AGENTS.md` and `.agents/**` do not alter runtime behavior. CI may therefore skip Node setup, dependency installation, build, and runtime tests when deterministic path detection proves the change is agent-knowledge-only.
+Changes limited to `AGENTS.md` and `.agents/**` do not alter runtime behavior. CI may therefore skip Node setup, dependency installation, build, and runtime tests when deterministic scope detection proves the complete change set is agent-knowledge-only.
 
 The lightweight agent gate must still:
 
-- reject whitespace errors with `git diff --check`;
+- reject whitespace errors with `git diff --check` across the complete change set;
 - verify the canonical repository-knowledge files exist;
 - verify retired `.agents/skills` mirrors have not returned.
 
-If any runtime, toolchain, workflow, or deployment file changes in the same commit, the corresponding stronger gate applies.
+If any runtime, toolchain, workflow, or deployment file changes in the same PR/push change set, the corresponding stronger gate applies.
+
+### Shared / Toolchain Changes
+
+Changes outside isolated web ownership, including API, analysis-core, root package/lock/config, or CI workflow changes, use the full repository test scope unless a more precise evidence boundary is explicitly established.
 
 ### Deployment Changes
 
@@ -145,16 +149,26 @@ format:check
 -> test
 ```
 
-GitHub Actions executes those same phases as separate named steps rather than invoking the aggregate command. This preserves identical coverage while making the failing boundary immediately visible.
+GitHub Actions executes the applicable phases as separate named steps rather than invoking the aggregate command. This keeps failure boundaries immediately visible while allowing irrelevant phases to be skipped safely.
 
-CI scope rules:
+CI scope is calculated from the **entire change set**:
+
+- pull request: merge-base of PR base/head -> PR head;
+- push: event `before` SHA -> pushed SHA;
+- if the range cannot be established reliably: conservative full runtime + deployment gate.
+
+Scope rules:
 
 - `AGENTS.md` / `.agents/**` only -> lightweight agent-knowledge verification;
-- any other repository change -> full runtime integration phases;
-- deployment surfaces -> Compose config + production smoke in addition to applicable runtime checks;
-- `.github/workflows/ci.yml` is a deployment-gate surface, so changes to the CI mechanism exercise the production smoke path.
+- pure `apps/web/src/**/*.css` change -> frozen install + format/lint/build, no Vitest;
+- web-owned runtime change -> frozen install + format/lint/build + focused `@codeflow/web` tests;
+- API, analysis-core, root config/dependency/toolchain/workflow, mixed ownership -> frozen install + format/lint/build + full repository tests;
+- deployment surfaces -> Compose config + production smoke after the applicable runtime gate;
+- `.github/workflows/ci.yml` is a deployment-gate surface, so CI mechanism changes exercise the production smoke path.
 
 The CI workflow uses pnpm dependency caching and cancels superseded runs for the same ref so obsolete feedback does not consume runner time.
+
+When a test gate fails, CI uploads a one-day `test-output.log` diagnostic artifact. Failure-only diagnostics are preferred to permanently increasing successful-run output or adding speculative retries.
 
 ## High-Risk Boundaries
 
@@ -172,7 +186,7 @@ For an integrated CodeFlow change, repository-specific evidence is sufficient wh
 
 - the authorized observable outcome is implemented;
 - changed failure boundaries have appropriate focused evidence;
-- the required integration CI for the detected scope is green;
+- the required integration CI for the detected complete change set is green;
 - any risk-specific gate triggered by the changed surface is green;
 - repository state/docs are truthful in their owning files;
 - no known in-scope blocker remains.

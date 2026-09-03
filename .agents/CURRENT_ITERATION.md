@@ -14,36 +14,55 @@ CodeFlow already has the evidence-backed TypeScript semantic-analysis path, boun
 
 The current authorized work is reliability/engineering-enabler work, not a new product milestone. Its purpose is to reduce verification latency without reducing confidence.
 
+The first CI optimization commit (`502944ab8c080c1728414a877b25c1deeaf3b41e`) already proved the value of named failure boundaries: dependency install, formatting, lint, and build passed, while `Test` failed. The former aggregate `pnpm check` step did not expose that distinction directly.
+
 ## CI Shape Being Established
 
-The repository CI should now provide:
+The target repository CI provides:
 
-- deterministic change-scope detection before expensive setup;
+- complete-change-set scope detection for both PRs and pushes;
+- conservative full verification when scope cannot be established safely;
 - lightweight verification for `AGENTS.md` / `.agents/**`-only changes;
-- full runtime verification for code, dependency, toolchain, workflow, or other runtime-relevant changes;
-- separate `format`, `lint`, `build`, and `test` failure boundaries instead of one opaque `pnpm check` step;
+- build/static verification without Vitest for pure CSS/token styling changes;
+- focused `@codeflow/web` tests for web-owned runtime/interaction changes;
+- full repository tests for API, analysis-core, root dependency/toolchain/workflow, and mixed-ownership changes;
+- separate format, lint, build, and test failure boundaries;
 - pnpm dependency caching;
 - cancellation of superseded CI runs on the same ref;
+- failure-only test diagnostics artifact retained for one day;
 - Compose validation/smoke only when deployment surfaces change;
 - full Compose verification when the CI workflow that owns deployment detection changes.
 
 ## Verification State
 
-The prior design merge (`29ed692f5ca5cc3c5062896bd419927f4cd06d44`) was integrated while its `master` CI failed inside the former aggregate `Verify repository` step. That failure is one reason the CI is being made more diagnostic; the gate itself must not be weakened.
+The engineering outcome is **not yet VERIFIED**.
 
-This CI optimization is not `VERIFIED` until its own GitHub Actions run proves the new workflow executes successfully. Because `.github/workflows/ci.yml` changes, that run must exercise the full runtime gate and production Compose smoke path.
+Known evidence from the previous CI shape:
+
+- frozen dependency installation: passed;
+- formatting: passed;
+- lint: passed;
+- build: passed;
+- test: failed;
+- deployment smoke did not run because the failed test stopped downstream steps.
+
+The concrete test assertion was not retrievable from the previous GitHub job output through the available connector. The new workflow therefore preserves the failing test gate and adds a failure-only artifact instead of guessing a patch or weakening coverage.
+
+Because `.github/workflows/ci.yml` changes in the corrective commit, its CI run must take the conservative/full path and exercise full runtime verification plus production Compose smoke after tests pass.
 
 ## Delta
 
-- integrate the optimized CI workflow and canonical testing rules;
-- inspect the resulting named CI phase if verification fails;
-- fix only the concrete failing boundary without disabling relevant coverage;
-- advance state only after green evidence exists.
+- integrate complete-range scope detection and failure diagnostics;
+- retrieve the concrete test failure from the diagnostic artifact if the test gate still fails;
+- fix only the actual failing behavior/test boundary;
+- obtain green format/lint/build/test and required Compose evidence;
+- then return repository state to idle with truthful verification evidence.
 
 ## Blockers
 
-None before execution. Any failure in the new named steps becomes the concrete blocker to resolve.
+- existing repository test suite is failing after the design-system integration;
+- exact failing assertion remains the only implementation-level blocker; do not infer it from prior Radix hypotheses.
 
 ## Next Move
 
-Run the new CI on `master`. If green, mark the engineering outcome verified and return repository state to idle. If a named phase fails, fix that exact failure boundary and rerun the focused check plus required integration scope.
+Run CI with the corrected workflow. If `Test` fails, download `test-output.log`, patch the concrete failure, and rerun the focused test plus required integration scope. If the full workflow becomes green, advance state truthfully and verify the lightweight agent-only path with the final state-only update.
