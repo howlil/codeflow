@@ -173,14 +173,18 @@ export function App() {
   function selectNode(nodeId: string) {
     setSelectedNodeId(nodeId);
     setSelectedEdgeId(null);
+  }
+
+  function inspectNode(nodeId: string) {
+    selectNode(nodeId);
     setInspectorTab('overview');
+    setInspectorOpen(true);
   }
 
   function navigateToNode(nodeId: string) {
-    selectNode(nodeId);
+    inspectNode(nodeId);
     setFocusMode(true);
     setQuery('');
-    setInspectorOpen(true);
   }
 
   function selectEdge(edgeId: string) {
@@ -236,7 +240,9 @@ export function App() {
         <IconButton
           aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
           title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-          onClick={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
+          onClick={() =>
+            setTheme((current) => (current === 'dark' ? 'light' : 'dark'))
+          }
         >
           {theme === 'dark' ? (
             <Sun size={14} aria-hidden="true" />
@@ -389,11 +395,11 @@ export function App() {
                 selectedNodeId={selectedNodeId}
                 selectedEdgeId={selectedEdgeId}
                 focusMode={focusMode}
-                onSelectNode={(nodeId) => {
+                onSelectNode={inspectNode}
+                onKeyboardNavigate={(nodeId) => {
                   selectNode(nodeId);
-                  setInspectorOpen(true);
+                  setInspectorTab('overview');
                 }}
-                onKeyboardNavigate={selectNode}
                 onSelectEdge={selectEdge}
               />
             </section>
@@ -590,7 +596,10 @@ function FlowCanvas({
 
           return (
             <div className="edge-lane" key={edge.id}>
-              <div className="edge-path" aria-hidden="true" />
+              <div
+                className={`edge-path edge-path--${evidenceKind}`}
+                aria-hidden="true"
+              />
               <button
                 className={`flow-edge flow-edge--${evidenceKind}${
                   selectedEdgeId === edge.id ? ' flow-edge--selected' : ''
