@@ -206,7 +206,7 @@ function selectTypeScriptSources(files: File[]): SelectedSource[] {
 
 function getSelectionError(candidates: SelectedSource[]): string | null {
   if (candidates.length > MAX_ANALYZED_FILES) {
-    return `M3 analyzes at most ${MAX_ANALYZED_FILES} TypeScript files per request. Choose a narrower repository directory.`;
+    return `CodeFlow analyzes at most ${MAX_ANALYZED_FILES} TypeScript files per request. Choose a narrower repository directory.`;
   }
 
   const oversized = candidates.find(({ file }) => file.size > MAX_FILE_BYTES);
