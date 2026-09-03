@@ -108,10 +108,6 @@ export function App() {
   }, [theme]);
 
   useEffect(() => {
-    setActiveSearchIndex(0);
-  }, [query]);
-
-  useEffect(() => {
     function handleGlobalShortcut(event: globalThis.KeyboardEvent) {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
@@ -321,7 +317,10 @@ export function App() {
                     value={query}
                     placeholder="Search functions…"
                     autoComplete="off"
-                    onChange={(event) => setQuery(event.target.value)}
+                    onChange={(event) => {
+                      setQuery(event.target.value);
+                      setActiveSearchIndex(0);
+                    }}
                     onKeyDown={handleSearchKeyDown}
                   />
                   {query.trim() !== '' ? (
