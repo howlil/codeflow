@@ -1,4 +1,11 @@
-import { useMemo, useState, type KeyboardEvent } from 'react';
+import { Moon, PanelRightOpen, Sun, X } from 'lucide-react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from 'react';
 
 import {
   analyzeRepositoryFlow,
@@ -11,24 +18,50 @@ import {
   RepositoryPicker,
   type RepositorySelectionSummary,
 } from './RepositoryPicker';
-import { StaticFlowPanel } from './StaticFlowPanel';
+import {
+  FunctionDataPanel,
+  RelationshipEvidencePanel,
+  StaticStepPanel,
+  type RelationshipLens,
+} from './StaticFlowPanel';
+import {
+  Button,
+  IconButton,
+  Input,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from './ui/primitives';
 
 type ProjectionStatus =
   | { kind: 'ready' }
   | { kind: 'empty'; message: string }
   | { kind: 'partial'; reasons: string[] };
+type InspectorTab = 'overview' | 'data' | 'evidence' | 'steps';
+type Theme = 'dark' | 'light';
+
+const THEME_STORAGE_KEY = 'codeflow-theme';
 
 export function App() {
   const [flow, setFlow] = useState<FlowProjection | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  const [activeSearchIndex, setActiveSearchIndex] = useState(0);
   const [focusMode, setFocusMode] = useState(false);
   const [sourceSplitMode, setSourceSplitMode] = useState(false);
+  const [inspectorTab, setInspectorTab] = useState<InspectorTab>('overview');
+  const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [relationshipLens, setRelationshipLens] =
+    useState<RelationshipLens>('ALL');
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
   const [error, setError] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [selectionSummary, setSelectionSummary] =
     useState<RepositorySelectionSummary | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
   const projectionStatus = useMemo(
     () => (flow === null ? null : getProjectionStatus(flow)),
     [flow],
@@ -51,6 +84,45 @@ export function App() {
       node.label.toLowerCase().includes(normalizedQuery),
     );
   }, [flow, query]);
+  const availableLenses = useMemo<RelationshipLens[]>(() => {
+    if (flow === null) {
+      return ['ALL'];
+    }
+    const kinds = new Set<RelationshipLens>();
+    if (flow.edges.length > 0) {
+      kinds.add('CALLS');
+    }
+    for (const relationship of flow.staticFlow?.relationships ?? []) {
+      kinds.add(relationship.kind);
+    }
+    return ['ALL', ...Array.from(kinds).sort()];
+  }, [flow]);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {
+      // Theme remains applied even when storage is unavailable.
+    }
+  }, [theme]);
+
+  useEffect(() => {
+    setActiveSearchIndex(0);
+  }, [query]);
+
+  useEffect(() => {
+    function handleGlobalShortcut(event: globalThis.KeyboardEvent) {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+      }
+    }
+
+    window.addEventListener('keydown', handleGlobalShortcut);
+    return () => window.removeEventListener('keydown', handleGlobalShortcut);
+  }, []);
 
   async function analyzeRepository(
     request: RepositoryAnalysisRequest,
@@ -58,12 +130,14 @@ export function App() {
   ) {
     setAnalyzing(true);
     setError(null);
-    setFlow(null);
     setSelectionSummary(summary);
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
     setFocusMode(false);
     setSourceSplitMode(false);
+    setInspectorTab('overview');
+    setInspectorOpen(false);
+    setRelationshipLens('ALL');
     setQuery('');
 
     try {
@@ -71,6 +145,7 @@ export function App() {
       setFlow(loadedFlow);
       setSelectedNodeId(loadedFlow.entryPointId);
     } catch (caughtError: unknown) {
+      setFlow(null);
       setError(
         caughtError instanceof Error
           ? caughtError.message
@@ -81,15 +156,37 @@ export function App() {
     }
   }
 
+  function resetRepository() {
+    setFlow(null);
+    setSelectionSummary(null);
+    setSelectedNodeId(null);
+    setSelectedEdgeId(null);
+    setFocusMode(false);
+    setSourceSplitMode(false);
+    setInspectorTab('overview');
+    setInspectorOpen(false);
+    setRelationshipLens('ALL');
+    setQuery('');
+    setError(null);
+  }
+
   function selectNode(nodeId: string) {
     setSelectedNodeId(nodeId);
     setSelectedEdgeId(null);
+    setInspectorTab('overview');
   }
 
   function navigateToNode(nodeId: string) {
     selectNode(nodeId);
     setFocusMode(true);
     setQuery('');
+    setInspectorOpen(true);
+  }
+
+  function selectEdge(edgeId: string) {
+    setSelectedEdgeId(edgeId);
+    setInspectorTab('evidence');
+    setInspectorOpen(true);
   }
 
   function toggleFocusMode() {
@@ -97,26 +194,69 @@ export function App() {
     setSelectedEdgeId(null);
   }
 
+  function handleSearchKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === 'Escape') {
+      setQuery('');
+      event.currentTarget.blur();
+      return;
+    }
+    if (searchResults.length === 0) {
+      return;
+    }
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setActiveSearchIndex((current) =>
+        Math.min(current + 1, searchResults.length - 1),
+      );
+      return;
+    }
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setActiveSearchIndex((current) => Math.max(current - 1, 0));
+      return;
+    }
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      const result = searchResults[activeSearchIndex];
+      if (result !== undefined) {
+        navigateToNode(result.id);
+      }
+    }
+  }
+
   const entryPoint = flow?.nodes.find((node) => node.id === flow.entryPointId);
 
   return (
     <main className="workspace-shell">
       <header className="workspace-header">
-        <div>
-          <p className="eyebrow">Repository intelligence</p>
+        <div className="workspace-brand">
           <h1>CodeFlow</h1>
+          <span>Evidence first · static analysis only</span>
         </div>
-        <p className="trust-note">Evidence first · static analysis only</p>
+        <IconButton
+          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+          onClick={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
+        >
+          {theme === 'dark' ? (
+            <Sun size={14} aria-hidden="true" />
+          ) : (
+            <Moon size={14} aria-hidden="true" />
+          )}
+        </IconButton>
       </header>
 
-      <RepositoryPicker busy={analyzing} onAnalyze={analyzeRepository} />
+      {flow === null && !analyzing ? (
+        <RepositoryPicker busy={analyzing} onAnalyze={analyzeRepository} />
+      ) : null}
 
       {analyzing ? (
-        <p className="state-panel" role="status">
-          Analyzing selected TypeScript repository…
-        </p>
+        <section className="state-panel" role="status">
+          <strong>Analyzing selected TypeScript repository…</strong>
+          <span>Building an evidence-backed projection without executing code.</span>
+        </section>
       ) : error !== null ? (
-        <section className="state-panel" role="alert">
+        <section className="state-panel state-panel--error" role="alert">
           <strong>Repository analysis unavailable</strong>
           <span>{error}</span>
         </section>
@@ -129,124 +269,202 @@ export function App() {
           </span>
         </section>
       ) : projectionStatus.kind === 'empty' ? (
-        <section className="state-panel" role="status">
-          <strong>No functions projected</strong>
-          <span>{projectionStatus.message}</span>
-        </section>
-      ) : (
-        <div
-          className={`workspace-grid${
-            sourceSplitMode ? ' workspace-grid--source-split' : ''
-          }`}
-        >
-          <aside className="repository-panel" aria-label="Repository flow">
-            <p className="panel-kicker">Repository</p>
-            <strong>
-              {selectionSummary?.rootLabel ?? flow.source.filePath}
-            </strong>
-            <p className="panel-copy">
-              {flow.analysis.analyzedFileCount} TypeScript source file
-              {flow.analysis.analyzedFileCount === 1 ? '' : 's'} analyzed from
-              the selected repository.
-            </p>
-            {selectionSummary !== null &&
-            selectionSummary.ignoredFileCount > 0 ? (
-              <p className="panel-copy">
-                {selectionSummary.ignoredFileCount} unsupported/dependency file
-                {selectionSummary.ignoredFileCount === 1 ? '' : 's'} ignored
-                before upload.
-              </p>
-            ) : null}
-            <EvidenceLegend />
-          </aside>
-
-          <section className="canvas-panel" aria-label="Semantic flow canvas">
-            <AnalysisNotice status={projectionStatus} />
-            <div className="canvas-toolbar">
-              <div>
-                <p className="panel-kicker">Flow projection</p>
-                <h2>{entryPoint?.label ?? 'Selected entry'} request flow</h2>
-              </div>
-              <span>{flow.nodes.length} functions</span>
-            </div>
-            <div className="comprehension-controls">
-              <div className="search-control">
-                <label htmlFor="function-search">Search functions</label>
-                <input
-                  id="function-search"
-                  type="search"
-                  value={query}
-                  placeholder="Find a function…"
-                  autoComplete="off"
-                  onChange={(event) => setQuery(event.target.value)}
-                />
-                {query.trim() !== '' ? (
-                  <div
-                    className="search-results"
-                    aria-label="Function search results"
-                  >
-                    {searchResults.length === 0 ? (
-                      <p>No matching functions.</p>
-                    ) : (
-                      searchResults.map((node) => (
-                        <button
-                          key={node.id}
-                          type="button"
-                          onClick={() => navigateToNode(node.id)}
-                        >
-                          <strong>{node.label}</strong>
-                          <span>
-                            {node.location.filePath}:L{node.location.startLine}
-                          </span>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                ) : null}
-              </div>
-              <button
-                className="focus-toggle"
-                type="button"
-                aria-pressed={focusMode}
-                disabled={selectedNode === null}
-                onClick={toggleFocusMode}
-              >
-                {focusMode ? 'Show full flow' : 'Focus selected'}
-              </button>
-            </div>
-            <FlowCanvas
-              flow={flow}
-              selectedNodeId={selectedNodeId}
-              selectedEdgeId={selectedEdgeId}
-              focusMode={focusMode}
-              onSelectNode={selectNode}
-              onKeyboardNavigate={selectNode}
-              onSelectEdge={setSelectedEdgeId}
-            />
+        <>
+          <WorkspaceContext
+            flow={flow}
+            selectionSummary={selectionSummary}
+            entryPoint={entryPoint ?? null}
+            onChangeRepository={resetRepository}
+          />
+          <section className="state-panel" role="status">
+            <strong>No functions projected</strong>
+            <span>{projectionStatus.message}</span>
           </section>
-
-          <aside
-            className="inspector-panel"
-            aria-label="Source evidence inspector"
+        </>
+      ) : (
+        <>
+          <WorkspaceContext
+            flow={flow}
+            selectionSummary={selectionSummary}
+            entryPoint={entryPoint ?? null}
+            onChangeRepository={resetRepository}
+          />
+          <div
+            className={`workspace-grid${
+              sourceSplitMode ? ' workspace-grid--source-split' : ''
+            }`}
           >
-            <Inspector
-              flow={flow}
-              selectedNode={selectedNode}
-              selectedEdge={selectedEdge}
-              sourceSplitMode={sourceSplitMode}
-              onToggleSourceSplit={() =>
-                setSourceSplitMode((current) => !current)
-              }
+            <section className="canvas-panel" aria-label="Semantic flow canvas">
+              <AnalysisNotice status={projectionStatus} />
+              <div className="canvas-toolbar">
+                <div>
+                  <p className="panel-kicker">Semantic workspace</p>
+                  <h2>{entryPoint?.label ?? 'Selected entry'} request flow</h2>
+                </div>
+                <span>{flow.nodes.length} functions</span>
+              </div>
+
+              <div className="comprehension-toolbar">
+                <div className="search-control">
+                  <Input
+                    ref={searchInputRef}
+                    aria-label="Search functions"
+                    type="search"
+                    value={query}
+                    placeholder="Search functions…"
+                    autoComplete="off"
+                    onChange={(event) => setQuery(event.target.value)}
+                    onKeyDown={handleSearchKeyDown}
+                  />
+                  {query.trim() !== '' ? (
+                    <div
+                      className="search-results"
+                      aria-label="Function search results"
+                      role="listbox"
+                    >
+                      {searchResults.length === 0 ? (
+                        <p>No matching functions.</p>
+                      ) : (
+                        searchResults.map((node, index) => (
+                          <button
+                            key={node.id}
+                            type="button"
+                            role="option"
+                            aria-selected={activeSearchIndex === index}
+                            onMouseEnter={() => setActiveSearchIndex(index)}
+                            onClick={() => navigateToNode(node.id)}
+                          >
+                            <strong>{node.label}</strong>
+                            <span>
+                              {node.location.filePath}:L{node.location.startLine}
+                            </span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="toolbar-actions">
+                  <Button
+                    aria-pressed={focusMode}
+                    disabled={selectedNode === null}
+                    onClick={toggleFocusMode}
+                  >
+                    {focusMode ? 'Back to entry flow' : 'Focus selected'}
+                  </Button>
+                  <Button
+                    className="inspector-open-button"
+                    aria-label="Open inspector"
+                    onClick={() => setInspectorOpen(true)}
+                  >
+                    <PanelRightOpen size={13} aria-hidden="true" />
+                    Inspector
+                  </Button>
+                </div>
+              </div>
+
+              <div className="lens-toolbar" aria-label="Relationship lens">
+                <div className="lens-options">
+                  {availableLenses.map((kind) => (
+                    <Button
+                      key={kind}
+                      variant="ghost"
+                      aria-pressed={relationshipLens === kind}
+                      className="lens-button"
+                      onClick={() => {
+                        setRelationshipLens(kind);
+                        setInspectorTab('evidence');
+                      }}
+                    >
+                      {relationshipLabel(kind)}
+                    </Button>
+                  ))}
+                </div>
+                <EvidenceLegend />
+              </div>
+
+              <FlowCanvas
+                flow={flow}
+                selectedNodeId={selectedNodeId}
+                selectedEdgeId={selectedEdgeId}
+                focusMode={focusMode}
+                onSelectNode={(nodeId) => {
+                  selectNode(nodeId);
+                  setInspectorOpen(true);
+                }}
+                onKeyboardNavigate={selectNode}
+                onSelectEdge={selectEdge}
+              />
+            </section>
+
+            <aside
+              className={`inspector-panel${
+                inspectorOpen ? ' inspector-panel--open' : ''
+              }`}
+              aria-label="Source evidence inspector"
+            >
+              <Inspector
+                flow={flow}
+                selectedNode={selectedNode}
+                selectedEdge={selectedEdge}
+                relationshipLens={relationshipLens}
+                activeTab={inspectorTab}
+                sourceSplitMode={sourceSplitMode}
+                onTabChange={setInspectorTab}
+                onSelectNode={selectNode}
+                onToggleSourceSplit={() =>
+                  setSourceSplitMode((current) => !current)
+                }
+                onClose={() => setInspectorOpen(false)}
+              />
+            </aside>
+            <button
+              className={`inspector-backdrop${
+                inspectorOpen ? ' inspector-backdrop--open' : ''
+              }`}
+              type="button"
+              aria-label="Close inspector"
+              onClick={() => setInspectorOpen(false)}
             />
-            <StaticFlowPanel
-              flow={flow}
-              selectedNode={selectedNode}
-              onSelectNode={selectNode}
-            />
-          </aside>
-        </div>
+          </div>
+        </>
       )}
     </main>
+  );
+}
+
+function WorkspaceContext({
+  flow,
+  selectionSummary,
+  entryPoint,
+  onChangeRepository,
+}: {
+  flow: FlowProjection;
+  selectionSummary: RepositorySelectionSummary | null;
+  entryPoint: FlowNode | null;
+  onChangeRepository: () => void;
+}) {
+  return (
+    <div className="workspace-context-bar">
+      <div className="workspace-context-path">
+        <strong>{selectionSummary?.rootLabel ?? flow.source.filePath}</strong>
+        <span aria-hidden="true">/</span>
+        <span>{entryPoint?.label ?? 'entry unavailable'}</span>
+      </div>
+      <div className="workspace-context-meta">
+        <span>
+          {flow.analysis.analyzedFileCount} source file
+          {flow.analysis.analyzedFileCount === 1 ? '' : 's'}
+          {selectionSummary !== null && selectionSummary.ignoredFileCount > 0
+            ? ` · ${selectionSummary.ignoredFileCount} ignored`
+            : ''}
+        </span>
+        <Button variant="ghost" onClick={onChangeRepository}>
+          Change repository
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -372,6 +590,7 @@ function FlowCanvas({
 
           return (
             <div className="edge-lane" key={edge.id}>
+              <div className="edge-path" aria-hidden="true" />
               <button
                 className={`flow-edge flow-edge--${evidenceKind}${
                   selectedEdgeId === edge.id ? ' flow-edge--selected' : ''
@@ -383,7 +602,7 @@ function FlowCanvas({
               >
                 <span>{edge.kind}</span>
                 <span className="edge-arrow" aria-hidden="true">
-                  {outgoing ? '→' : '←'}
+                  {outgoing ? '↓' : '↑'}
                 </span>
                 <span>{evidenceKind}</span>
               </button>
@@ -440,23 +659,146 @@ function Inspector({
   flow,
   selectedNode,
   selectedEdge,
+  relationshipLens,
+  activeTab,
   sourceSplitMode,
+  onTabChange,
+  onSelectNode,
   onToggleSourceSplit,
+  onClose,
 }: {
   flow: FlowProjection;
   selectedNode: FlowNode | null;
   selectedEdge: FlowEdge | null;
+  relationshipLens: RelationshipLens;
+  activeTab: InspectorTab;
   sourceSplitMode: boolean;
+  onTabChange: (tab: InspectorTab) => void;
+  onSelectNode: (nodeId: string) => void;
   onToggleSourceSplit: () => void;
+  onClose: () => void;
+}) {
+  const relationshipTitle =
+    selectedEdge === null
+      ? null
+      : `${labelForNode(flow, selectedEdge.sourceId)} → ${labelForNode(
+          flow,
+          selectedEdge.targetId,
+        )}`;
+  const location = selectedEdge?.evidence[0]?.location ?? selectedNode?.location;
+
+  return (
+    <Tabs
+      className="inspector-tabs"
+      value={activeTab}
+      onValueChange={(value) => onTabChange(value as InspectorTab)}
+    >
+      <div className="inspector-heading">
+        <div>
+          <p className="panel-kicker">
+            {selectedEdge === null ? 'Inspector' : 'Relationship'}
+          </p>
+          <h2>{relationshipTitle ?? selectedNode?.label ?? 'No selection'}</h2>
+          {location === undefined ? null : (
+            <p className="source-location">
+              {location.filePath}:L{location.startLine}–{location.endLine}
+            </p>
+          )}
+        </div>
+        <div className="inspector-heading-actions">
+          <Button
+            className="source-expand-button"
+            variant="ghost"
+            aria-pressed={sourceSplitMode}
+            disabled={selectedNode === null && selectedEdge === null}
+            onClick={onToggleSourceSplit}
+          >
+            {sourceSplitMode ? 'Restore inspector' : 'Expand source'}
+          </Button>
+          <IconButton
+            className="inspector-close-button"
+            aria-label="Close inspector panel"
+            onClick={onClose}
+          >
+            <X size={14} aria-hidden="true" />
+          </IconButton>
+        </div>
+      </div>
+
+      <TabsList aria-label="Inspector view">
+        <TabsTrigger value="overview">Overview</TabsTrigger>
+        <TabsTrigger value="data" disabled={selectedEdge !== null}>
+          Data
+        </TabsTrigger>
+        <TabsTrigger value="evidence">Evidence</TabsTrigger>
+        <TabsTrigger value="steps" disabled={selectedEdge !== null}>
+          Steps
+        </TabsTrigger>
+      </TabsList>
+
+      <div className="inspector-content">
+        <TabsContent value="overview">
+          <InspectorOverview
+            flow={flow}
+            selectedNode={selectedNode}
+            selectedEdge={selectedEdge}
+          />
+        </TabsContent>
+        <TabsContent value="data">
+          <FunctionDataPanel flow={flow} selectedNode={selectedNode} />
+        </TabsContent>
+        <TabsContent value="evidence">
+          <RelationshipEvidencePanel
+            flow={flow}
+            selectedNode={selectedNode}
+            selectedEdge={selectedEdge}
+            lens={relationshipLens}
+          />
+        </TabsContent>
+        <TabsContent value="steps">
+          <StaticStepPanel flow={flow} onSelectNode={onSelectNode} />
+        </TabsContent>
+      </div>
+    </Tabs>
+  );
+}
+
+function InspectorOverview({
+  flow,
+  selectedNode,
+  selectedEdge,
+}: {
+  flow: FlowProjection;
+  selectedNode: FlowNode | null;
+  selectedEdge: FlowEdge | null;
 }) {
   if (selectedEdge !== null) {
+    const evidence = selectedEdge.evidence[0];
+    if (evidence === undefined) {
+      return (
+        <div className="inspector-stack">
+          <p className="panel-copy">
+            No source provenance was projected for this relationship.
+          </p>
+        </div>
+      );
+    }
+    const snippet = getSourceSnippet(
+      sourceTextFor(flow, evidence.location.filePath),
+      evidence.location.startLine,
+      evidence.location.endLine,
+    );
     return (
-      <RelationshipInspector
-        flow={flow}
-        edge={selectedEdge}
-        sourceSplitMode={sourceSplitMode}
-        onToggleSourceSplit={onToggleSourceSplit}
-      />
+      <div className="inspector-stack">
+        <pre className="source-snippet">
+          <code>{snippet ?? 'Source text is unavailable.'}</code>
+        </pre>
+        <div className="summary-row">
+          <strong>{selectedEdge.kind}</strong>
+          <span>{evidence.reason}</span>
+          <small>{evidence.source}</small>
+        </div>
+      </div>
     );
   }
 
@@ -464,181 +806,53 @@ function Inspector({
     return <p className="panel-copy">Select a function to inspect evidence.</p>;
   }
 
-  const relatedEdges = flow.edges.filter(
-    (edge) =>
-      edge.sourceId === selectedNode.id || edge.targetId === selectedNode.id,
-  );
   const sourceSnippet = getSourceSnippet(
     sourceTextFor(flow, selectedNode.location.filePath),
     selectedNode.location.startLine,
     selectedNode.location.endLine,
   );
+  const relatedEdges = flow.edges.filter(
+    (edge) =>
+      edge.sourceId === selectedNode.id || edge.targetId === selectedNode.id,
+  );
 
   return (
-    <>
-      <InspectorHeading
-        label="Inspector / source"
-        sourceSplitMode={sourceSplitMode}
-        onToggleSourceSplit={onToggleSourceSplit}
-      />
-      <h2>{selectedNode.label}</h2>
-      <p className="source-location">
-        {selectedNode.location.filePath}:L{selectedNode.location.startLine}–
-        {selectedNode.location.endLine}
-      </p>
+    <div className="inspector-stack">
       <pre className="source-snippet">
         <code>
           {sourceSnippet ??
             'Source text is unavailable for this projected location.'}
         </code>
       </pre>
-      <div className="evidence-list">
-        <p className="panel-kicker">Relationship evidence</p>
-        {relatedEdges.length === 0 ? (
-          <p className="panel-copy">No projected call relationships.</p>
-        ) : (
-          relatedEdges.map((edge) => <EvidenceItem edge={edge} key={edge.id} />)
-        )}
-      </div>
-    </>
-  );
-}
-
-function RelationshipInspector({
-  flow,
-  edge,
-  sourceSplitMode,
-  onToggleSourceSplit,
-}: {
-  flow: FlowProjection;
-  edge: FlowEdge;
-  sourceSplitMode: boolean;
-  onToggleSourceSplit: () => void;
-}) {
-  const evidence = edge.evidence[0];
-  const sourceNode = flow.nodes.find((node) => node.id === edge.sourceId);
-  const targetNode = flow.nodes.find((node) => node.id === edge.targetId);
-  const relationshipTitle = `${sourceNode?.label ?? edge.sourceId} → ${
-    targetNode?.label ?? edge.targetId
-  }`;
-
-  if (evidence === undefined) {
-    return (
-      <>
-        <InspectorHeading
-          label="Inspector / relationship"
-          sourceSplitMode={sourceSplitMode}
-          onToggleSourceSplit={onToggleSourceSplit}
-        />
-        <h2>{relationshipTitle}</h2>
-        <div className="evidence-list">
-          <p className="panel-kicker">Selected evidence</p>
-          <EvidenceItem edge={edge} />
-        </div>
-      </>
-    );
-  }
-
-  const sourceSnippet = getSourceSnippet(
-    sourceTextFor(flow, evidence.location.filePath),
-    evidence.location.startLine,
-    evidence.location.endLine,
-  );
-
-  return (
-    <>
-      <InspectorHeading
-        label="Inspector / relationship"
-        sourceSplitMode={sourceSplitMode}
-        onToggleSourceSplit={onToggleSourceSplit}
-      />
-      <h2>{relationshipTitle}</h2>
-      <p className="source-location">
-        {evidence.location.filePath}:L{evidence.location.startLine}–
-        {evidence.location.endLine}
-      </p>
-      <pre className="source-snippet">
-        <code>
-          {sourceSnippet ??
-            'Source text is unavailable for this evidence location.'}
-        </code>
-      </pre>
-      <div className="evidence-list">
-        <p className="panel-kicker">Selected evidence</p>
-        <EvidenceItem edge={edge} />
-      </div>
-    </>
-  );
-}
-
-function InspectorHeading({
-  label,
-  sourceSplitMode,
-  onToggleSourceSplit,
-}: {
-  label: string;
-  sourceSplitMode: boolean;
-  onToggleSourceSplit: () => void;
-}) {
-  return (
-    <div className="inspector-heading">
-      <p className="panel-kicker">{label}</p>
-      <button
-        className="focus-toggle"
-        type="button"
-        aria-pressed={sourceSplitMode}
-        onClick={onToggleSourceSplit}
-      >
-        {sourceSplitMode ? 'Restore inspector' : 'Expand source'}
-      </button>
-    </div>
-  );
-}
-
-function EvidenceItem({ edge }: { edge: FlowEdge }) {
-  const evidence = edge.evidence[0];
-
-  if (evidence === undefined) {
-    return (
-      <article className="evidence-item evidence-item--unavailable">
-        <div>
-          <span className="evidence-chip evidence-chip--unavailable">
-            evidence-unavailable
+      <section className="inspector-section">
+        <p className="panel-kicker">Relationship summary</p>
+        <div className="summary-row">
+          <strong>{relatedEdges.length}</strong>
+          <span>
+            projected call relationship{relatedEdges.length === 1 ? '' : 's'}
           </span>
-          <span className="relationship-label">{edge.kind}</span>
         </div>
-        <p>No supporting provenance was projected for this relationship.</p>
-      </article>
-    );
-  }
-
-  return (
-    <article className="evidence-item">
-      <div>
-        <span className={`evidence-chip evidence-chip--${evidence.kind}`}>
-          {evidence.kind}
-        </span>
-        <span className="relationship-label">{edge.kind}</span>
-      </div>
-      <p>{evidence.reason}</p>
-      <small>
-        {evidence.source} · {evidence.location.filePath}:L
-        {evidence.location.startLine}
-      </small>
-    </article>
+      </section>
+    </div>
   );
 }
 
 function EvidenceLegend() {
   return (
-    <div className="legend" aria-label="Evidence legend">
-      <span>
-        <i className="legend-line legend-line--verified" /> verified-static
-      </span>
-      <span>
-        <i className="legend-line legend-line--inferred" /> inferred-static
-      </span>
-    </div>
+    <details className="evidence-legend">
+      <summary>Evidence</summary>
+      <div>
+        <span>
+          <i className="legend-line" /> verified-static
+        </span>
+        <span>
+          <i className="legend-line legend-line--inferred" /> inferred-static
+        </span>
+        <span>
+          <i className="legend-line legend-line--unavailable" /> unavailable
+        </span>
+      </div>
+    </details>
   );
 }
 
@@ -730,4 +944,34 @@ function getSourceSnippet(
     .split('\n')
     .slice(startLine - 1, endLine)
     .join('\n');
+}
+
+function labelForNode(flow: FlowProjection, nodeId: string): string {
+  return flow.nodes.find((node) => node.id === nodeId)?.label ?? nodeId;
+}
+
+function relationshipLabel(lens: RelationshipLens): string {
+  return lens === 'ALL'
+    ? 'All'
+    : lens
+        .toLowerCase()
+        .split('_')
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+}
+
+function getInitialTheme(): Theme {
+  try {
+    const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+    if (stored === 'dark' || stored === 'light') {
+      return stored;
+    }
+  } catch {
+    // Fall through to system preference when storage is unavailable.
+  }
+
+  return typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-color-scheme: light)').matches
+    ? 'light'
+    : 'dark';
 }
