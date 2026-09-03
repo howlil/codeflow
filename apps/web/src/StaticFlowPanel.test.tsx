@@ -2,7 +2,11 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { FlowProjection } from './flow-client';
-import { StaticFlowPanel } from './StaticFlowPanel';
+import {
+  FunctionDataPanel,
+  RelationshipEvidencePanel,
+  StaticStepPanel,
+} from './StaticFlowPanel';
 
 const location = {
   filePath: 'demo/src/handler.ts',
@@ -145,14 +149,10 @@ const flow: FlowProjection = {
 
 afterEach(cleanup);
 
-describe('StaticFlowPanel', () => {
+describe('static flow inspector panels', () => {
   it('shows source-backed function inputs, outputs, and argument mappings', () => {
     render(
-      <StaticFlowPanel
-        flow={flow}
-        selectedNode={flow.nodes[0] ?? null}
-        onSelectNode={vi.fn()}
-      />,
+      <FunctionDataPanel flow={flow} selectedNode={flow.nodes[0] ?? null} />,
     );
 
     expect(screen.getByText('Inputs')).toBeInTheDocument();
@@ -161,42 +161,28 @@ describe('StaticFlowPanel', () => {
     expect(screen.getByText('Outputs')).toBeInTheDocument();
     expect(screen.getByText('result.value')).toBeInTheDocument();
     expect(screen.getByText('Argument mappings')).toBeInTheDocument();
-    expect(screen.getAllByText('trimmed → value')).not.toHaveLength(0);
+    expect(screen.getByText('trimmed → value')).toBeInTheDocument();
   });
 
-  it('filters only semantic relationship kinds that actually exist', () => {
+  it('filters relationship evidence by the active semantic lens', () => {
     render(
-      <StaticFlowPanel
+      <RelationshipEvidencePanel
         flow={flow}
         selectedNode={flow.nodes[0] ?? null}
-        onSelectNode={vi.fn()}
+        selectedEdge={null}
+        lens="MUTATES"
       />,
     );
 
-    expect(screen.getByRole('button', { name: 'CALLS' })).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'PASSES_ARGUMENT' }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'MUTATES' })).toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: 'WRITES' }),
-    ).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'MUTATES' }));
-
+    expect(screen.getByText('MUTATES')).toBeInTheDocument();
     expect(screen.getByText('Mutate result.value')).toBeInTheDocument();
     expect(screen.queryByText('handle → normalize')).not.toBeInTheDocument();
+    expect(screen.queryByText('trimmed → value')).not.toBeInTheDocument();
   });
 
   it('steps deterministically without presenting static possibilities as runtime truth', () => {
     const onSelectNode = vi.fn();
-    render(
-      <StaticFlowPanel
-        flow={flow}
-        selectedNode={flow.nodes[0] ?? null}
-        onSelectNode={onSelectNode}
-      />,
-    );
+    render(<StaticStepPanel flow={flow} onSelectNode={onSelectNode} />);
 
     expect(
       screen.getByText(/This is not observed runtime execution/i),
@@ -204,7 +190,7 @@ describe('StaticFlowPanel', () => {
     expect(screen.getByText('Parameter input')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Next step' }));
-    expect(screen.getAllByText('Mutate result.value')).not.toHaveLength(0);
+    expect(screen.getByText('Mutate result.value')).toBeInTheDocument();
     expect(screen.getByText(/Step 2\/3/)).toBeInTheDocument();
     expect(onSelectNode).toHaveBeenLastCalledWith('handler');
 
