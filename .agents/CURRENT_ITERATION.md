@@ -1,39 +1,49 @@
 # Current Iteration
 
-Status: INTEGRATED
+Status: ACTIVE
 
 Active Milestone: None
 
-Last Integrated Outcome: Chatspace-derived CodeFlow design-system foundations and semantic-workbench reshaping merged to `master` in PR #24 (`29ed692f5ca5cc3c5062896bd419927f4cd06d44`).
+Active Engineering Outcome: Fast, high-signal, risk-proportional CI verification.
+
+Last Integrated Product Outcome: Chatspace-derived CodeFlow design-system foundations and semantic-workbench reshaping merged to `master` in PR #24 (`29ed692f5ca5cc3c5062896bd419927f4cd06d44`).
 
 ## Current Position
 
-CodeFlow currently has:
+CodeFlow already has the evidence-backed TypeScript semantic-analysis path, bounded local repository input, semantic workspace, production Compose packaging, and Chatspace-aligned UI foundation.
 
-- the evidence-backed TypeScript semantic-analysis path and bounded local repository input;
-- semantic search/focus/navigation, source/evidence inspection, static data-flow relationships, and deterministic static step-through;
-- production Docker Compose packaging with public `web` on container port `8080` and internal `api:3001`;
-- the Chatspace-aligned UI foundation: Tailwind CSS v4, Radix interaction primitives, Lucide affordance icons, shared CodeFlow controls, `cs-*` light/dark tokens, a full-height semantic workspace, and task-oriented inspector views.
+The current authorized work is reliability/engineering-enabler work, not a new product milestone. Its purpose is to reduce verification latency without reducing confidence.
 
-The latest design outcome is integrated into `master`, but integration is not equivalent to verification or release readiness.
+## CI Shape Being Established
+
+The repository CI should now provide:
+
+- deterministic change-scope detection before expensive setup;
+- lightweight verification for `AGENTS.md` / `.agents/**`-only changes;
+- full runtime verification for code, dependency, toolchain, workflow, or other runtime-relevant changes;
+- separate `format`, `lint`, `build`, and `test` failure boundaries instead of one opaque `pnpm check` step;
+- pnpm dependency caching;
+- cancellation of superseded CI runs on the same ref;
+- Compose validation/smoke only when deployment surfaces change;
+- full Compose verification when the CI workflow that owns deployment detection changes.
 
 ## Verification State
 
-The `master` CI run for merge commit `29ed692f5ca5cc3c5062896bd419927f4cd06d44` completed with **failure** in the `Verify repository` step. Dependency installation succeeded. Deployment-change detection, Compose validation, and Compose smoke were skipped, which is expected for a non-deployment change.
+The prior design merge (`29ed692f5ca5cc3c5062896bd419927f4cd06d44`) was integrated while its `master` CI failed inside the former aggregate `Verify repository` step. That failure is one reason the CI is being made more diagnostic; the gate itself must not be weakened.
 
-Therefore the current outcome is **INTEGRATED**, not `VERIFIED` or `RELEASE_READY`.
+This CI optimization is not `VERIFIED` until its own GitHub Actions run proves the new workflow executes successfully. Because `.github/workflows/ci.yml` changes, that run must exercise the full runtime gate and production Compose smoke path.
 
 ## Delta
 
-No new product capability is currently authorized. The remaining engineering delta is verification closure for the already-integrated design-system outcome.
+- integrate the optimized CI workflow and canonical testing rules;
+- inspect the resulting named CI phase if verification fails;
+- fix only the concrete failing boundary without disabling relevant coverage;
+- advance state only after green evidence exists.
 
 ## Blockers
 
-- `master` repository verification is failing for the integrated design change.
-- The concrete failing assertion/command output still needs to be reproduced or read before changing implementation; do not weaken `pnpm check`, tests, or CI to obtain green status.
+None before execution. Any failure in the new named steps becomes the concrete blocker to resolve.
 
 ## Next Move
 
-Resolve the concrete `Verify repository` failure at the smallest affected boundary, run the focused failing check, then run the repository integration gate required by `.agents/QUALITY.md`.
-
-When evidence becomes green, advance state truthfully to the highest proven stage. Do not auto-activate a historical/deferred roadmap item; future milestone shaping starts from current user intent and the highest-value core-journey gap.
+Run the new CI on `master`. If green, mark the engineering outcome verified and return repository state to idle. If a named phase fails, fix that exact failure boundary and rerun the focused check plus required integration scope.

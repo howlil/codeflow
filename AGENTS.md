@@ -62,6 +62,10 @@ Infrastructure-only, migration-only, contract-only, reliability-only, bug-fix, o
 
 Use `.agents/QUALITY.md` to choose the lowest sufficient confidence layer for the changed failure boundary. Do not require cumulative unit + integration + E2E + deployment verification when lower-cost evidence is already sufficient. Critical user journeys may justify E2E; deployment gates apply only when deployment surfaces change.
 
+Optimize CI for **signal per minute** without weakening evidence. CI should expose meaningful failure boundaries instead of hiding format, lint, build, and test behind one opaque step. A gate may be skipped only when deterministic change-scope detection proves that its failure domain is unaffected; speed alone is never sufficient reason to suppress a relevant check.
+
+For UI/design work, distinguish presentation from interaction risk: styling-only changes normally need build plus visual/diff inspection and existing regression confidence, while changes to controls, keyboard behavior, selection, navigation, async states, or accessibility require the focused behavioral tests that observe those interactions.
+
 A merge is not evidence of `VERIFIED`, `RELEASE_READY`, `RELEASED`, or `DEPLOYED`. Advance repository state only when the corresponding evidence exists.
 
 ## Repository Knowledge Rules
