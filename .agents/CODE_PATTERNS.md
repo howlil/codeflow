@@ -1,14 +1,14 @@
 # CodeFlow Code Patterns
 
-`CODE_PATTERNS.md` stores repository-specific implementation knowledge. Generic SWE behavior belongs to the global agent rules and is not repeated here.
+`CODE_PATTERNS.md` stores repository-specific implementation knowledge. Generic SWE behavior belongs to the user's global agent rules and is not repeated here.
 
 ## Repository Ownership
 
 ```text
-apps/web             user-facing semantic workspace and interaction
-apps/api             HTTP transport and orchestration
+apps/web             React/Vite semantic workspace and interaction
+apps/api             Fastify HTTP transport and orchestration
 packages/analysis-core
-                     semantic model, analysis, evidence, projection logic
+                     semantic model, TypeScript analysis, evidence, projection logic
 ```
 
 When changing behavior, first locate the existing owner above rather than creating a parallel package/layer.
@@ -24,11 +24,20 @@ semantic/domain behavior
 -> verification
 ```
 
-A semantic/backend capability intended to be observable by the user is not complete merely because `analysis-core` or the API supports it. The corresponding UI must expose the capability truthfully in the same milestone/slice unless the authorized work is explicitly infrastructure-only, contract-only, migration-only, or an exploratory spike.
+A semantic/backend capability intended to be observable by the user is not complete merely because `analysis-core` or the API supports it. The corresponding UI must expose the capability truthfully in the same coherent slice unless the authorized work is explicitly infrastructure-only, contract-only, migration-only, reliability-only, or exploratory.
 
 Do not accumulate hidden backend product features for a later generic frontend phase. Do not build UI that invents semantic behavior not supported by analysis/API truth.
 
-Apply `.agents/skills/frontend/SKILL.md` for web ownership and `.agents/skills/backend/SKILL.md` for API/analysis ownership. Apply both for cross-stack user-facing slices.
+## Current Stack Pattern
+
+Package manifests and the lockfile are authoritative for exact versions. Current implementation direction is:
+
+- `apps/web`: React + TypeScript + Vite, Tailwind CSS v4, Radix UI Primitives for complex accessible controls, Lucide for UI affordance icons, and CodeFlow-owned `cs-*` semantic tokens/shared primitives;
+- `apps/api`: Fastify as a narrow HTTP boundary;
+- `packages/analysis-core`: deterministic semantic/domain analysis independent from HTTP and React;
+- Vitest/Testing Library for behavior-focused verification where applicable.
+
+Reuse the installed stack before adding dependencies. Native HTML remains preferred when its semantics and interaction are sufficient; Radix is for interaction/accessibility complexity, not a separate visual design system. Shared ordinary web primitives belong under the existing `apps/web/src/ui/` ownership when repetition justifies them. Product-specific semantic graph components should not be forced into generic UI wrappers.
 
 ## Semantic Model Pattern
 
@@ -89,27 +98,27 @@ The following are view/inspection state, not domain truth:
 
 Changing view state must not mutate semantic evidence or relationship classification.
 
-Explicit partial/error/unavailable states are preferred over synthetic fallback data.
-
-Primary interaction should preserve native accessibility semantics where practical.
-
-See `.agents/DESIGN.md` for durable visual and interaction behavior.
+Explicit partial/error/unavailable states are preferred over synthetic fallback data. Primary interaction should preserve native accessibility semantics where practical. Use `.agents/DESIGN.md` for durable visual and interaction behavior.
 
 ## API Pattern
 
 `apps/api` is a narrow Fastify boundary over analysis functionality.
 
+Prefer direct request -> validate -> owning domain call -> explicit projection -> reply flows. Do not introduce controller/service/repository/manager chains that only forward arguments.
+
 Keep semantic contracts explicit and parser-agnostic. New HTTP behavior should reuse current domain/projection contracts unless the user has authorized a material public-contract change.
 
 ## Testing Location Pattern
 
-Tests currently live close to the behavior they protect:
+Tests live close to the behavior they protect:
 
-- `apps/web/src/App.test.tsx` protects workspace behavior;
+- `apps/web/src/App.test.tsx` and focused web tests protect workspace behavior;
 - `apps/api/src/app.test.ts` protects the API boundary;
-- analysis-core tests/fixtures should protect semantic model/analyzer/projection behavior when those surfaces change.
+- analysis-core tests/fixtures protect semantic model/analyzer/projection behavior when those surfaces change.
 
-Use small deterministic fixtures when they prove semantic behavior more clearly than a large external repository.
+Use small deterministic fixtures when they prove semantic behavior more clearly than a large external repository. Prefer observable behavior over framework internals, snapshots, or trivia. Verification selection belongs to `.agents/QUALITY.md`.
+
+Radix interaction tests in jsdom must preserve PointerEvent semantics that Radix actually branches on. In particular, do not alias `PointerEvent` directly to `MouseEvent`: the test environment must retain `pointerType` and `pointerId`, otherwise pointer-driven Select/Menu behavior can fail before the product interaction is exercised.
 
 ## Known Traps
 
@@ -119,3 +128,5 @@ Use small deterministic fixtures when they prove semantic behavior more clearly 
 - Do not execute analyzed repository code as part of ordinary static analysis.
 - Do not create language-specific UI architecture when a shared semantic projection can represent the concept.
 - Do not introduce a new package solely to organize one small local concern.
+- Do not introduce generic `utils`, `helpers`, `manager`, or `service` layers without durable ownership.
+- Do not recreate repository-local frontend/backend skills; durable repository-specific guidance belongs in the canonical `.agents/` owners.

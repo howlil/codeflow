@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -16,18 +20,197 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect change scope
+        id: scope
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          CURRENT_SHA: ${{ github.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          conservative_scope() {
+            echo "base_sha=" >> "$GITHUB_OUTPUT"
+            echo "head_sha=$CURRENT_SHA" >> "$GITHUB_OUTPUT"
+            echo "runtime=true" >> "$GITHUB_OUTPUT"
+            echo "agent_only=false" >> "$GITHUB_OUTPUT"
+            echo "style_only=false" >> "$GITHUB_OUTPUT"
+            echo "test_scope=full" >> "$GITHUB_OUTPUT"
+            echo "deployment=true" >> "$GITHUB_OUTPUT"
+          }
+
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            if [ -z "$PR_BASE_SHA" ] || [ -z "$PR_HEAD_SHA" ]; then
+              conservative_scope
+              exit 0
+            fi
+
+            if ! git cat-file -e "$PR_BASE_SHA^{commit}" 2>/dev/null || ! git cat-file -e "$PR_HEAD_SHA^{commit}" 2>/dev/null; then
+              conservative_scope
+              exit 0
+            fi
+
+            base_sha="$(git merge-base "$PR_BASE_SHA" "$PR_HEAD_SHA")"
+            head_sha="$PR_HEAD_SHA"
+          else
+            zero_sha="0000000000000000000000000000000000000000"
+            if [ -z "$PUSH_BEFORE" ] || [ "$PUSH_BEFORE" = "$zero_sha" ] || ! git cat-file -e "$PUSH_BEFORE^{commit}" 2>/dev/null; then
+              conservative_scope
+              exit 0
+            fi
+
+            base_sha="$PUSH_BEFORE"
+            head_sha="$CURRENT_SHA"
+          fi
+
+          runtime=false
+          agent_only=true
+          style_only=true
+          test_scope=none
+          deployment=false
+
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+
+            case "$file" in
+              AGENTS.md|.agents/*)
+                ;;
+              *)
+                runtime=true
+                agent_only=false
+
+                case "$file" in
+                  apps/web/src/*.css)
+                    ;;
+                  *)
+                    style_only=false
+                    ;;
+                esac
+
+                case "$file" in
+                  apps/web/src/*.css)
+                    ;;
+                  apps/web/*)
+                    if [ "$test_scope" != "full" ]; then
+                      test_scope=web
+                    fi
+                    ;;
+                  *)
+                    test_scope=full
+                    ;;
+                esac
+                ;;
+            esac
+
+            case "$file" in
+              Dockerfile|compose.yaml|deploy/*|.dockerignore|.env.example|.github/workflows/ci.yml)
+                deployment=true
+                ;;
+            esac
+          done < <(git diff --name-only "$base_sha" "$head_sha")
+
+          if [ "$runtime" = "false" ]; then
+            style_only=false
+          fi
+
+          echo "base_sha=$base_sha" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
+          echo "runtime=$runtime" >> "$GITHUB_OUTPUT"
+          echo "agent_only=$agent_only" >> "$GITHUB_OUTPUT"
+          echo "style_only=$style_only" >> "$GITHUB_OUTPUT"
+          echo "test_scope=$test_scope" >> "$GITHUB_OUTPUT"
+          echo "deployment=$deployment" >> "$GITHUB_OUTPUT"
+
+      - name: Verify agent knowledge
+        if: steps.scope.outputs.agent_only == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check "${{ steps.scope.outputs.base_sha }}" "${{ steps.scope.outputs.head_sha }}"
+          test -f AGENTS.md
+          test -f .agents/PROJECT.md
+          test -f .agents/ARCHITECTURE.md
+          test -f .agents/CURRENT_ITERATION.md
+          test -f .agents/CODE_PATTERNS.md
+          test -f .agents/QUALITY.md
+          test -f .agents/DECISIONS.md
+          test -f .agents/DESIGN.md
+          test ! -d .agents/skills
 
       - name: Enable Corepack
+        if: steps.scope.outputs.runtime == 'true'
         run: corepack enable
 
       - name: Set up Node.js
+        if: steps.scope.outputs.runtime == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
+        if: steps.scope.outputs.runtime == 'true'
         run: pnpm install --frozen-lockfile
 
-      - name: Verify repository
-        run: pnpm check
+      - name: Check formatting
+        if: steps.scope.outputs.runtime == 'true'
+        run: pnpm format:check
+
+      - name: Lint
+        if: steps.scope.outputs.runtime == 'true'
+        run: pnpm lint
+
+      - name: Build
+        if: steps.scope.outputs.runtime == 'true'
+        run: pnpm build
+
+      - name: Test
+        id: tests
+        if: steps.scope.outputs.runtime == 'true' && steps.scope.outputs.test_scope != 'none'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [ "${{ steps.scope.outputs.test_scope }}" = "web" ]; then
+            pnpm --filter @codeflow/web test 2>&1 | tee test-output.log
+          else
+            pnpm test 2>&1 | tee test-output.log
+          fi
+
+      - name: Upload test failure diagnostics
+        if: failure() && steps.tests.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test-output.log
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Validate production Compose
+        if: steps.scope.outputs.deployment == 'true'
+        run: docker compose config
+
+      - name: Smoke test production Compose
+        if: steps.scope.outputs.deployment == 'true'
+        run: |
+          trap 'docker compose down --remove-orphans' EXIT
+
+          docker compose up -d --build
+
+          for attempt in {1..30}; do
+            if docker compose exec -T web wget -qO- http://127.0.0.1:8080/health >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+
+          docker compose ps
+          docker compose logs
+          exit 1

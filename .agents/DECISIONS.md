@@ -57,3 +57,19 @@
 **Why:** Product truth must remain reproducible from repository analysis/evidence and should not depend on how a user arranged or inspected the graph.
 
 **Consequences:** UI interaction can change presentation and inspection context but cannot create or reclassify semantic relationships by itself.
+
+## D-009 — Repository input is local, bounded, and in-memory
+
+**Decision:** The real-repository input path uses browser local-directory/file selection. The web client sends only the bounded supported source set plus the selected exported entry point to `apps/api`, which validates the request again and performs in-memory static analysis.
+
+**Why:** This proves the real-repository product path without introducing Git-host authentication, server-side clone/process execution, persistence, or a wider remote-network trust boundary before those capabilities are required.
+
+**Consequences:** Repository source remains user-selected and ephemeral; both client and API apply scope/resource limits; API path validation is authoritative; ordinary analysis does not execute repository code. Public/private Git import, repository auth, saved analyses, and server-side repository acquisition remain separate future product/security decisions.
+
+## D-010 — Production deployment uses one Compose stack with a single public web origin
+
+**Decision:** The production deployment baseline is Docker Compose with two containers: an Nginx web container serving the built Vite application and reverse-proxying `/api` plus `/health`, and an internal Node/Fastify API container. The web container listens on and exposes container port `8080`; the deployment platform owns external host-port assignment and the public route.
+
+**Why:** The existing browser client already uses same-origin `/api` requests. A single public origin avoids a new CORS/public-API boundary while keeping the current web/API process ownership intact and making VPS/PaaS deployment straightforward.
+
+**Consequences:** Compose packaging does not turn CodeFlow into a microservice architecture; it deploys the existing modular monolith processes together. The API listens on `0.0.0.0:3001` inside the Compose network and remains reachable publicly only through the web proxy. The repository Compose file does not publish host ports. `CODEFLOW_PORT` remains preserved as a deployment compatibility key and should be set to `8080` on MyPaaS, while MyPaaS owns the external host port and route. Deployment changes must preserve the repository security/input bounds and must pass Compose configuration, image-build, startup, and proxied health verification.

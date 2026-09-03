@@ -10,61 +10,34 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 import type { FlowProjection } from './flow-client';
 
-const repositoryFlow: FlowProjection = {
-  id: 'flow:function:src/index.ts:main',
-  entryPointId: 'function:src/index.ts:main',
-  repository: {
-    name: 'example-api',
-    url: 'https://github.com/howlil/example-api',
-    branch: 'master',
-  },
-  entryPoints: [
-    {
-      id: 'function:src/index.ts:main',
-      name: 'main',
-      filePath: 'src/index.ts',
-      confidence: 'detected',
-      reason: 'Bootstrap export.',
-    },
-    {
-      id: 'function:src/http.ts:handleRequest',
-      name: 'handleRequest',
-      filePath: 'src/http.ts',
-      confidence: 'detected',
-      reason: 'Request handler export.',
-    },
-  ],
-  analysis: {
-    state: 'READY',
-    filesAnalyzed: 2,
-    filesIgnored: 0,
-    functions: 3,
-    relationships: 2,
-    unresolvedReferences: 0,
-    unsupportedDynamicImports: 0,
-    limitations: [],
-  },
+const handlerSource = `import { formatGreeting } from './format';\nimport { normalizeName } from './name';\n\nexport function handleGreeting(name: string): string {\n  const formatter = formatGreeting;\n  return formatter(normalizeName(name));\n}\n`;
+const nameSource = `export function normalizeName(name: string): string {\n  return name.trim().toLowerCase();\n}\n`;
+const formatSource = `export function formatGreeting(name: string): string {\n  return \`Hello, \${name}!\`;\n}\n`;
+
+const sampleFlow: FlowProjection = {
+  id: 'flow:function:demo/src/handler.ts:handleGreeting',
+  entryPointId: 'function:demo/src/handler.ts:handleGreeting',
   nodes: [
     {
-      id: 'function:src/index.ts:main',
+      id: 'function:demo/src/handler.ts:handleGreeting',
       kind: 'Function',
-      label: 'main',
+      label: 'handleGreeting',
       entryPoint: true,
       location: {
-        filePath: 'src/index.ts',
-        startLine: 2,
+        filePath: 'demo/src/handler.ts',
+        startLine: 4,
         startColumn: 1,
-        endLine: 2,
-        endColumn: 70,
+        endLine: 7,
+        endColumn: 2,
       },
     },
     {
-      id: 'function:src/orders.ts:createOrder',
+      id: 'function:demo/src/name.ts:normalizeName',
       kind: 'Function',
-      label: 'createOrder',
+      label: 'normalizeName',
       entryPoint: false,
       location: {
-        filePath: 'src/orders.ts',
+        filePath: 'demo/src/name.ts',
         startLine: 1,
         startColumn: 1,
         endLine: 3,
@@ -72,174 +45,521 @@ const repositoryFlow: FlowProjection = {
       },
     },
     {
-      id: 'function:src/orders.ts:validateOrder',
+      id: 'function:demo/src/format.ts:formatGreeting',
       kind: 'Function',
-      label: 'validateOrder',
+      label: 'formatGreeting',
       entryPoint: false,
       location: {
-        filePath: 'src/orders.ts',
-        startLine: 5,
+        filePath: 'demo/src/format.ts',
+        startLine: 1,
         startColumn: 1,
-        endLine: 7,
+        endLine: 3,
         endColumn: 2,
       },
     },
   ],
   edges: [
     {
-      id: 'main-order',
+      id: 'verified-edge',
       kind: 'CALLS',
-      sourceId: 'function:src/index.ts:main',
-      targetId: 'function:src/orders.ts:createOrder',
+      sourceId: 'function:demo/src/handler.ts:handleGreeting',
+      targetId: 'function:demo/src/name.ts:normalizeName',
       evidence: [
         {
           kind: 'verified-static',
           source: 'typescript-compiler-api',
-          reason: 'Direct cross-file symbol resolution.',
+          reason: 'Direct symbol resolution.',
           location: {
-            filePath: 'src/index.ts',
-            startLine: 2,
-            startColumn: 60,
-            endLine: 2,
-            endColumn: 72,
+            filePath: 'demo/src/handler.ts',
+            startLine: 6,
+            startColumn: 20,
+            endLine: 6,
+            endColumn: 39,
           },
         },
       ],
     },
     {
-      id: 'order-validate',
+      id: 'inferred-edge',
       kind: 'CALLS',
-      sourceId: 'function:src/orders.ts:createOrder',
-      targetId: 'function:src/orders.ts:validateOrder',
+      sourceId: 'function:demo/src/handler.ts:handleGreeting',
+      targetId: 'function:demo/src/format.ts:formatGreeting',
       evidence: [
         {
           kind: 'inferred-static',
           source: 'typescript-compiler-api',
-          reason: 'Local call target.',
+          reason: 'Local alias inference.',
           location: {
-            filePath: 'src/orders.ts',
-            startLine: 2,
+            filePath: 'demo/src/handler.ts',
+            startLine: 6,
             startColumn: 10,
-            endLine: 2,
-            endColumn: 30,
+            endLine: 6,
+            endColumn: 40,
           },
         },
       ],
     },
   ],
   source: {
-    filePath: 'src/index.ts',
-    text: "import { createOrder } from './orders.js';\nexport function main(input: string) { return createOrder(input); }\n",
+    filePath: 'demo/src/handler.ts',
+    text: handlerSource,
   },
   sources: [
+    { filePath: 'demo/src/format.ts', text: formatSource },
+    { filePath: 'demo/src/handler.ts', text: handlerSource },
+    { filePath: 'demo/src/name.ts', text: nameSource },
+  ],
+  analysis: {
+    status: 'complete',
+    analyzedFileCount: 3,
+    ignoredFileCount: 0,
+    issues: [],
+  },
+  functionData: [
     {
-      filePath: 'src/index.ts',
-      text: "import { createOrder } from './orders.js';\nexport function main(input: string) { return createOrder(input); }\n",
-    },
-    {
-      filePath: 'src/orders.ts',
-      text: 'export function createOrder(input: string) {\n  return validateOrder(input);\n}\n\nfunction validateOrder(input: string) {\n  return input.trim();\n}\n',
+      functionId: 'function:demo/src/handler.ts:handleGreeting',
+      parameters: [
+        {
+          id: 'parameter:name',
+          name: 'name',
+          typeText: 'string',
+          location: {
+            filePath: 'demo/src/handler.ts',
+            startLine: 4,
+            startColumn: 32,
+            endLine: 4,
+            endColumn: 44,
+          },
+          evidence: [],
+        },
+      ],
+      returns: [
+        {
+          id: 'return:greeting',
+          expressionText: 'formatter(normalizeName(name))',
+          location: {
+            filePath: 'demo/src/handler.ts',
+            startLine: 6,
+            startColumn: 3,
+            endLine: 6,
+            endColumn: 43,
+          },
+          evidence: [],
+        },
+      ],
+      callArguments: [],
     },
   ],
+  staticFlow: {
+    steps: [
+      {
+        id: 'step:parameter',
+        functionId: 'function:demo/src/handler.ts:handleGreeting',
+        kind: 'parameter',
+        label: 'name parameter',
+        valueText: 'name',
+        location: {
+          filePath: 'demo/src/handler.ts',
+          startLine: 4,
+          startColumn: 32,
+          endLine: 4,
+          endColumn: 44,
+        },
+        evidence: [],
+      },
+      {
+        id: 'step:normalize',
+        functionId: 'function:demo/src/name.ts:normalizeName',
+        kind: 'transform',
+        label: 'normalize name',
+        valueText: 'name.trim().toLowerCase()',
+        location: {
+          filePath: 'demo/src/name.ts',
+          startLine: 2,
+          startColumn: 10,
+          endLine: 2,
+          endColumn: 35,
+        },
+        evidence: [],
+      },
+    ],
+    relationships: [
+      {
+        id: 'flow:name-normalized',
+        kind: 'FLOWS_TO',
+        functionId: 'function:demo/src/handler.ts:handleGreeting',
+        sourceStepId: 'step:parameter',
+        targetStepId: 'step:normalize',
+        label: 'name → normalized name',
+        evidence: [],
+      },
+    ],
+  },
 };
 
-function stubAnalysis(flow: FlowProjection = repositoryFlow) {
+function repositoryFile(filePath: string, text: string): File {
+  const file = new File([text], filePath.split('/').at(-1) ?? filePath, {
+    type: 'text/typescript',
+  });
+  Object.defineProperty(file, 'webkitRelativePath', { value: filePath });
+  Object.defineProperty(file, 'text', {
+    value: async () => text,
+  });
+  return file;
+}
+
+const repositoryFiles = [
+  repositoryFile('demo/src/handler.ts', handlerSource),
+  repositoryFile('demo/src/name.ts', nameSource),
+  repositoryFile('demo/src/format.ts', formatSource),
+  repositoryFile('demo/README.md', '# Demo'),
+];
+
+function stubFlowRequest(flow: FlowProjection = sampleFlow) {
+  const fetchMock = vi.fn().mockResolvedValue({
+    ok: true,
+    status: 200,
+    json: async () => flow,
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  return fetchMock;
+}
+
+function stubFlowFailure(message: string) {
   vi.stubGlobal(
     'fetch',
-    vi.fn().mockResolvedValue({ ok: true, json: async () => flow }),
+    vi.fn().mockResolvedValue({
+      ok: false,
+      status: 422,
+      json: async () => ({ error: message }),
+    }),
   );
 }
 
-describe('CodeFlow repository journey', () => {
+function selectEntrySource(filePath: string) {
+  const trigger = screen.getByRole('combobox', { name: 'Entry source file' });
+  fireEvent.pointerDown(trigger, {
+    button: 0,
+    ctrlKey: false,
+    pointerId: 1,
+    pointerType: 'mouse',
+  });
+  fireEvent.click(screen.getByRole('option', { name: filePath }));
+}
+
+async function openRepository(flow: FlowProjection = sampleFlow) {
+  const fetchMock = stubFlowRequest(flow);
+  render(<App />);
+
+  fireEvent.change(screen.getByLabelText('Repository directory'), {
+    target: { files: repositoryFiles },
+  });
+  selectEntrySource('demo/src/handler.ts');
+  fireEvent.change(
+    screen.getByRole('textbox', { name: 'Exported entry function' }),
+    { target: { value: 'handleGreeting' } },
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Analyze repository' }));
+
+  await screen.findByText(
+    flow.nodes.length === 0
+      ? 'No functions projected'
+      : 'handleGreeting request flow',
+  );
+  return fetchMock;
+}
+
+describe('App', () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
+    window.localStorage.clear();
+    delete document.documentElement.dataset.theme;
   });
 
-  it('starts with GitHub acquisition instead of a manual file picker', () => {
+  it('starts from local repository input rather than the sample fixture', () => {
+    const fetchMock = stubFlowRequest();
+
     render(<App />);
+
     expect(
-      screen.getByRole('heading', {
-        name: 'Understand an unfamiliar codebase',
-      }),
+      screen.getByText('Select a local TypeScript repository'),
     ).toBeInTheDocument();
-    expect(
-      screen.getByLabelText('Public GitHub repository URL'),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Analyze repository' }),
-    ).toBeInTheDocument();
-    expect(screen.queryByText('Choose Files')).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('acquires a repository, lets the user select an entry, and searches semantic symbols', async () => {
-    stubAnalysis();
-    render(<App />);
-    fireEvent.change(screen.getByLabelText('Public GitHub repository URL'), {
-      target: { value: 'https://github.com/howlil/example-api' },
+  it('collapses setup into repository context and inspects cross-file source', async () => {
+    const fetchMock = await openRepository();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const request = fetchMock.mock.calls[0]?.[1] as RequestInit;
+    const body = JSON.parse(String(request.body)) as {
+      files: Array<{ filePath: string }>;
+      entryPoint: { filePath: string; name: string };
+    };
+    expect(body.entryPoint).toEqual({
+      filePath: 'demo/src/handler.ts',
+      name: 'handleGreeting',
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Analyze repository' }));
-    expect((await screen.findAllByText('example-api')).length).toBeGreaterThan(
-      0,
-    );
-    expect(screen.getByText('Focused neighborhood')).toBeInTheDocument();
-    expect(screen.getByText('src/index.ts')).toBeInTheDocument();
+    expect(body.files.map((file) => file.filePath)).toEqual([
+      'demo/src/format.ts',
+      'demo/src/handler.ts',
+      'demo/src/name.ts',
+    ]);
+    expect(
+      screen.queryByLabelText('Repository directory'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Change repository' }),
+    ).toBeInTheDocument();
 
-    fireEvent.change(
-      screen.getByRole('searchbox', { name: /Search repository/i }),
-      { target: { value: 'validate' } },
-    );
-    const results = screen.getByLabelText('Repository search results');
     fireEvent.click(
-      within(results).getByRole('button', { name: /validateOrder/i }),
+      screen.getByRole('button', { name: /^FunctionnormalizeName/i }),
     );
+
     expect(
-      screen.getAllByRole('heading', { name: 'validateOrder' }).length,
-    ).toBeGreaterThan(0);
-    fireEvent.click(screen.getByRole('button', { name: 'Show callers' }));
-    expect(screen.getByText('Callers of')).toBeInTheDocument();
+      screen.getByRole('heading', { name: 'normalizeName' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/name\.trim\(\)\.toLowerCase\(\)/),
+    ).toBeInTheDocument();
+    const inspector = screen.getByLabelText('Source evidence inspector');
+    expect(
+      within(inspector).getByText(/demo\/src\/name\.ts:L1/),
+    ).toBeInTheDocument();
   });
 
-  it('shows source evidence and partial limitations without inventing completeness', async () => {
-    stubAnalysis({
-      ...repositoryFlow,
-      analysis: {
-        ...repositoryFlow.analysis!,
-        state: 'PARTIAL',
-        filesIgnored: 3,
-        limitations: ['3 files ignored by repository scope filters.'],
-      },
-    });
-    render(<App />);
-    fireEvent.change(screen.getByLabelText('Public GitHub repository URL'), {
-      target: { value: 'https://github.com/howlil/example-api' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Analyze repository' }));
+  it('navigates search from the keyboard and returns to the entry flow truthfully', async () => {
+    await openRepository();
+
+    const search = screen.getByRole('searchbox', { name: 'Search functions' });
+    fireEvent.change(search, { target: { value: 'format' } });
+    fireEvent.keyDown(search, { key: 'Enter' });
+
     expect(
-      await screen.findByText('Analysis completed with limitations'),
+      screen.getByText('Neighborhood focus · formatGreeting'),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: 'formatGreeting' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('normalizeName')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back to entry flow' }));
+
+    expect(screen.getByText('normalizeName')).toBeInTheDocument();
+  });
+
+  it('moves between caller and callee with arrow keys while keeping inspection synchronized', async () => {
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      (callback: FrameRequestCallback): number => {
+        callback(0);
+        return 0;
+      },
+    );
+    await openRepository();
+
+    const entryNode = screen.getByRole('button', {
+      name: /^Entry functionhandleGreeting/i,
+    });
+    entryNode.focus();
+
+    fireEvent.keyDown(entryNode, { key: 'ArrowRight' });
+
+    const calleeNode = screen.getByRole('button', {
+      name: /^FunctionformatGreeting/i,
+    });
+    expect(calleeNode).toHaveFocus();
+    expect(
+      screen.getByRole('heading', { name: 'formatGreeting' }),
+    ).toBeInTheDocument();
+
+    fireEvent.keyDown(calleeNode, { key: 'ArrowLeft' });
+
+    expect(entryNode).toHaveFocus();
+    expect(
+      screen.getByRole('heading', { name: 'handleGreeting' }),
+    ).toBeInTheDocument();
+  });
+
+  it('opens selected relationship evidence with source provenance', async () => {
+    await openRepository();
+
     fireEvent.click(
       screen.getByRole('button', {
-        name: /Inspect CALLS relationship from main to createOrder/i,
+        name: 'Inspect CALLS relationship from handleGreeting to normalizeName',
       }),
     );
+
     expect(
-      screen.getByText('Direct cross-file symbol resolution.'),
+      screen.getByRole('heading', { name: 'handleGreeting → normalizeName' }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/createOrder\(input\)/)).toBeInTheDocument();
+    expect(screen.getByText('Direct symbol resolution.')).toBeInTheDocument();
+    expect(screen.getByText(/typescript-compiler-api/)).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Evidence' })).toHaveAttribute(
+      'data-state',
+      'active',
+    );
   });
 
-  it('rejects invalid URL locally before making an acquisition request', () => {
-    const fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
-    render(<App />);
-    fireEvent.change(screen.getByLabelText('Public GitHub repository URL'), {
-      target: { value: 'https://example.com/repository' },
+  it('separates data, evidence, and static steps into task-oriented inspector tabs', async () => {
+    await openRepository();
+
+    const dataTab = screen.getByRole('tab', { name: 'Data' });
+    fireEvent.mouseDown(dataTab, { button: 0 });
+    fireEvent.pointerDown(dataTab, {
+      button: 0,
+      pointerId: 1,
+      pointerType: 'mouse',
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Analyze repository' }));
+    fireEvent.click(dataTab);
+    expect(screen.getByText('string')).toBeInTheDocument();
+    expect(
+      screen.getByText('formatter(normalizeName(name))'),
+    ).toBeInTheDocument();
+
+    const evidenceTab = screen.getByRole('tab', { name: 'Evidence' });
+    fireEvent.mouseDown(evidenceTab, { button: 0 });
+    fireEvent.pointerDown(evidenceTab, {
+      button: 0,
+      pointerId: 1,
+      pointerType: 'mouse',
+    });
+    fireEvent.click(evidenceTab);
+    expect(screen.getAllByText('CALLS').length).toBeGreaterThan(0);
+
+    const stepsTab = screen.getByRole('tab', { name: 'Steps' });
+    fireEvent.mouseDown(stepsTab, { button: 0 });
+    fireEvent.pointerDown(stepsTab, {
+      button: 0,
+      pointerId: 1,
+      pointerType: 'mouse',
+    });
+    fireEvent.click(stepsTab);
+    expect(screen.getByText(/Step 1\/2/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Next step' }));
+    expect(screen.getByText(/Step 2\/2/)).toBeInTheDocument();
+    expect(screen.getByText('normalize name')).toBeInTheDocument();
+  });
+
+  it('persists explicit theme selection', () => {
+    render(<App />);
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Switch to light theme' }),
+    );
+
+    expect(document.documentElement.dataset.theme).toBe('light');
+    expect(window.localStorage.getItem('codeflow-theme')).toBe('light');
+  });
+
+  it('expands source inspection without leaving the semantic canvas', async () => {
+    await openRepository();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Expand source' }));
+
+    expect(
+      screen.getByRole('button', { name: 'Restore inspector' }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      screen.getByRole('region', { name: 'Semantic flow canvas' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByLabelText('Source evidence inspector'),
+    ).toHaveTextContent('export function handleGreeting');
+  });
+
+  it('shows an explicit empty state when analysis projects no functions', async () => {
+    await openRepository({
+      ...sampleFlow,
+      nodes: [],
+      edges: [],
+    });
+
+    expect(screen.getByText('No functions projected')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('region', { name: 'Semantic flow canvas' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('keeps a partial repository projection navigable and surfaces analysis issues', async () => {
+    const partialFlow: FlowProjection = {
+      ...sampleFlow,
+      analysis: {
+        status: 'partial',
+        analyzedFileCount: 3,
+        ignoredFileCount: 1,
+        issues: [
+          {
+            kind: 'unsupported',
+            filePath: 'demo/src/missing.ts',
+            message:
+              'Relative import ./missing could not be resolved from the selected repository files.',
+          },
+        ],
+      },
+      edges: sampleFlow.edges.map((edge) =>
+        edge.id === 'verified-edge' ? { ...edge, evidence: [] } : edge,
+      ),
+    };
+
+    await openRepository(partialFlow);
+
+    expect(screen.getByText('Partial projection')).toBeInTheDocument();
+    expect(
+      screen.getByText(/demo\/src\/missing\.ts: Relative import/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/1 relationship has no supporting evidence/i),
+    ).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Inspect CALLS relationship from handleGreeting to normalizeName',
+      }),
+    );
+    expect(screen.getAllByText('evidence-unavailable').length).toBeGreaterThan(
+      0,
+    );
+  });
+
+  it('rejects oversized local source before upload', () => {
+    const fetchMock = stubFlowRequest();
+    const oversized = repositoryFile(
+      'demo/src/large.ts',
+      'x'.repeat(129 * 1024),
+    );
+
+    render(<App />);
+    fireEvent.change(screen.getByLabelText('Repository directory'), {
+      target: { files: [oversized] },
+    });
+
     expect(screen.getByRole('alert')).toHaveTextContent(
-      'public GitHub repository URL',
+      'exceeds the 131072-byte per-file analysis limit',
     );
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('shows an API failure state without fabricating a flow', async () => {
+    stubFlowFailure('Exported entry point handleGreeting was not found.');
+    render(<App />);
+
+    fireEvent.change(screen.getByLabelText('Repository directory'), {
+      target: { files: repositoryFiles },
+    });
+    selectEntrySource('demo/src/handler.ts');
+    fireEvent.change(
+      screen.getByRole('textbox', { name: 'Exported entry function' }),
+      { target: { value: 'handleGreeting' } },
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Analyze repository' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Repository analysis unavailable',
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Exported entry point handleGreeting was not found.',
+    );
   });
 });

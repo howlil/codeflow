@@ -1,7 +1,9 @@
-import type {
-  RepositorySource,
-  RepositorySummary,
-} from '@codeflow/analysis-core';
+import type { RepositorySummary } from '@codeflow/analysis-core';
+
+export interface AcquiredSource {
+  filePath: string;
+  text: string;
+}
 
 export const REPOSITORY_LIMITS = {
   maxFiles: 40,
@@ -11,7 +13,7 @@ export const REPOSITORY_LIMITS = {
 } as const;
 
 export interface AcquiredRepository {
-  files: RepositorySource[];
+  files: AcquiredSource[];
   ignoredFiles: string[];
   repository: RepositorySummary;
 }
@@ -142,7 +144,7 @@ export async function acquirePublicGitHubRepository(
   ignoredFiles.push(
     ...supported.slice(REPOSITORY_LIMITS.maxFiles).map((entry) => entry.path),
   );
-  const files: RepositorySource[] = [];
+  const files: AcquiredSource[] = [];
   let totalBytes = 0;
   for (const entry of selected) {
     if (entry.size > REPOSITORY_LIMITS.maxFileBytes) {

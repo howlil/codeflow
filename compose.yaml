@@ -1,0 +1,42 @@
+services:
+  api:
+    build:
+      context: .
+      target: api-runtime
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3001
+      NODE_ENV: production
+    expose:
+      - '3001'
+    init: true
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3001/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  web:
+    build:
+      context: .
+      target: web-runtime
+    depends_on:
+      api:
+        condition: service_healthy
+    expose:
+      - '8080'
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'wget -qO- http://127.0.0.1:8080/health >/dev/null || exit 1'
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s

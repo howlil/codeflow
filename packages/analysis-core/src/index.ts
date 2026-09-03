@@ -1,28 +1,36 @@
 export type {
+  AnalysisIssue,
+  AnalysisIssueKind,
+  AnalysisSummary,
+  CallArgumentMapping,
   Evidence,
   EvidenceKind,
   FlowEdge,
   FlowNode,
   FlowProjection,
-  AnalysisLifecycleState,
-  AnalysisSummary,
-  EntryPointConfidence,
-  EntryPointSuggestion,
-  RepositorySource,
-  RepositorySummary,
+  FunctionDataProjection,
+  FunctionParameterProjection,
+  FunctionReturnProjection,
+  ProjectionSource,
   SemanticEntity,
   SemanticGraph,
   SemanticRelationship,
   SourceLocation,
+  StaticFlowProjection,
+  StaticFlowRelationship,
+  StaticFlowRelationshipKind,
+  StaticFlowStep,
+  StaticFlowStepKind,
+  EntryPointConfidence,
+  EntryPointSuggestion,
+  RepositorySummary,
 } from './model.js';
 export { buildSampleRequestFlow } from './sample.js';
 export {
   analyzeTypeScriptFlow,
-  type AnalyzeTypeScriptFlowInput,
-} from './typescript-flow.js';
-export {
   analyzeTypeScriptRepository,
-  discoverEntryPoints,
+  type AnalyzeTypeScriptFlowInput,
   type AnalyzeTypeScriptRepositoryInput,
-  type RepositoryAnalysisResult,
-} from './typescript-repository.js';
+  type TypeScriptSourceInput,
+} from './typescript-flow.js';
+export { discoverEntryPoints } from './entry-discovery.js';
