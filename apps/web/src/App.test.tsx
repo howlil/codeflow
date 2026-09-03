@@ -237,17 +237,14 @@ function stubFlowFailure(message: string) {
 }
 
 function selectEntrySource(filePath: string) {
-  const pointer = {
+  const trigger = screen.getByRole('combobox', { name: 'Entry source file' });
+  fireEvent.pointerDown(trigger, {
     button: 0,
     ctrlKey: false,
     pointerId: 1,
     pointerType: 'mouse',
-  };
-  const trigger = screen.getByRole('combobox', { name: 'Entry source file' });
-  fireEvent.pointerDown(trigger, pointer);
-  const option = screen.getByRole('option', { name: filePath });
-  fireEvent.pointerDown(option, pointer);
-  fireEvent.pointerUp(option, pointer);
+  });
+  fireEvent.click(screen.getByRole('option', { name: filePath }));
 }
 
 async function openRepository(flow: FlowProjection = sampleFlow) {
