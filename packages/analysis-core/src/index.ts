@@ -21,6 +21,9 @@ export type {
   StaticFlowRelationshipKind,
   StaticFlowStep,
   StaticFlowStepKind,
+  EntryPointConfidence,
+  EntryPointSuggestion,
+  RepositorySummary,
 } from './model.js';
 export { buildSampleRequestFlow } from './sample.js';
 export {
@@ -30,3 +33,4 @@ export {
   type AnalyzeTypeScriptRepositoryInput,
   type TypeScriptSourceInput,
 } from './typescript-flow.js';
+export { discoverEntryPoints } from './entry-discovery.js';

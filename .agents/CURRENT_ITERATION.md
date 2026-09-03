@@ -1,45 +1,38 @@
 # Current Iteration
 
-Status: ACTIVE
+Status: COMPLETE
 
-Active Milestone: None
+Active Milestone: M5 - GitHub-to-Understanding Workspace
 
-Active Engineering Outcome: Fast, high-signal, risk-proportional CI verification.
+## Outcome
 
-Last Integrated Product Outcome: Chatspace-derived CodeFlow design-system foundations and semantic-workbench reshaping merged to `master` in PR #24 (`29ed692f5ca5cc3c5062896bd419927f4cd06d44`).
+CodeFlow now takes a public GitHub repository URL as the primary entry journey, acquires a bounded TypeScript/TSX source set in memory, discovers deterministic entry-point candidates, and opens the existing evidence-backed semantic workspace. The local repository picker remains available as an explicit secondary path.
 
-## Current Position
+All authorized M5 slices are implemented:
 
-CodeFlow already has the evidence-backed TypeScript semantic-analysis path, bounded local repository input, semantic workspace, production Compose packaging, and Chatspace-aligned UI foundation.
-
-The current authorized work is reliability/engineering-enabler work, not a new product milestone. Its purpose is to reduce verification latency without reducing confidence.
-
-CI now has complete-change-set scope detection, conservative fallback, pure-CSS/static verification, focused web-test scope, full shared/runtime scope, named failure boundaries, dependency caching, superseded-run cancellation, and failure-only test diagnostics.
+- S1 GitHub acquisition: strict public repository URL parsing, metadata/tree/raw-source retrieval, supported-source filtering, traversal rejection, timeout handling, file/byte bounds, and safe error categories.
+- S2 orientation and entry discovery: exported TypeScript functions are surfaced with deterministic detected/likely confidence labels and repository-relative paths.
+- S3 full-height workspace: the existing M4 semantic workspace is the post-acquisition destination, with repository context and analysis status visible above the canvas.
+- S4 evidence inspection: source-backed nodes, edges, evidence locations, data projections, static-flow steps, and partial-analysis issues remain available for GitHub-acquired sources.
+- S5 search and focus: existing search, focus mode, keyboard navigation, relationship lenses, and inspector behavior are preserved for acquired repositories.
+- S6 lifecycle: change repository, loading, invalid, unavailable, unsupported, bounded, and partial states are explicit; source remains request-scoped and is never persisted or executed.
+- S7 production acceptance: the GitHub route is covered at the API boundary and the primary picker/discovery behavior has focused regression coverage; the existing Compose/CI packaging path remains intact.
 
 ## Verification Evidence
 
-Run `33777291853` established the original shared web-test failure and proved failure artifacts. Run `33777724570` then proved selective verification chose the focused web-test path for a web-test-harness change: frozen install, formatting, lint, and build passed, while the same Radix Select setup failure remained.
+- `pnpm format:check`
+- `pnpm lint`
+- `pnpm build`
+- `pnpm test`
+- `pnpm check`
+- Pull request verification on the protected `master` branch
+- Post-merge `HEAD`, `origin/master`, and clean-worktree synchronization check
 
-The failure artifact and Radix implementation establish the harness defect precisely:
+The remote `master` advanced with M4 while this slice was in progress. That revision was integrated before final verification so the M5 adapter composes with the current local-analysis and semantic-workspace contracts.
 
-- `selectEntrySource` sends `pointerdown` to the Radix Select trigger;
-- Radix's mouse-open path requires `event.pointerType === 'mouse'`;
-- Testing Library creates pointer events from the jsdom window constructor;
-- the previous shim did not reliably guarantee a `window.PointerEvent` carrying `pointerType`/`pointerId`;
-- the portal therefore stayed closed and nine downstream tests stopped at the same option lookup.
+## Boundaries Preserved
 
-The correction installs one deterministic desktop PointerEvent constructor on both the test global and jsdom window, preserving the actual Radix pointer branch instead of bypassing the component through its hidden native select.
-
-## Delta
-
-- verify the corrected jsdom PointerEvent boundary with focused web tests;
-- if web tests pass, run one full CI/workflow validation that also reaches required Compose checks for the earlier workflow change;
-- then return repository state to idle with truthful evidence and verify the lightweight agent-only path.
-
-## Blockers
-
-- current blocker: focused verification of the window/global PointerEvent correction.
-
-## Next Move
-
-Run CI with the corrected PointerEvent constructor. If `Test` still fails, consume the failure artifact and fix only the next concrete boundary. Do not weaken or remove Radix interaction coverage.
+- Public GitHub repositories only; no private-auth flow or credential storage.
+- TypeScript/TSX only for this iteration; unsupported files are reported rather than fabricated into the model.
+- Bounded request-scoped/in-memory analysis; no persistence, arbitrary repository execution, runtime tracing, or AI explanation was added.
+- Static evidence and inferred entry-point confidence remain distinct from observed runtime behavior.

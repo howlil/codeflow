@@ -23,8 +23,9 @@ A developer who needs to understand an unfamiliar or complex codebase quickly an
 ## Core Product Journey
 
 ```text
-local repository selection
+public GitHub repository URL or explicit local repository selection
  -> bounded supported source input
+ -> deterministic entry-point discovery
  -> deterministic semantic analysis
  -> evidence-backed semantic/data-flow projection
  -> semantic workspace
@@ -39,7 +40,9 @@ The product must remain useful without AI explanation and without executing arbi
 
 The implemented TypeScript path currently supports:
 
-- bounded browser-selected local repository input with authoritative API revalidation;
+- bounded public GitHub repository acquisition with authoritative URL/tree/source validation;
+- explicit browser-selected local repository input as a secondary path;
+- deterministic exported-function entry-point discovery with confidence labels;
 - request-scoped/in-memory multi-file TypeScript analysis;
 - evidence-backed functions and supported cross-file call relationships;
 - repository-relative source/evidence provenance;

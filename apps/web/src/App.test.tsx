@@ -405,16 +405,37 @@ describe('App', () => {
   it('separates data, evidence, and static steps into task-oriented inspector tabs', async () => {
     await openRepository();
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Data' }));
+    const dataTab = screen.getByRole('tab', { name: 'Data' });
+    fireEvent.mouseDown(dataTab, { button: 0 });
+    fireEvent.pointerDown(dataTab, {
+      button: 0,
+      pointerId: 1,
+      pointerType: 'mouse',
+    });
+    fireEvent.click(dataTab);
     expect(screen.getByText('string')).toBeInTheDocument();
     expect(
       screen.getByText('formatter(normalizeName(name))'),
     ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Evidence' }));
+    const evidenceTab = screen.getByRole('tab', { name: 'Evidence' });
+    fireEvent.mouseDown(evidenceTab, { button: 0 });
+    fireEvent.pointerDown(evidenceTab, {
+      button: 0,
+      pointerId: 1,
+      pointerType: 'mouse',
+    });
+    fireEvent.click(evidenceTab);
     expect(screen.getAllByText('CALLS').length).toBeGreaterThan(0);
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Steps' }));
+    const stepsTab = screen.getByRole('tab', { name: 'Steps' });
+    fireEvent.mouseDown(stepsTab, { button: 0 });
+    fireEvent.pointerDown(stepsTab, {
+      button: 0,
+      pointerId: 1,
+      pointerType: 'mouse',
+    });
+    fireEvent.click(stepsTab);
     expect(screen.getByText(/Step 1\/2/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Next step' }));
     expect(screen.getByText(/Step 2\/2/)).toBeInTheDocument();

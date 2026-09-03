@@ -134,6 +134,19 @@ export interface FlowProjection {
     ignoredFileCount: number;
     issues: AnalysisIssue[];
   };
+  repository?: {
+    name: string;
+    url?: string;
+    branch?: string;
+    revision?: string;
+  };
+  entryPoints?: Array<{
+    id: string;
+    name: string;
+    filePath: string;
+    confidence: 'detected' | 'likely' | 'manual';
+    reason: string;
+  }>;
   /** Added in M4. Optional so older deterministic fixtures remain readable. */
   functionData?: FunctionDataProjection[];
   /** Added in M4. Optional so older deterministic fixtures remain readable. */
@@ -181,5 +194,47 @@ export async function analyzeRepositoryFlow(
     );
   }
 
+  return (await response.json()) as FlowProjection;
+}
+
+export class GitHubAnalysisError extends Error {
+  constructor(
+    readonly code: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'GitHubAnalysisError';
+  }
+}
+
+export async function analyzeGitHubRepository(
+  repositoryUrl: string,
+  entryPoint?: { filePath: string; name: string },
+): Promise<FlowProjection> {
+  const response = await fetch('/api/analyses', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      repositoryUrl,
+      ...(entryPoint === undefined ? {} : { entryPoint }),
+    }),
+  });
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as unknown;
+    if (
+      typeof payload === 'object' &&
+      payload !== null &&
+      'code' in payload &&
+      'message' in payload &&
+      typeof payload.code === 'string' &&
+      typeof payload.message === 'string'
+    ) {
+      throw new GitHubAnalysisError(payload.code, payload.message);
+    }
+    throw new GitHubAnalysisError(
+      'ANALYSIS_FAILED',
+      `Repository analysis failed with status ${response.status}.`,
+    );
+  }
   return (await response.json()) as FlowProjection;
 }

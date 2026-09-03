@@ -11,5 +11,6 @@
     "sourceMap": true,
     "tsBuildInfoFile": "dist/analysis-core.tsbuildinfo"
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts"]
 }

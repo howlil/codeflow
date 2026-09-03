@@ -1,11 +1,18 @@
 import {
   analyzeTypeScriptRepository,
   buildSampleRequestFlow,
+  discoverEntryPoints,
   type AnalysisIssue,
   type FlowProjection,
   type TypeScriptSourceInput,
 } from '@codeflow/analysis-core';
 import Fastify, { type FastifyInstance } from 'fastify';
+
+import {
+  acquirePublicGitHubRepository,
+  RepositoryAcquisitionError,
+  UnsupportedRepositoryError,
+} from './github.js';
 
 const MAX_REQUEST_BYTES = 1_500_000;
 const MAX_FILE_RECORDS = 256;
@@ -35,6 +42,14 @@ interface AnalyzeRepositoryPayload {
   };
 }
 
+interface GitHubAnalysisPayload {
+  repositoryUrl: string;
+  entryPoint?: {
+    filePath: string;
+    name: string;
+  };
+}
+
 class InputError extends Error {
   constructor(
     readonly statusCode: number,
@@ -53,6 +68,96 @@ export function buildApp(): FastifyInstance {
   }));
 
   app.get('/api/flows/sample', async () => buildSampleRequestFlow());
+
+  app.post<{ Body: unknown }>(
+    '/api/analyses',
+    { bodyLimit: 32 * 1024 },
+    async (request, reply) => {
+      try {
+        const payload = parseGitHubAnalysisPayload(request.body);
+        const acquired = await acquirePublicGitHubRepository(
+          payload.repositoryUrl,
+        );
+        const files = acquired.files.map((file) => ({
+          filePath: file.filePath,
+          sourceText: file.text,
+        }));
+        const entryPoints = discoverEntryPoints(files);
+        const entryPoint = payload.entryPoint ?? entryPoints[0];
+        if (entryPoint === undefined) {
+          return reply.code(422).send({
+            code: 'NO_ENTRY_POINT',
+            message: 'No exported TypeScript entry point was found.',
+          });
+        }
+
+        const projection = analyzeTypeScriptRepository({
+          files,
+          entryPoint: {
+            filePath: entryPoint.filePath,
+            name: entryPoint.name,
+          },
+        });
+        const acquisitionIssues = acquired.ignoredFiles.map((filePath) => ({
+          kind: 'ignored' as const,
+          filePath,
+          message:
+            'Dependency, generated, unsupported, or oversized content was excluded from this bounded analysis.',
+        }));
+        return {
+          ...projection,
+          repository: acquired.repository,
+          entryPoints,
+          analysis: {
+            ...projection.analysis,
+            status:
+              acquisitionIssues.length > 0
+                ? ('partial' as const)
+                : projection.analysis.status,
+            ignoredFileCount:
+              projection.analysis.ignoredFileCount + acquisitionIssues.length,
+            issues: [...acquisitionIssues, ...projection.analysis.issues],
+          },
+        } satisfies FlowProjection;
+      } catch (error: unknown) {
+        if (error instanceof RepositoryAcquisitionError) {
+          return reply
+            .code(
+              error.code === 'invalid-url'
+                ? 400
+                : error.code === 'limit-exceeded'
+                  ? 413
+                  : 502,
+            )
+            .send({
+              code:
+                error.code === 'invalid-url'
+                  ? 'INVALID_REPOSITORY_URL'
+                  : error.code === 'limit-exceeded'
+                    ? 'REPOSITORY_LIMIT_EXCEEDED'
+                    : 'REPOSITORY_UNAVAILABLE',
+              message: error.message,
+            });
+        }
+        if (error instanceof UnsupportedRepositoryError) {
+          return reply.code(422).send({
+            code: 'UNSUPPORTED_REPOSITORY',
+            message: error.message,
+          });
+        }
+        if (
+          error instanceof Error &&
+          error.message.startsWith('Exported entry point')
+        ) {
+          return reply.code(422).send({
+            code: 'NO_ENTRY_POINT',
+            message: error.message,
+          });
+        }
+        throw error;
+      }
+    },
+  );
 
   app.post<{ Body: unknown }>(
     '/api/flows/analyze',
@@ -86,6 +191,37 @@ export function buildApp(): FastifyInstance {
   );
 
   return app;
+}
+
+function parseGitHubAnalysisPayload(body: unknown): GitHubAnalysisPayload {
+  if (!isRecord(body) || typeof body.repositoryUrl !== 'string') {
+    throw new RepositoryAcquisitionError(
+      'invalid-url',
+      'repositoryUrl must be a public GitHub repository URL.',
+    );
+  }
+  if (body.entryPoint === undefined) {
+    return { repositoryUrl: body.repositoryUrl };
+  }
+  if (
+    !isRecord(body.entryPoint) ||
+    typeof body.entryPoint.filePath !== 'string' ||
+    typeof body.entryPoint.name !== 'string' ||
+    body.entryPoint.filePath.trim() === '' ||
+    body.entryPoint.name.trim() === ''
+  ) {
+    throw new RepositoryAcquisitionError(
+      'invalid-url',
+      'entryPoint must include a filePath and name.',
+    );
+  }
+  return {
+    repositoryUrl: body.repositoryUrl,
+    entryPoint: {
+      filePath: body.entryPoint.filePath,
+      name: body.entryPoint.name.trim(),
+    },
+  };
 }
 
 function parseAnalyzeRepositoryPayload(

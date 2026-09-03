@@ -8,12 +8,14 @@ import {
 } from 'react';
 
 import {
+  analyzeGitHubRepository,
   analyzeRepositoryFlow,
   type FlowEdge,
   type FlowNode,
   type FlowProjection,
   type RepositoryAnalysisRequest,
 } from './flow-client';
+import { GitHubRepositoryPicker } from './GitHubRepositoryPicker';
 import {
   RepositoryPicker,
   type RepositorySelectionSummary,
@@ -60,6 +62,9 @@ export function App() {
   const [analyzing, setAnalyzing] = useState(false);
   const [selectionSummary, setSelectionSummary] =
     useState<RepositorySelectionSummary | null>(null);
+  const [githubRepositoryUrl, setGithubRepositoryUrl] = useState<string | null>(
+    null,
+  );
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const projectionStatus = useMemo(
@@ -152,6 +157,47 @@ export function App() {
     }
   }
 
+  async function analyzeGitHub(
+    repositoryUrl: string,
+    entryPoint?: { filePath: string; name: string },
+  ) {
+    setAnalyzing(true);
+    setError(null);
+    setGithubRepositoryUrl(repositoryUrl);
+    setSelectionSummary(null);
+    setSelectedNodeId(null);
+    setSelectedEdgeId(null);
+    setFocusMode(false);
+    setSourceSplitMode(false);
+    setInspectorTab('overview');
+    setInspectorOpen(false);
+    setRelationshipLens('ALL');
+    setQuery('');
+
+    try {
+      const loadedFlow = await analyzeGitHubRepository(
+        repositoryUrl,
+        entryPoint,
+      );
+      setFlow(loadedFlow);
+      setSelectedNodeId(loadedFlow.entryPointId);
+      setSelectionSummary({
+        rootLabel: loadedFlow.repository?.name ?? repositoryUrl,
+        selectedFileCount: loadedFlow.sources.length,
+        ignoredFileCount: loadedFlow.analysis.ignoredFileCount,
+      });
+    } catch (caughtError: unknown) {
+      setFlow(null);
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'Unable to analyze the public GitHub repository.',
+      );
+    } finally {
+      setAnalyzing(false);
+    }
+  }
+
   function resetRepository() {
     setFlow(null);
     setSelectionSummary(null);
@@ -164,6 +210,7 @@ export function App() {
     setRelationshipLens('ALL');
     setQuery('');
     setError(null);
+    setGithubRepositoryUrl(null);
   }
 
   function selectNode(nodeId: string) {
@@ -249,7 +296,17 @@ export function App() {
       </header>
 
       {flow === null && !analyzing ? (
-        <RepositoryPicker busy={analyzing} onAnalyze={analyzeRepository} />
+        <>
+          <GitHubRepositoryPicker
+            busy={analyzing}
+            error={null}
+            onAnalyze={analyzeGitHub}
+          />
+          <details className="local-analysis-option">
+            <summary>Analyze a local repository instead</summary>
+            <RepositoryPicker busy={analyzing} onAnalyze={analyzeRepository} />
+          </details>
+        </>
       ) : null}
 
       {analyzing ? (
@@ -279,6 +336,12 @@ export function App() {
             selectionSummary={selectionSummary}
             entryPoint={entryPoint ?? null}
             onChangeRepository={resetRepository}
+            entryPoints={flow.entryPoints ?? []}
+            onSelectEntry={(nextEntryPoint) => {
+              if (githubRepositoryUrl !== null) {
+                void analyzeGitHub(githubRepositoryUrl, nextEntryPoint);
+              }
+            }}
           />
           <section className="state-panel" role="status">
             <strong>No functions projected</strong>
@@ -292,6 +355,12 @@ export function App() {
             selectionSummary={selectionSummary}
             entryPoint={entryPoint ?? null}
             onChangeRepository={resetRepository}
+            entryPoints={flow.entryPoints ?? []}
+            onSelectEntry={(nextEntryPoint) => {
+              if (githubRepositoryUrl !== null) {
+                void analyzeGitHub(githubRepositoryUrl, nextEntryPoint);
+              }
+            }}
           />
           <div
             className={`workspace-grid${
@@ -447,11 +516,15 @@ function WorkspaceContext({
   selectionSummary,
   entryPoint,
   onChangeRepository,
+  entryPoints,
+  onSelectEntry,
 }: {
   flow: FlowProjection;
   selectionSummary: RepositorySelectionSummary | null;
   entryPoint: FlowNode | null;
   onChangeRepository: () => void;
+  entryPoints: NonNullable<FlowProjection['entryPoints']>;
+  onSelectEntry: (entryPoint: { filePath: string; name: string }) => void;
 }) {
   return (
     <div className="workspace-context-bar">
@@ -472,6 +545,34 @@ function WorkspaceContext({
           Change repository
         </Button>
       </div>
+      {entryPoints.length > 0 ? (
+        <div
+          className="workspace-entry-points"
+          aria-label="Suggested entry points"
+        >
+          <span className="panel-kicker">Suggested entry points</span>
+          <div>
+            {entryPoints.slice(0, 8).map((candidate) => (
+              <button
+                className={candidate.id === flow.entryPointId ? 'selected' : ''}
+                key={candidate.id}
+                type="button"
+                onClick={() =>
+                  onSelectEntry({
+                    filePath: candidate.filePath,
+                    name: candidate.name,
+                  })
+                }
+              >
+                <strong>{candidate.name}</strong>
+                <small>
+                  {candidate.filePath} · {candidate.confidence}
+                </small>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

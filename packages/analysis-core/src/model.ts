@@ -172,4 +172,23 @@ export interface FlowProjection {
   functionData: FunctionDataProjection[];
   /** Ordered static exploration steps and relationships. Never observed runtime execution. */
   staticFlow: StaticFlowProjection;
+  repository?: RepositorySummary;
+  entryPoints?: EntryPointSuggestion[];
+}
+
+export interface RepositorySummary {
+  name: string;
+  url?: string;
+  branch?: string;
+  revision?: string;
+}
+
+export type EntryPointConfidence = 'detected' | 'likely' | 'manual';
+
+export interface EntryPointSuggestion {
+  id: string;
+  name: string;
+  filePath: string;
+  confidence: EntryPointConfidence;
+  reason: string;
 }

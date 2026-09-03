@@ -994,3 +994,119 @@ h2 {
     grid-template-columns: 1fr;
   }
 }
+
+.github-acquisition {
+  display: grid;
+  gap: 26px;
+  width: min(100%, 920px);
+  margin: 12vh auto 20px;
+  padding: clamp(24px, 5vw, 52px);
+  background: var(--surface-workspace);
+  border: 1px solid var(--border-default);
+  border-radius: 18px;
+  box-shadow: var(--shadow-overlay);
+}
+
+.github-acquisition h2 {
+  margin-bottom: 12px;
+  font-size: clamp(1.35rem, 3vw, 2rem);
+}
+
+.github-acquisition > div > p:last-child {
+  max-width: 610px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.github-acquisition form {
+  display: grid;
+  gap: 8px;
+}
+
+.github-acquisition label {
+  color: var(--text-primary);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.github-input-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+
+.github-input-row input {
+  min-height: 40px;
+  padding: 9px 12px;
+}
+
+.github-note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+}
+
+.local-analysis-option {
+  width: min(100%, 920px);
+  margin: 0 auto 20px;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
+.local-analysis-option summary {
+  width: fit-content;
+  cursor: pointer;
+}
+
+.local-analysis-option[open] summary {
+  margin-bottom: 10px;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.workspace-entry-points {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.workspace-entry-points > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.workspace-entry-points button {
+  display: grid;
+  gap: 2px;
+  padding: 7px 9px;
+  color: var(--text-secondary);
+  text-align: left;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 7px;
+  cursor: pointer;
+}
+
+.workspace-entry-points button:hover,
+.workspace-entry-points button.selected {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.workspace-entry-points strong {
+  font-size: 0.68rem;
+}
+.workspace-entry-points small {
+  color: var(--text-muted);
+  font-size: 0.6rem;
+}
+
+@media (max-width: 640px) {
+  .github-input-row {
+    grid-template-columns: 1fr;
+  }
+}
