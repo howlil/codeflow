@@ -60,13 +60,13 @@ Infrastructure-only, migration-only, contract-only, reliability-only, bug-fix, o
 
 ## Verification and State
 
-Use `.agents/QUALITY.md` to choose the lowest sufficient confidence layer for the changed failure boundary. Do not require cumulative unit + integration + E2E + deployment verification when lower-cost evidence is already sufficient. Critical user journeys may justify E2E; deployment gates apply only when deployment surfaces change.
+Use `.agents/QUALITY.md` to choose the lowest sufficient automated confidence layer for the changed failure boundary. Do not require cumulative unit + integration + browser E2E + deployment verification when lower-cost deterministic evidence is already sufficient. Manual acceptance, black-box browser testing, and human visual review are not merge or release gates. Deployment gates apply only when deployment surfaces change.
 
-Optimize CI for **signal per minute** without weakening evidence. CI should expose meaningful failure boundaries instead of hiding format, lint, build, and test behind one opaque step. A gate may be skipped only when deterministic change-scope detection proves that its failure domain is unaffected across the complete PR/push change set; speed alone is never sufficient reason to suppress a relevant check. If scope cannot be established reliably, choose the conservative stronger gate.
+Optimize CI for **signal per minute** without weakening relevant deterministic evidence. CI should expose meaningful failure boundaries instead of hiding format, lint, build, and test behind one opaque step. A gate may be skipped only when deterministic change-scope detection proves that its failure domain is unaffected across the complete PR/push change set; speed alone is never sufficient reason to suppress a relevant check. If scope cannot be established reliably, choose the conservative stronger automated gate.
 
-For UI/design work, distinguish presentation from interaction risk: pure styling/token changes normally need static/build confidence plus direct visual/diff inspection, while changes to controls, keyboard behavior, selection, navigation, async states, or accessibility require the focused behavioral tests that observe those interactions.
+For UI/design work, distinguish presentation from interaction risk: pure styling/token changes normally need static/build confidence, while changes to controls, keyboard behavior, selection, navigation, async states, or accessibility require focused deterministic behavioral tests at the owning boundary. Do not make manual screenshot/diff inspection a completion requirement.
 
-A merge is not evidence of `VERIFIED`, `RELEASE_READY`, `RELEASED`, or `DEPLOYED`. Advance repository state only when the corresponding evidence exists.
+A merge is not evidence of `VERIFIED`, `RELEASE_READY`, `RELEASED`, or `DEPLOYED`. Advance repository state only when the corresponding automated evidence exists.
 
 ## Repository Knowledge Rules
 
