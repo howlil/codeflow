@@ -228,7 +228,10 @@ export function Checkbox({
 export function Panel({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn('rounded-lg border border-cs-border bg-cs-panel', className)}
+      className={cn(
+        'rounded-lg border border-cs-border bg-cs-panel',
+        className,
+      )}
       {...props}
     />
   );
@@ -266,10 +269,7 @@ export function TabsList({
 }: ComponentPropsWithoutRef<typeof RadixTabs.List>) {
   return (
     <RadixTabs.List
-      className={cn(
-        'flex min-w-0 gap-1 border-b border-cs-border',
-        className,
-      )}
+      className={cn('flex min-w-0 gap-1 border-b border-cs-border', className)}
       {...props}
     />
   );

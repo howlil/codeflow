@@ -259,7 +259,9 @@ export function App() {
       {analyzing ? (
         <section className="state-panel" role="status">
           <strong>Analyzing selected TypeScript repository…</strong>
-          <span>Building an evidence-backed projection without executing code.</span>
+          <span>
+            Building an evidence-backed projection without executing code.
+          </span>
         </section>
       ) : error !== null ? (
         <section className="state-panel state-panel--error" role="alert">
@@ -342,7 +344,8 @@ export function App() {
                           >
                             <strong>{node.label}</strong>
                             <span>
-                              {node.location.filePath}:L{node.location.startLine}
+                              {node.location.filePath}:L
+                              {node.location.startLine}
                             </span>
                           </button>
                         ))
@@ -694,7 +697,8 @@ function Inspector({
           flow,
           selectedEdge.targetId,
         )}`;
-  const location = selectedEdge?.evidence[0]?.location ?? selectedNode?.location;
+  const location =
+    selectedEdge?.evidence[0]?.location ?? selectedNode?.location;
 
   return (
     <Tabs

@@ -320,7 +320,9 @@ describe('App', () => {
       screen.getByText(/name\.trim\(\)\.toLowerCase\(\)/),
     ).toBeInTheDocument();
     const inspector = screen.getByLabelText('Source evidence inspector');
-    expect(within(inspector).getByText(/demo\/src\/name\.ts:L1/)).toBeInTheDocument();
+    expect(
+      within(inspector).getByText(/demo\/src\/name\.ts:L1/),
+    ).toBeInTheDocument();
   });
 
   it('navigates search from the keyboard and returns to the entry flow truthfully', async () => {
@@ -338,9 +340,7 @@ describe('App', () => {
     ).toBeInTheDocument();
     expect(screen.queryByText('normalizeName')).not.toBeInTheDocument();
 
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Back to entry flow' }),
-    );
+    fireEvent.click(screen.getByRole('button', { name: 'Back to entry flow' }));
 
     expect(screen.getByText('normalizeName')).toBeInTheDocument();
   });
@@ -392,9 +392,10 @@ describe('App', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Direct symbol resolution.')).toBeInTheDocument();
     expect(screen.getByText(/typescript-compiler-api/)).toBeInTheDocument();
-    expect(
-      screen.getByRole('tab', { name: 'Evidence' }),
-    ).toHaveAttribute('data-state', 'active');
+    expect(screen.getByRole('tab', { name: 'Evidence' })).toHaveAttribute(
+      'data-state',
+      'active',
+    );
   });
 
   it('separates data, evidence, and static steps into task-oriented inspector tabs', async () => {

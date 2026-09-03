@@ -74,7 +74,8 @@ export function FunctionDataPanel({
                 <strong>RETURN</strong>
                 <span>{returnPath.expressionText ?? 'return'}</span>
                 <small>
-                  {returnPath.location.filePath}:L{returnPath.location.startLine}
+                  {returnPath.location.filePath}:L
+                  {returnPath.location.startLine}
                 </small>
               </div>
             ))}
@@ -91,7 +92,8 @@ export function FunctionDataPanel({
                 <strong>PASSES_ARGUMENT</strong>
                 <span>
                   {mapping.argumentText} →{' '}
-                  {mapping.parameterName ?? `parameter ${mapping.argumentIndex + 1}`}
+                  {mapping.parameterName ??
+                    `parameter ${mapping.argumentIndex + 1}`}
                 </span>
                 <small>
                   {mapping.location.filePath}:L{mapping.location.startLine}
