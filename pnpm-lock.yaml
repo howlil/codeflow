@@ -54,6 +54,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@codeflow/analysis-core':
+        specifier: workspace:*
+        version: link:../../packages/analysis-core
       react:
         specifier: ^19.2.8
         version: 19.2.8
@@ -91,6 +94,10 @@ importers:
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
+    devDependencies:
+      vitest:
+        specifier: ^4.1.11
+        version: 4.1.11(@types/node@26.2.0)(jsdom@30.0.1)(vite@8.2.2(@types/node@26.2.0)(esbuild@0.28.2)(tsx@4.23.12))
 
 packages:
 

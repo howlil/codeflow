@@ -68,4 +68,50 @@ export interface FlowProjection {
     filePath: string;
     text: string;
   };
+  repository?: RepositorySummary;
+  sources?: RepositorySource[];
+  entryPoints?: EntryPointSuggestion[];
+  analysis?: AnalysisSummary;
+}
+
+export interface RepositorySource {
+  filePath: string;
+  text: string;
+}
+
+export interface RepositorySummary {
+  name: string;
+  url?: string;
+  branch?: string;
+  revision?: string;
+}
+
+export type EntryPointConfidence = 'detected' | 'likely' | 'manual';
+
+export interface EntryPointSuggestion {
+  id: string;
+  name: string;
+  filePath: string;
+  confidence: EntryPointConfidence;
+  reason: string;
+}
+
+export type AnalysisLifecycleState =
+  | 'VALIDATING'
+  | 'FETCHING'
+  | 'INDEXING'
+  | 'ANALYZING'
+  | 'READY'
+  | 'PARTIAL'
+  | 'FAILED';
+
+export interface AnalysisSummary {
+  state: AnalysisLifecycleState;
+  filesAnalyzed: number;
+  filesIgnored: number;
+  functions: number;
+  relationships: number;
+  unresolvedReferences: number;
+  unsupportedDynamicImports: number;
+  limitations: string[];
 }

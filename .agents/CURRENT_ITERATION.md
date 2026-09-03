@@ -1,133 +1,91 @@
 # Current Iteration
 
-Status: ACTIVE
+Status: RELEASE READY
 
-Active Milestone: M3 — Real Repository Analysis
+Active Milestone: M5 — GitHub-to-Understanding Workspace
 
-Last Completed: M2 — Canvas Comprehension (`RELEASE READY`)
+Last Completed: M5 — GitHub-to-Understanding Workspace
 
-Goal: Move CodeFlow from a sample-only semantic proof to an end-to-end workflow that analyzes a real TypeScript repository and opens the resulting evidence-backed projection in the existing semantic workspace.
+Goal: Move CodeFlow from a sample-only semantic proof to an end-to-end workflow that takes a public GitHub repository to an evidence-backed understanding workspace without manual file acquisition.
 
-Why: The largest current product gap is not richer semantics over the sample fixture; it is that a developer still cannot bring an actual repository into the product. Real repository analysis should validate the current semantic model, API boundary, workspace, and evidence model before deeper data-flow semantics are added.
-
-## Feature Compass
-
-Shape:
+## Product outcome
 
 ```text
-repository input
- -> bounded TypeScript repository analysis
- -> cross-file semantic relationships + evidence
- -> bounded projection
- -> API
- -> existing semantic workspace
- -> search / focus / source / provenance inspection
+GitHub URL
+ -> validate and acquire bounded source
+ -> deterministic repository orientation
+ -> suggested entry point
+ -> cross-file static analysis
+ -> semantic flow workspace
+ -> evidence/source inspection
+ -> search and focused navigation
 ```
 
-Position:
+## Completed slices
 
-- M0, M1, and M2 are integrated into `master`.
-- Frontend/backend repo skills and vertical-delivery rules are integrated.
-- Current production path still exposes the sample flow rather than user-provided repository analysis.
+### S1 — GitHub repository acquisition
 
-Delta: Replace the sample-only product path with one real-repository vertical path while preserving the existing modular-monolith, semantic-model, evidence, and workspace boundaries.
+- `POST /api/analyses` accepts only public `https://github.com/owner/repository` URLs.
+- GitHub metadata/tree/source acquisition is request-scoped and in-memory.
+- Bounds are enforced at 40 files, 800 KB per file, 4 MB total, and 8 seconds per request.
+- Absolute/traversal paths, dependency/vendor/build/generated directories, and non-TypeScript files are excluded.
+- Source bodies are capped while streamed; repository code is never executed.
 
-Next Move: Resolve the repository-input boundary, then execute M3 slices continuously.
+### S2 — Repository orientation and entry discovery
 
-## Scope
+- Exported TypeScript functions are discovered deterministically across the bounded source set.
+- Conventional bootstrap names and locations are labelled `detected`; other exported symbols are `likely`.
+- The workspace lets the user select a suggested entry point and reanalyze that entry.
 
-In scope:
+### S3 — Full-height analysis workspace
 
-- one explicitly approved user-facing repository-input mode;
-- bounded multi-file TypeScript repository input;
-- deterministic cross-file analysis for the semantic capabilities CodeFlow already claims, starting with current function/call relationships;
-- source/evidence provenance that remains traceable to repository-relative source;
-- API/projection behavior required to deliver the capability to the web workspace;
-- reuse of M2 search, focus, selection, source inspection, evidence inspection, keyboard navigation, and explicit analysis states;
-- truthful ignored/unsupported/partial/error behavior;
-- resource and repository-scope bounds appropriate to untrusted input;
-- focused semantic/API/web regression tests and the repository quality gate.
+- The initial screen is a single repository acquisition task.
+- After analysis, the semantic canvas is the dominant surface.
+- Compact context and a selection-driven inspector flank the canvas.
+- The repository URL becomes breadcrumb/context rather than a persistent setup form.
 
-Out of scope unless separately authorized:
+### S4 — Evidence-centric inspection
 
-- data-flow/read/write/mutation semantics;
-- Go or other language adapters;
-- durable persistence, accounts, repository history, or saved analyses;
-- queues, distributed workers, graph databases, Redis, or microservices;
-- runtime execution/tracing;
-- AI explanation;
-- remote repository authentication/integration unless it is the explicitly approved M3 input mode.
+- Node and relationship selection opens exact repository-relative source locations.
+- `verified-static`, `inferred-static`, and unavailable evidence remain distinct.
+- The workspace exposes `Verified`, `Inferred`, and `Unresolved` counts.
+- Source inspection can expand without leaving the semantic workspace.
 
-## Slices
+### S5 — Search, focus, and semantic navigation
 
-### M3.1 — Repository Input Vertical Slice
+- `Ctrl K` / `Cmd K` focuses repository search.
+- Search matches symbol names and repository-relative source paths.
+- `Focus neighborhood`, `Show callers`, and `Show callees` keep selection and context synchronized.
+- Arrow-key caller/callee navigation remains available on canvas nodes.
 
-Outcome: A user can initiate analysis of a real repository through the approved input boundary and see an evidence-backed projection in the current workspace.
+### S6 — Truthful lifecycle
 
-Required path:
+- Client progress distinguishes URL validation from repository acquisition/analysis without fake percentages.
+- API errors distinguish invalid URL, unavailable repository, unsupported repository, and analysis failure.
+- Ready/partial analysis is explicit; ignored files, TypeScript diagnostics, and unsupported dynamic imports become limitations.
 
-```text
-user repository input
- -> bounded API input
- -> analysis-core
- -> projection
- -> workspace
-```
+### S7 — Production acceptance
 
-Do not implement the observable input contract until the material input-mode decision below is approved.
+- Cross-file TypeScript fixture covers entry, imported callee, local callee, source evidence, and deterministic IDs.
+- API tests cover GitHub acquisition, filtering, partial response, invalid URL, and unsupported repository behavior.
+- Web tests cover acquisition journey, no manual picker, entry/search/focus navigation, evidence, partial state, and local URL rejection.
+- The sample endpoint remains available for regression fixtures but is no longer the primary web journey.
 
-### M3.2 — Cross-File Semantics & Evidence
+## Scope boundaries
 
-Outcome: Existing supported TypeScript call semantics work across repository files/modules rather than only inside the current sample source, with deterministic identity and repository-relative source/evidence locations.
+Included: public GitHub repositories, TypeScript/TSX static analysis, bounded request-scoped source, deterministic `CALLS` semantics, evidence-backed projection, workspace navigation, and partial/error UX.
 
-UI inspection must expose the same grounded source/provenance rather than inventing missing relationships.
+Excluded: private auth, accounts, persistence, saved analysis, database/queue/worker infrastructure, AI chat, runtime execution/tracing, additional languages, security scanning, PR impact analysis, and architecture dashboards.
 
-### M3.3 — Scope Safety & Partial Analysis UX
+## Verification evidence
 
-Outcome: Real repository input remains bounded and useful when parts of a repository are ignored, unsupported, invalid, or too large.
+- `pnpm --filter @codeflow/analysis-core typecheck`
+- `pnpm --filter @codeflow/analysis-core build`
+- `pnpm --filter @codeflow/analysis-core test`
+- `pnpm --filter @codeflow/api typecheck`
+- `pnpm --filter @codeflow/api test`
+- `pnpm --filter @codeflow/web typecheck`
+- `pnpm --filter @codeflow/web test`
+- `pnpm check`
 
-Backend must enforce the approved scope/resource policy; UI must surface partial/unsupported/error state truthfully in the same slice.
-
-### M3.4 — Real-Repository Acceptance & Sample Demotion
-
-Outcome: A representative multi-file repository case proves the end-to-end product path, regression coverage protects it, and the sample flow is no longer the primary user-facing path while remaining only where it still has clear fixture/demo value.
-
-## Material Decision Gate
-
-### D1 — Repository Input Mode: OPEN
-
-This changes product behavior plus API/security boundaries and requires explicit user approval before M3.1 locks the contract.
-
-Preferred minimal option:
-
-- **Local directory/file selection in the browser** -> send a bounded supported file set to the API for in-memory analysis. This avoids Git hosting auth, server-side clone/process execution, and persistence in M3.
-
-Alternative:
-
-- **Public Git repository URL** -> backend fetch/clone/import. This adds network/remote-host input behavior and a larger trust/resource boundary; private repository auth would remain a separate decision.
-
-No repository input mode is authorized merely by this milestone plan.
-
-## Acceptance / Milestone Gate
-
-M3 is release ready only when:
-
-1. a developer can use the approved input flow on a real multi-file TypeScript repository;
-2. analysis produces a bounded semantic projection rather than exposing raw parser/AST structures;
-3. supported cross-file call relationships and evidence/source provenance are correct and deterministic for the tested revision;
-4. the web workspace consumes that projection and preserves the existing M2 comprehension interactions;
-5. ignored, unsupported, partial, invalid, and failure cases are represented truthfully where applicable;
-6. ordinary analysis does not execute repository code and approved resource/scope bounds are verified;
-7. relevant analysis-core, API, and web tests pass;
-8. `pnpm check` and required CI pass;
-9. no unapproved persistence, auth, infrastructure, runtime, or semantic scope is introduced.
-
-## Risks / Blockers
-
-- D1 repository-input mode is the only current material blocker to implementing M3.1.
-- Multi-file analysis may expose pressure in semantic IDs or the duplicated web/API projection types; fix only what M3 correctness requires rather than broad contract rearchitecture.
-- Large-repository performance must be bounded first, not solved preemptively with distributed infrastructure.
-
-## Next Action
-
-Approve D1 repository-input mode, then execute M3.1 as the first vertical slice.
+The final branch/remote/CI state is recorded in the delivery report after protected-master integration.

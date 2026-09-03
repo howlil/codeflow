@@ -4,6 +4,12 @@ export type {
   FlowEdge,
   FlowNode,
   FlowProjection,
+  AnalysisLifecycleState,
+  AnalysisSummary,
+  EntryPointConfidence,
+  EntryPointSuggestion,
+  RepositorySource,
+  RepositorySummary,
   SemanticEntity,
   SemanticGraph,
   SemanticRelationship,
@@ -14,3 +20,9 @@ export {
   analyzeTypeScriptFlow,
   type AnalyzeTypeScriptFlowInput,
 } from './typescript-flow.js';
+export {
+  analyzeTypeScriptRepository,
+  discoverEntryPoints,
+  type AnalyzeTypeScriptRepositoryInput,
+  type RepositoryAnalysisResult,
+} from './typescript-repository.js';

@@ -10,17 +10,61 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
 import type { FlowProjection } from './flow-client';
 
-const sampleFlow: FlowProjection = {
-  id: 'flow:function:fixture:handleGreeting',
-  entryPointId: 'function:fixture:handleGreeting',
+const repositoryFlow: FlowProjection = {
+  id: 'flow:function:src/index.ts:main',
+  entryPointId: 'function:src/index.ts:main',
+  repository: {
+    name: 'example-api',
+    url: 'https://github.com/howlil/example-api',
+    branch: 'master',
+  },
+  entryPoints: [
+    {
+      id: 'function:src/index.ts:main',
+      name: 'main',
+      filePath: 'src/index.ts',
+      confidence: 'detected',
+      reason: 'Bootstrap export.',
+    },
+    {
+      id: 'function:src/http.ts:handleRequest',
+      name: 'handleRequest',
+      filePath: 'src/http.ts',
+      confidence: 'detected',
+      reason: 'Request handler export.',
+    },
+  ],
+  analysis: {
+    state: 'READY',
+    filesAnalyzed: 2,
+    filesIgnored: 0,
+    functions: 3,
+    relationships: 2,
+    unresolvedReferences: 0,
+    unsupportedDynamicImports: 0,
+    limitations: [],
+  },
   nodes: [
     {
-      id: 'function:fixture:normalizeName',
+      id: 'function:src/index.ts:main',
       kind: 'Function',
-      label: 'normalizeName',
+      label: 'main',
+      entryPoint: true,
+      location: {
+        filePath: 'src/index.ts',
+        startLine: 2,
+        startColumn: 1,
+        endLine: 2,
+        endColumn: 70,
+      },
+    },
+    {
+      id: 'function:src/orders.ts:createOrder',
+      kind: 'Function',
+      label: 'createOrder',
       entryPoint: false,
       location: {
-        filePath: 'fixtures/request-flow/greeting.ts',
+        filePath: 'src/orders.ts',
         startLine: 1,
         startColumn: 1,
         endLine: 3,
@@ -28,327 +72,174 @@ const sampleFlow: FlowProjection = {
       },
     },
     {
-      id: 'function:fixture:formatGreeting',
+      id: 'function:src/orders.ts:validateOrder',
       kind: 'Function',
-      label: 'formatGreeting',
+      label: 'validateOrder',
       entryPoint: false,
       location: {
-        filePath: 'fixtures/request-flow/greeting.ts',
+        filePath: 'src/orders.ts',
         startLine: 5,
         startColumn: 1,
         endLine: 7,
         endColumn: 2,
       },
     },
-    {
-      id: 'function:fixture:handleGreeting',
-      kind: 'Function',
-      label: 'handleGreeting',
-      entryPoint: true,
-      location: {
-        filePath: 'fixtures/request-flow/greeting.ts',
-        startLine: 9,
-        startColumn: 1,
-        endLine: 12,
-        endColumn: 2,
-      },
-    },
   ],
   edges: [
     {
-      id: 'verified-edge',
+      id: 'main-order',
       kind: 'CALLS',
-      sourceId: 'function:fixture:handleGreeting',
-      targetId: 'function:fixture:normalizeName',
+      sourceId: 'function:src/index.ts:main',
+      targetId: 'function:src/orders.ts:createOrder',
       evidence: [
         {
           kind: 'verified-static',
           source: 'typescript-compiler-api',
-          reason: 'Direct symbol resolution.',
+          reason: 'Direct cross-file symbol resolution.',
           location: {
-            filePath: 'fixtures/request-flow/greeting.ts',
-            startLine: 11,
-            startColumn: 20,
-            endLine: 11,
-            endColumn: 39,
+            filePath: 'src/index.ts',
+            startLine: 2,
+            startColumn: 60,
+            endLine: 2,
+            endColumn: 72,
           },
         },
       ],
     },
     {
-      id: 'inferred-edge',
+      id: 'order-validate',
       kind: 'CALLS',
-      sourceId: 'function:fixture:handleGreeting',
-      targetId: 'function:fixture:formatGreeting',
+      sourceId: 'function:src/orders.ts:createOrder',
+      targetId: 'function:src/orders.ts:validateOrder',
       evidence: [
         {
           kind: 'inferred-static',
           source: 'typescript-compiler-api',
-          reason: 'Local alias inference.',
+          reason: 'Local call target.',
           location: {
-            filePath: 'fixtures/request-flow/greeting.ts',
-            startLine: 11,
+            filePath: 'src/orders.ts',
+            startLine: 2,
             startColumn: 10,
-            endLine: 11,
-            endColumn: 40,
+            endLine: 2,
+            endColumn: 30,
           },
         },
       ],
     },
   ],
   source: {
-    filePath: 'fixtures/request-flow/greeting.ts',
-    text: `function normalizeName(name: string): string {
-  return name.trim().toLowerCase();
-}
-
-function formatGreeting(name: string): string {
-  return \`Hello, \${name}!\`;
-}
-
-export function handleGreeting(name: string): string {
-  const formatter = formatGreeting;
-  return formatter(normalizeName(name));
-}
-`,
+    filePath: 'src/index.ts',
+    text: "import { createOrder } from './orders.js';\nexport function main(input: string) { return createOrder(input); }\n",
   },
+  sources: [
+    {
+      filePath: 'src/index.ts',
+      text: "import { createOrder } from './orders.js';\nexport function main(input: string) { return createOrder(input); }\n",
+    },
+    {
+      filePath: 'src/orders.ts',
+      text: 'export function createOrder(input: string) {\n  return validateOrder(input);\n}\n\nfunction validateOrder(input: string) {\n  return input.trim();\n}\n',
+    },
+  ],
 };
 
-function stubFlowRequest(flow: FlowProjection = sampleFlow) {
+function stubAnalysis(flow: FlowProjection = repositoryFlow) {
   vi.stubGlobal(
     'fetch',
-    vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => flow,
-    }),
+    vi.fn().mockResolvedValue({ ok: true, json: async () => flow }),
   );
 }
 
-function stubFlowFailure(message: string) {
-  vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error(message)));
-}
-
-describe('App', () => {
+describe('CodeFlow repository journey', () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
   });
 
-  it('renders the flow and exposes source evidence on selection', async () => {
-    stubFlowRequest();
-
+  it('starts with GitHub acquisition instead of a manual file picker', () => {
     render(<App />);
-
     expect(
-      await screen.findByText('handleGreeting request flow'),
-    ).toBeInTheDocument();
-    expect(screen.getAllByText('verified-static').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('inferred-static').length).toBeGreaterThan(0);
-
-    fireEvent.click(
-      screen.getByRole('button', { name: /^FunctionformatGreeting/i }),
-    );
-
-    expect(
-      screen.getByRole('heading', { name: 'formatGreeting' }),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/Hello, \$\{name\}!/)).toBeInTheDocument();
-    expect(screen.getByText('Local alias inference.')).toBeInTheDocument();
-  });
-
-  it('navigates by search and limits the canvas to the selected neighborhood', async () => {
-    stubFlowRequest();
-
-    render(<App />);
-    await screen.findByText('handleGreeting request flow');
-
-    fireEvent.change(
-      screen.getByRole('searchbox', { name: 'Search functions' }),
-      { target: { value: 'format' } },
-    );
-    const searchResults = screen.getByLabelText('Function search results');
-    fireEvent.click(
-      within(searchResults).getByRole('button', { name: /formatGreeting/i }),
-    );
-
-    expect(
-      screen.getByText('Neighborhood focus · formatGreeting'),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { name: 'formatGreeting' }),
-    ).toBeInTheDocument();
-    expect(screen.queryByText('normalizeName')).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Show full flow' }));
-
-    expect(screen.getByText('normalizeName')).toBeInTheDocument();
-  });
-
-  it('moves between caller and callee with arrow keys while keeping inspection synchronized', async () => {
-    stubFlowRequest();
-    vi.stubGlobal(
-      'requestAnimationFrame',
-      (callback: FrameRequestCallback): number => {
-        callback(0);
-        return 0;
-      },
-    );
-
-    render(<App />);
-    await screen.findByText('handleGreeting request flow');
-
-    const entryNode = screen.getByRole('button', {
-      name: /^Entry functionhandleGreeting/i,
-    });
-    entryNode.focus();
-
-    fireEvent.keyDown(entryNode, { key: 'ArrowRight' });
-
-    const calleeNode = screen.getByRole('button', {
-      name: /^FunctionnormalizeName/i,
-    });
-    expect(calleeNode).toHaveFocus();
-    expect(
-      screen.getByRole('heading', { name: 'normalizeName' }),
-    ).toBeInTheDocument();
-
-    fireEvent.keyDown(calleeNode, { key: 'ArrowLeft' });
-
-    expect(entryNode).toHaveFocus();
-    expect(
-      screen.getByRole('heading', { name: 'handleGreeting' }),
-    ).toBeInTheDocument();
-  });
-
-  it('inspects one selected relationship with its source provenance', async () => {
-    stubFlowRequest();
-
-    render(<App />);
-    await screen.findByText('handleGreeting request flow');
-
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: 'Inspect CALLS relationship from handleGreeting to normalizeName',
+      screen.getByRole('heading', {
+        name: 'Understand an unfamiliar codebase',
       }),
-    );
-
-    expect(
-      screen.getByRole('heading', { name: 'handleGreeting → normalizeName' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('Direct symbol resolution.')).toBeInTheDocument();
     expect(
-      screen.queryByText('Local alias inference.'),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByText(/return formatter\(normalizeName\(name\)\);/),
+      screen.getByLabelText('Public GitHub repository URL'),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Analyze repository' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Choose Files')).not.toBeInTheDocument();
   });
 
-  it('expands source inspection without leaving the semantic canvas', async () => {
-    stubFlowRequest();
-
+  it('acquires a repository, lets the user select an entry, and searches semantic symbols', async () => {
+    stubAnalysis();
     render(<App />);
-    await screen.findByText('handleGreeting request flow');
-
-    fireEvent.click(screen.getByRole('button', { name: 'Expand source' }));
-
-    expect(
-      screen.getByRole('button', { name: 'Restore inspector' }),
-    ).toHaveAttribute('aria-pressed', 'true');
-    expect(
-      screen.getByRole('region', { name: 'Semantic flow canvas' }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByLabelText('Source evidence inspector'),
-    ).toHaveTextContent('export function handleGreeting');
-
-    fireEvent.click(screen.getByRole('button', { name: 'Restore inspector' }));
-
-    expect(
-      screen.getByRole('button', { name: 'Expand source' }),
-    ).toHaveAttribute('aria-pressed', 'false');
-  });
-
-  it('shows an explicit empty state when analysis projects no functions', async () => {
-    stubFlowRequest({
-      ...sampleFlow,
-      nodes: [],
-      edges: [],
+    fireEvent.change(screen.getByLabelText('Public GitHub repository URL'), {
+      target: { value: 'https://github.com/howlil/example-api' },
     });
-
-    render(<App />);
-
-    expect(
-      await screen.findByText('No functions projected'),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /analysis completed, but this projection contains no functions/i,
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole('region', { name: 'Semantic flow canvas' }),
-    ).not.toBeInTheDocument();
-  });
-
-  it('keeps a partial projection navigable without inventing missing evidence', async () => {
-    const partialFlow: FlowProjection = {
-      ...sampleFlow,
-      entryPointId: 'function:fixture:missing-entry',
-      nodes: sampleFlow.nodes.map((node) => ({ ...node, entryPoint: false })),
-      edges: sampleFlow.edges.map((edge) =>
-        edge.id === 'verified-edge' ? { ...edge, evidence: [] } : edge,
-      ),
-    };
-    stubFlowRequest(partialFlow);
-
-    render(<App />);
-
-    expect(await screen.findByText('Partial projection')).toBeInTheDocument();
-    expect(
-      screen.getByText(/entry point was not projected/i),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/1 relationship has no supporting evidence/i),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/No focal function is available/i),
-    ).toBeInTheDocument();
-
-    fireEvent.change(
-      screen.getByRole('searchbox', { name: 'Search functions' }),
-      { target: { value: 'normalize' } },
-    );
-    fireEvent.click(
-      within(screen.getByLabelText('Function search results')).getByRole(
-        'button',
-        { name: /normalizeName/i },
-      ),
-    );
-
-    expect(
-      screen.getByText('Neighborhood focus · normalizeName'),
-    ).toBeInTheDocument();
-    expect(screen.getAllByText('evidence-unavailable').length).toBeGreaterThan(
+    fireEvent.click(screen.getByRole('button', { name: 'Analyze repository' }));
+    expect((await screen.findAllByText('example-api')).length).toBeGreaterThan(
       0,
     );
+    expect(screen.getByText('Focused neighborhood')).toBeInTheDocument();
+    expect(screen.getByText('src/index.ts')).toBeInTheDocument();
+
+    fireEvent.change(
+      screen.getByRole('searchbox', { name: /Search repository/i }),
+      { target: { value: 'validate' } },
+    );
+    const results = screen.getByLabelText('Repository search results');
+    fireEvent.click(
+      within(results).getByRole('button', { name: /validateOrder/i }),
+    );
     expect(
-      screen.getByText(
-        'No supporting provenance was projected for this relationship.',
-      ),
-    ).toBeInTheDocument();
+      screen.getAllByRole('heading', { name: 'validateOrder' }).length,
+    ).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Show callers' }));
+    expect(screen.getByText('Callers of')).toBeInTheDocument();
   });
 
-  it('shows a failure state when the flow request cannot be loaded', async () => {
-    stubFlowFailure('Fixture request failed.');
-
+  it('shows source evidence and partial limitations without inventing completeness', async () => {
+    stubAnalysis({
+      ...repositoryFlow,
+      analysis: {
+        ...repositoryFlow.analysis!,
+        state: 'PARTIAL',
+        filesIgnored: 3,
+        limitations: ['3 files ignored by repository scope filters.'],
+      },
+    });
     render(<App />);
+    fireEvent.change(screen.getByLabelText('Public GitHub repository URL'), {
+      target: { value: 'https://github.com/howlil/example-api' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Analyze repository' }));
+    expect(
+      await screen.findByText('Analysis completed with limitations'),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: /Inspect CALLS relationship from main to createOrder/i,
+      }),
+    );
+    expect(
+      screen.getByText('Direct cross-file symbol resolution.'),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/createOrder\(input\)/)).toBeInTheDocument();
+  });
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Flow unavailable',
-    );
+  it('rejects invalid URL locally before making an acquisition request', () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    render(<App />);
+    fireEvent.change(screen.getByLabelText('Public GitHub repository URL'), {
+      target: { value: 'https://example.com/repository' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Analyze repository' }));
     expect(screen.getByRole('alert')).toHaveTextContent(
-      'Fixture request failed.',
+      'public GitHub repository URL',
     );
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

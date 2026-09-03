@@ -1,45 +1,48 @@
-export type EvidenceKind = 'verified-static' | 'inferred-static';
+import type { Evidence, FlowProjection } from '@codeflow/analysis-core';
 
-export interface SourceLocation {
-  filePath: string;
-  startLine: number;
-  startColumn: number;
-  endLine: number;
-  endColumn: number;
+export type {
+  FlowEdge,
+  FlowNode,
+  FlowProjection,
+} from '@codeflow/analysis-core';
+export type FlowEvidence = Evidence;
+
+export class AnalysisRequestError extends Error {
+  constructor(
+    readonly code: string,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'AnalysisRequestError';
+  }
 }
 
-export interface FlowEvidence {
-  kind: EvidenceKind;
-  source: string;
-  location: SourceLocation;
-  reason: string;
-}
+export async function loadAnalysis(
+  repositoryUrl: string,
+  entryPoint?: { filePath: string; name: string },
+): Promise<FlowProjection> {
+  const response = await fetch('/api/analyses', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      repositoryUrl,
+      ...(entryPoint === undefined ? {} : { entryPoint }),
+    }),
+  });
 
-export interface FlowNode {
-  id: string;
-  kind: 'Function';
-  label: string;
-  location: SourceLocation;
-  entryPoint: boolean;
-}
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as {
+      code?: string;
+      message?: string;
+    } | null;
+    throw new AnalysisRequestError(
+      payload?.code ?? 'ANALYSIS_FAILED',
+      payload?.message ??
+        `Analysis request failed with status ${response.status}.`,
+    );
+  }
 
-export interface FlowEdge {
-  id: string;
-  kind: 'CALLS';
-  sourceId: string;
-  targetId: string;
-  evidence: FlowEvidence[];
-}
-
-export interface FlowProjection {
-  id: string;
-  entryPointId: string;
-  nodes: FlowNode[];
-  edges: FlowEdge[];
-  source: {
-    filePath: string;
-    text: string;
-  };
+  return (await response.json()) as FlowProjection;
 }
 
 export async function loadSampleFlow(): Promise<FlowProjection> {

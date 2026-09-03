@@ -48,15 +48,15 @@ repository / fixture
 
 ## Current Milestone
 
-### M3 — Real Repository Analysis
+### M5 — GitHub-to-Understanding Workspace
 
-Goal: move CodeFlow from a sample-only semantic proof to an end-to-end path that accepts one explicitly approved form of real TypeScript repository input, analyzes it within bounded untrusted-input constraints, and opens the evidence-backed result in the existing semantic workspace.
+Goal: move a developer from a public GitHub repository URL to an evidence-backed understanding workspace without manual file acquisition or prior knowledge of the repository's entry function.
 
-M3 should validate the existing semantic model, API boundary, evidence model, and M2 workspace against real multi-file repository input before deeper data-flow semantics are added.
+M5 delivers one continuous workflow: validate and acquire bounded TypeScript source, orient the developer with deterministic entry-point suggestions, project the selected flow, inspect source/provenance in context, and navigate by search/focus while keeping uncertainty visible.
 
-The detailed slice plan, decision gate, execution position, and verification evidence belong in `.agents/CURRENT_ITERATION.md`.
+The detailed slice plan and verification evidence belong in `.agents/CURRENT_ITERATION.md`.
 
-The repository-input mode remains a material open product/API/security decision until explicitly approved. Milestone activation does not itself authorize local upload, Git hosting import/auth, server filesystem access, or another input mechanism.
+The supported input boundary is public `https://github.com/owner/repository` acquisition only. Private auth, persistence, repository execution, and runtime tracing remain separate decisions.
 
 ## Completed Product Foundations
 
@@ -108,23 +108,23 @@ Potential scope:
 - deterministic branch/failure metadata;
 - step-through static simulation without fabricated runtime values.
 
-### M5 — Go Adapter Proof
+### M6 — Repository Architecture & Semantic Zoom
 
-Goal: prove the semantic model is not accidentally TypeScript-shaped while preserving the same consumer model in API/UI.
+Goal: move from repository to application/module/behavior/function/source through explicit semantic abstraction and drill-down.
 
-### M6 — Multi-Application Repository View
+### M7 — Behavior Discovery
 
-Potential scope includes application discovery, cross-application relationships, System projection, grouping, repository scope selection, and abstraction-level navigation.
+Discover evidence-backed behaviors such as create order or authenticate request instead of requiring a user to begin with a symbol.
 
-### M7 — Infrastructure Semantics
+### M8 — Change Impact Understanding
 
-Add only infrastructure/configuration semantics justified by actual target repositories or fixtures.
+Trace callers, data-flow consequences, and architectural blast radius from a selected function or file.
 
-### M8 — Grounded AI Explanation
+### M9 — Grounded AI Explanation
 
 AI explanation may use selected semantic context, graph paths, evidence, and minimal source snippets. AI must not become the source of canonical semantic edges, and CodeFlow must remain useful when AI is disabled.
 
-### M9 — Runtime Evidence Spike
+### M10 — Runtime Evidence Spike
 
 Validate whether runtime observations can map reliably to semantic IDs and how observed evidence coexists with static/inferred evidence before building a runtime subsystem.
 
