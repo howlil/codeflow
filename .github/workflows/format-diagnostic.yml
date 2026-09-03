@@ -6,7 +6,7 @@ on:
       - design/chatspace-system
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   format:
@@ -37,18 +37,12 @@ jobs:
           apps/web/src/StaticFlowPanel.tsx
           apps/web/src/ui/primitives.tsx
 
-      - name: Package formatted files
+      - name: Commit formatted source and remove diagnostic workflow
+        shell: bash
         run: |
-          tar -czf formatted-source.tgz \
-            apps/web/src/App.test.tsx \
-            apps/web/src/App.tsx \
-            apps/web/src/index.css \
-            apps/web/src/StaticFlowPanel.tsx \
-            apps/web/src/ui/primitives.tsx
-
-      - name: Upload formatted source
-        uses: actions/upload-artifact@v4
-        with:
-          name: formatted-source
-          path: formatted-source.tgz
-          if-no-files-found: error
+          rm .github/workflows/format-diagnostic.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/web/src/App.test.tsx apps/web/src/App.tsx apps/web/src/index.css apps/web/src/StaticFlowPanel.tsx apps/web/src/ui/primitives.tsx .github/workflows/format-diagnostic.yml
+          git commit -m "style: apply repository formatting"
+          git push origin HEAD:design/chatspace-system
