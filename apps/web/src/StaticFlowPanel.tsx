@@ -1,12 +1,15 @@
 import { useMemo, useState } from 'react';
 
 import type {
+  FlowEdge,
+  FlowEvidence,
   FlowNode,
   FlowProjection,
   StaticFlowRelationshipKind,
 } from './flow-client';
+import { Button } from './ui/primitives';
 
-type RelationshipLens = 'ALL' | 'CALLS' | StaticFlowRelationshipKind;
+export type RelationshipLens = 'ALL' | 'CALLS' | StaticFlowRelationshipKind;
 
 const EMPTY_STATIC_STEPS: NonNullable<FlowProjection['staticFlow']>['steps'] =
   [];
@@ -14,20 +17,13 @@ const EMPTY_STATIC_RELATIONSHIPS: NonNullable<
   FlowProjection['staticFlow']
 >['relationships'] = [];
 
-export function StaticFlowPanel({
+export function FunctionDataPanel({
   flow,
   selectedNode,
-  onSelectNode,
 }: {
   flow: FlowProjection;
   selectedNode: FlowNode | null;
-  onSelectNode: (nodeId: string) => void;
 }) {
-  const [lens, setLens] = useState<RelationshipLens>('ALL');
-  const [stepIndex, setStepIndex] = useState(0);
-  const staticSteps = flow.staticFlow?.steps ?? EMPTY_STATIC_STEPS;
-  const staticRelationships =
-    flow.staticFlow?.relationships ?? EMPTY_STATIC_RELATIONSHIPS;
   const functionData = useMemo(
     () =>
       selectedNode === null
@@ -37,19 +33,116 @@ export function StaticFlowPanel({
           ) ?? null),
     [flow.functionData, selectedNode],
   );
-  const availableLenses = useMemo(() => {
-    const kinds = new Set<RelationshipLens>();
-    if (flow.edges.length > 0) {
-      kinds.add('CALLS');
+
+  if (selectedNode === null || functionData === null) {
+    return (
+      <p className="panel-copy">
+        Select a function with projected data to inspect its inputs and outputs.
+      </p>
+    );
+  }
+
+  return (
+    <div className="inspector-stack">
+      <section className="inspector-section">
+        <p className="panel-kicker">Inputs</p>
+        {functionData.parameters.length === 0 ? (
+          <p className="panel-copy">No declared parameters.</p>
+        ) : (
+          <div className="data-rows">
+            {functionData.parameters.map((parameter) => (
+              <div className="data-row" key={parameter.id}>
+                <strong>{parameter.name}</strong>
+                <span>{parameter.typeText ?? 'type not declared'}</span>
+                <small>
+                  {parameter.location.filePath}:L{parameter.location.startLine}
+                </small>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="inspector-section">
+        <p className="panel-kicker">Outputs</p>
+        {functionData.returns.length === 0 ? (
+          <p className="panel-copy">No explicit return path.</p>
+        ) : (
+          <div className="data-rows">
+            {functionData.returns.map((returnPath) => (
+              <div className="data-row" key={returnPath.id}>
+                <strong>RETURN</strong>
+                <span>{returnPath.expressionText ?? 'return'}</span>
+                <small>
+                  {returnPath.location.filePath}:L
+                  {returnPath.location.startLine}
+                </small>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {functionData.callArguments.length > 0 ? (
+        <section className="inspector-section">
+          <p className="panel-kicker">Argument mappings</p>
+          <div className="data-rows">
+            {functionData.callArguments.map((mapping) => (
+              <div className="data-row" key={mapping.id}>
+                <strong>PASSES_ARGUMENT</strong>
+                <span>
+                  {mapping.argumentText} →{' '}
+                  {mapping.parameterName ??
+                    `parameter ${mapping.argumentIndex + 1}`}
+                </span>
+                <small>
+                  {mapping.location.filePath}:L{mapping.location.startLine}
+                </small>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+    </div>
+  );
+}
+
+interface RelationshipView {
+  id: string;
+  kind: string;
+  label: string;
+  evidence: FlowEvidence | null;
+}
+
+export function RelationshipEvidencePanel({
+  flow,
+  selectedNode,
+  selectedEdge,
+  lens,
+}: {
+  flow: FlowProjection;
+  selectedNode: FlowNode | null;
+  selectedEdge: FlowEdge | null;
+  lens: RelationshipLens;
+}) {
+  const staticRelationships =
+    flow.staticFlow?.relationships ?? EMPTY_STATIC_RELATIONSHIPS;
+  const relationships = useMemo<RelationshipView[]>(() => {
+    if (selectedEdge !== null) {
+      const source = labelForNode(flow, selectedEdge.sourceId);
+      const target = labelForNode(flow, selectedEdge.targetId);
+      return [
+        {
+          id: selectedEdge.id,
+          kind: selectedEdge.kind,
+          label: `${source} → ${target}`,
+          evidence: selectedEdge.evidence[0] ?? null,
+        },
+      ];
     }
-    for (const relationship of staticRelationships) {
-      kinds.add(relationship.kind);
-    }
-    return ['ALL', ...Array.from(kinds).sort()] as RelationshipLens[];
-  }, [flow.edges, staticRelationships]);
-  const visibleRelationships = useMemo(() => {
+
     const selectedNodeId = selectedNode?.id ?? null;
-    const calls = flow.edges
+    const calls: RelationshipView[] = flow.edges
       .filter(
         (edge) =>
           selectedNodeId === null ||
@@ -58,14 +151,14 @@ export function StaticFlowPanel({
       )
       .map((edge) => ({
         id: edge.id,
-        kind: 'CALLS' as const,
+        kind: 'CALLS',
         label: `${labelForNode(flow, edge.sourceId)} → ${labelForNode(
           flow,
           edge.targetId,
         )}`,
         evidence: edge.evidence[0] ?? null,
       }));
-    const visibleStaticRelationships = staticRelationships
+    const staticViews: RelationshipView[] = staticRelationships
       .filter(
         (relationship) =>
           selectedNodeId === null || relationship.functionId === selectedNodeId,
@@ -77,11 +170,57 @@ export function StaticFlowPanel({
         evidence: relationship.evidence[0] ?? null,
       }));
 
-    return [...calls, ...visibleStaticRelationships].filter(
+    return [...calls, ...staticViews].filter(
       (relationship) => lens === 'ALL' || relationship.kind === lens,
     );
-  }, [flow, lens, selectedNode, staticRelationships]);
-  const steps = staticSteps;
+  }, [flow, lens, selectedEdge, selectedNode, staticRelationships]);
+
+  if (relationships.length === 0) {
+    return <p className="panel-copy">No relationships match this context.</p>;
+  }
+
+  return (
+    <div className="evidence-rows">
+      {relationships.slice(0, 16).map((relationship) => (
+        <article className="evidence-row" key={relationship.id}>
+          <div className="evidence-row-heading">
+            <strong>{relationship.kind}</strong>
+            <span
+              className={`evidence-chip evidence-chip--${
+                relationship.evidence?.kind ?? 'evidence-unavailable'
+              }`}
+            >
+              {relationship.evidence?.kind ?? 'evidence-unavailable'}
+            </span>
+          </div>
+          <p>{relationship.label}</p>
+          {relationship.evidence === null ? (
+            <small>No supporting provenance was projected.</small>
+          ) : (
+            <>
+              <span>{relationship.evidence.reason}</span>
+              <small>
+                {relationship.evidence.source} ·{' '}
+                {relationship.evidence.location.filePath}:L
+                {relationship.evidence.location.startLine}
+              </small>
+            </>
+          )}
+        </article>
+      ))}
+    </div>
+  );
+}
+
+export function StaticStepPanel({
+  flow,
+  onSelectNode,
+}: {
+  flow: FlowProjection;
+  onSelectNode: (nodeId: string) => void;
+}) {
+  const [stepIndex, setStepIndex] = useState(0);
+  const steps = flow.staticFlow?.steps ?? EMPTY_STATIC_STEPS;
   const boundedStepIndex = Math.min(stepIndex, Math.max(steps.length - 1, 0));
   const activeStep = steps[boundedStepIndex] ?? null;
 
@@ -98,193 +237,51 @@ export function StaticFlowPanel({
   }
 
   return (
-    <div className="evidence-list" aria-label="Static data flow">
-      <section>
-        <p className="panel-kicker">Function data</p>
-        {selectedNode === null || functionData === null ? (
-          <p className="panel-copy">
-            Select a function to inspect source-backed inputs and outputs.
-          </p>
-        ) : (
-          <>
-            <strong>{selectedNode.label}</strong>
-            <div className="evidence-list">
-              <div>
-                <p className="panel-kicker">Inputs</p>
-                {functionData.parameters.length === 0 ? (
-                  <p className="panel-copy">No declared parameters.</p>
-                ) : (
-                  functionData.parameters.map((parameter) => (
-                    <article className="evidence-item" key={parameter.id}>
-                      <div>
-                        <span className="relationship-label">
-                          {parameter.name}
-                        </span>
-                        <span className="evidence-chip evidence-chip--verified-static">
-                          parameter
-                        </span>
-                      </div>
-                      <p>{parameter.typeText ?? 'type not declared'}</p>
-                      <small>
-                        {parameter.location.filePath}:L
-                        {parameter.location.startLine}
-                      </small>
-                    </article>
-                  ))
-                )}
-              </div>
-
-              <div>
-                <p className="panel-kicker">Outputs</p>
-                {functionData.returns.length === 0 ? (
-                  <p className="panel-copy">No explicit return path.</p>
-                ) : (
-                  functionData.returns.map((returnPath) => (
-                    <article className="evidence-item" key={returnPath.id}>
-                      <div>
-                        <span className="relationship-label">RETURN</span>
-                        <span className="evidence-chip evidence-chip--verified-static">
-                          static path
-                        </span>
-                      </div>
-                      <p>{returnPath.expressionText ?? 'return'}</p>
-                      <small>
-                        {returnPath.location.filePath}:L
-                        {returnPath.location.startLine}
-                      </small>
-                    </article>
-                  ))
-                )}
-              </div>
-
-              {functionData.callArguments.length > 0 ? (
-                <div>
-                  <p className="panel-kicker">Argument mappings</p>
-                  {functionData.callArguments.map((mapping) => (
-                    <article className="evidence-item" key={mapping.id}>
-                      <div>
-                        <span className="relationship-label">
-                          PASSES_ARGUMENT
-                        </span>
-                        <span
-                          className={`evidence-chip evidence-chip--${
-                            mapping.evidence[0]?.kind ?? 'unavailable'
-                          }`}
-                        >
-                          {mapping.evidence[0]?.kind ?? 'evidence-unavailable'}
-                        </span>
-                      </div>
-                      <p>
-                        {mapping.argumentText} →{' '}
-                        {mapping.parameterName ??
-                          `parameter ${mapping.argumentIndex + 1}`}
-                      </p>
-                      <small>
-                        {mapping.location.filePath}:L
-                        {mapping.location.startLine}
-                      </small>
-                    </article>
-                  ))}
-                </div>
-              ) : null}
+    <div className="inspector-stack">
+      <p className="panel-copy">
+        Deterministic source exploration only. This is not observed runtime
+        execution and does not choose branch outcomes or fabricate values.
+      </p>
+      {activeStep === null ? (
+        <p className="panel-copy">No supported static data-flow steps.</p>
+      ) : (
+        <>
+          <article className="step-detail">
+            <div className="evidence-row-heading">
+              <strong>{activeStep.kind}</strong>
+              <span
+                className={`evidence-chip evidence-chip--${
+                  activeStep.evidence[0]?.kind ?? 'evidence-unavailable'
+                }`}
+              >
+                {activeStep.evidence[0]?.kind ?? 'evidence-unavailable'}
+              </span>
             </div>
-          </>
-        )}
-      </section>
-
-      <section>
-        <p className="panel-kicker">Relationship lens</p>
-        <div className="comprehension-controls" aria-label="Relationship lens">
-          {availableLenses.map((kind) => (
-            <button
-              className="focus-toggle"
-              type="button"
-              aria-pressed={lens === kind}
-              key={kind}
-              onClick={() => setLens(kind)}
+            <p>{activeStep.label}</p>
+            {activeStep.valueText === null ? null : (
+              <code>{activeStep.valueText}</code>
+            )}
+            <small>
+              Step {boundedStepIndex + 1}/{steps.length} ·{' '}
+              {activeStep.location.filePath}:L{activeStep.location.startLine}
+            </small>
+          </article>
+          <div className="step-controls">
+            <Button
+              disabled={boundedStepIndex === 0}
+              onClick={() => moveStep(boundedStepIndex - 1)}
             >
-              {kind}
-            </button>
-          ))}
-        </div>
-        {visibleRelationships.length === 0 ? (
-          <p className="panel-copy">No relationships match this lens.</p>
-        ) : (
-          visibleRelationships.slice(0, 12).map((relationship) => (
-            <article className="evidence-item" key={relationship.id}>
-              <div>
-                <span className="relationship-label">{relationship.kind}</span>
-                <span
-                  className={`evidence-chip evidence-chip--${
-                    relationship.evidence?.kind ?? 'unavailable'
-                  }`}
-                >
-                  {relationship.evidence?.kind ?? 'evidence-unavailable'}
-                </span>
-              </div>
-              <p>{relationship.label}</p>
-              {relationship.evidence === null ? null : (
-                <small>
-                  {relationship.evidence.location.filePath}:L
-                  {relationship.evidence.location.startLine}
-                </small>
-              )}
-            </article>
-          ))
-        )}
-      </section>
-
-      <section>
-        <p className="panel-kicker">Static step-through</p>
-        <p className="panel-copy">
-          Deterministic source exploration only. This is not observed runtime
-          execution and does not choose branch outcomes or fabricate values.
-        </p>
-        {activeStep === null ? (
-          <p className="panel-copy">No supported static data-flow steps.</p>
-        ) : (
-          <>
-            <article className="evidence-item">
-              <div>
-                <span className="relationship-label">{activeStep.kind}</span>
-                <span
-                  className={`evidence-chip evidence-chip--${
-                    activeStep.evidence[0]?.kind ?? 'unavailable'
-                  }`}
-                >
-                  {activeStep.evidence[0]?.kind ?? 'evidence-unavailable'}
-                </span>
-              </div>
-              <p>{activeStep.label}</p>
-              {activeStep.valueText === null ? null : (
-                <code>{activeStep.valueText}</code>
-              )}
-              <small>
-                Step {boundedStepIndex + 1}/{steps.length} ·{' '}
-                {activeStep.location.filePath}:L{activeStep.location.startLine}
-              </small>
-            </article>
-            <div className="comprehension-controls">
-              <button
-                className="focus-toggle"
-                type="button"
-                disabled={boundedStepIndex === 0}
-                onClick={() => moveStep(boundedStepIndex - 1)}
-              >
-                Previous step
-              </button>
-              <button
-                className="focus-toggle"
-                type="button"
-                disabled={boundedStepIndex >= steps.length - 1}
-                onClick={() => moveStep(boundedStepIndex + 1)}
-              >
-                Next step
-              </button>
-            </div>
-          </>
-        )}
-      </section>
+              Previous step
+            </Button>
+            <Button
+              disabled={boundedStepIndex >= steps.length - 1}
+              onClick={() => moveStep(boundedStepIndex + 1)}
+            >
+              Next step
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

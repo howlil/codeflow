@@ -1,6 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react';
 
 import type { RepositoryAnalysisRequest } from './flow-client';
+import { Button, Input, Select } from './ui/primitives';
 
 const MAX_ANALYZED_FILES = 96;
 const MAX_FILE_BYTES = 128 * 1024;
@@ -47,6 +48,13 @@ export function RepositoryPicker({
   );
   const ignoredFileCount = selectedFiles.length - candidates.length;
   const selectionError = getSelectionError(candidates);
+  const entryOptions =
+    candidates.length === 0
+      ? [{ value: '', label: 'Select a repository first', disabled: true }]
+      : candidates.map(({ filePath }) => ({
+          value: filePath,
+          label: filePath,
+        }));
 
   function handleFiles(fileList: FileList | null) {
     const files = fileList === null ? [] : Array.from(fileList);
@@ -121,8 +129,9 @@ export function RepositoryPicker({
       <div className="repository-input-grid">
         <label className="file-control">
           <span>Repository directory</span>
-          <input
+          <Input
             {...directoryInputAttributes}
+            className="file-input"
             type="file"
             multiple
             onChange={(event) => handleFiles(event.target.files)}
@@ -131,27 +140,18 @@ export function RepositoryPicker({
 
         <label>
           <span>Entry source file</span>
-          <select
+          <Select
             aria-label="Entry source file"
             value={entryFilePath}
+            options={entryOptions}
             disabled={candidates.length === 0 || busy}
-            onChange={(event) => setEntryFilePath(event.target.value)}
-          >
-            {candidates.length === 0 ? (
-              <option value="">Select a repository first</option>
-            ) : (
-              candidates.map(({ filePath }) => (
-                <option key={filePath} value={filePath}>
-                  {filePath}
-                </option>
-              ))
-            )}
-          </select>
+            onValueChange={setEntryFilePath}
+          />
         </label>
 
         <label>
           <span>Exported entry function</span>
-          <input
+          <Input
             type="text"
             value={entryPointName}
             placeholder="handleRequest"
@@ -160,8 +160,10 @@ export function RepositoryPicker({
           />
         </label>
 
-        <button
+        <Button
           className="primary-action"
+          variant="primary"
+          size="md"
           type="submit"
           disabled={
             busy ||
@@ -172,7 +174,7 @@ export function RepositoryPicker({
           }
         >
           {busy ? 'Analyzing…' : 'Analyze repository'}
-        </button>
+        </Button>
       </div>
 
       {selectedFiles.length > 0 ? (
@@ -204,7 +206,7 @@ function selectTypeScriptSources(files: File[]): SelectedSource[] {
 
 function getSelectionError(candidates: SelectedSource[]): string | null {
   if (candidates.length > MAX_ANALYZED_FILES) {
-    return `M3 analyzes at most ${MAX_ANALYZED_FILES} TypeScript files per request. Choose a narrower repository directory.`;
+    return `CodeFlow analyzes at most ${MAX_ANALYZED_FILES} TypeScript files per request. Choose a narrower repository directory.`;
   }
 
   const oversized = candidates.find(({ file }) => file.size > MAX_FILE_BYTES);
