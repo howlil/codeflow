@@ -18,24 +18,27 @@ CodeFlow follows the Chatspace workspace design language:
 
 **compact, clean, minimalist, smooth, and selectively glassmorphic.**
 
-The product should feel like a focused modern engineering workspace rather than a decorative AI dashboard or free-form diagram editor.
+CodeFlow should feel like a focused engineering workbench for program understanding, not a decorative AI dashboard, form-driven administration page, or free-form diagram editor.
 
 Priorities, in order:
 
-1. usability and information clarity;
-2. semantic/evidence hierarchy and navigation speed;
-3. compact information density;
+1. semantic comprehension and information clarity;
+2. evidence hierarchy and navigation speed;
+3. compact but readable information density;
 4. interaction quality and spatial continuity;
-5. visual refinement;
-6. selective glass/depth effects.
+5. accessibility and responsive task completion;
+6. visual refinement;
+7. selective depth/glass effects.
 
-Distinctiveness comes primarily from composition, typography, proportion, spacing, interaction quality, semantic graph treatment, and disciplined surfaces—not generic glow, gradients, or ornament.
+Distinctiveness comes from composition, typography, proportion, spacing, semantic graph treatment, evidence presentation, and disciplined surfaces—not generic glow, gradients, or ornament.
 
 ## Product Experience
 
-The primary CodeFlow job is repository comprehension. The workspace should let a developer move from repository context to semantic relationships, source evidence, data flow, and static step-through without losing orientation.
+The primary CodeFlow job is repository comprehension.
 
-The semantic workspace must dominate. Repository context, metadata, controls, inspectors, and status remain subordinate.
+The interface should let a developer move from repository context to semantic relationships, source evidence, data flow, and deterministic static step-through without losing orientation.
+
+After analysis succeeds, the semantic workspace owns the viewport. Repository acquisition is setup, not permanent application chrome.
 
 ## Information Hierarchy
 
@@ -46,56 +49,102 @@ Use hierarchy through:
 3. grouping and alignment;
 4. dividers/borders;
 5. controlled surface contrast;
-6. restrained elevation/glass treatment;
+6. restrained elevation;
 7. semantic color only when it adds meaning.
 
 Do not use color, glow, blur, cards, or oversized typography to compensate for weak structure.
+
+Primary semantic work content must dominate. Metadata, repository statistics, legends, status, and secondary controls remain subordinate and contextual.
+
+## Workspace Model
+
+### Before analysis
+
+Repository acquisition is an explicit setup surface:
+
+```text
+repository directory
+entry source
+entry function
+analyze
+```
+
+### After analysis
+
+Desktop default:
+
+```text
++--------------------------------------------------------------------+
+| CodeFlow / repository / entry          search        theme / more  |
++----------------------------------------------+---------------------+
+|                                              | selected entity     |
+|                                              | source location     |
+|             Semantic Workspace               |                     |
+|                                              | Overview Data       |
+|           bounded semantic graph             | Evidence Steps      |
+|                                              |                     |
+|                                              | inspector content   |
++----------------------------------------------+---------------------+
+| relationship lenses / contextual evidence                          |
++--------------------------------------------------------------------+
+```
+
+The default desktop split is approximately 70–75% semantic workspace and 25–30% inspector.
+
+Do not keep a permanent repository rail merely for repository name, file counts, ignored-file counts, or evidence legend. A permanent navigation surface must be earned by real navigation capability such as repository/module/application/entry-point navigation.
+
+The application shell should use the viewport intentionally. Prefer a `100dvh` workbench with independently bounded canvas and inspector regions over document-style page scrolling.
 
 ## Navigation Principles
 
 - navigation state is immediately understandable;
 - selected/active context is clear but not visually loud;
-- search acts as semantic/spatial navigation, not a detached results page;
-- focus/neighborhood changes the visible projection, never canonical relationships;
+- search is semantic/spatial navigation, not a detached results page;
+- selecting a search result selects and focuses the semantic entity while keeping inspector/source context synchronized;
+- search supports keyboard navigation and dismissal;
+- focus/neighborhood reduces visible context without changing canonical relationships;
+- terminology must describe actual behavior; do not label an entry neighborhood as a full graph;
 - relationship lenses expose only semantic kinds actually present;
-- source inspection remains synchronized with semantic selection;
+- relationship lens changes preserve selected semantic context;
 - repeated actions behave consistently across pointer and keyboard interaction;
 - secondary controls appear when relevant rather than permanently occupying space.
 
-## Interaction Behavior
+## Inspector Model
 
-Interactions should feel direct and smooth.
+The inspector is a task-oriented work surface, not a long document of every available detail.
 
-- avoid unnecessary modal or multi-step friction;
-- use motion to preserve spatial/causal continuity, not decoration;
-- state changes should be fast and visually legible;
-- loading, unavailable, empty, partial, error, recovery, disabled, selected, and focused states must be explicit;
-- no important action may depend only on hover;
-- motion should be short, restrained, interruptible, and unnecessary for understanding state.
-
-## Workspace Model
-
-Desktop default:
+Use a stable selected-context header and distinct modes:
 
 ```text
-+----------------------+--------------------------------------+----------------------+
-| Repository / Scope   | Semantic Workspace                   | Inspector / Source   |
-| context              | selected projection                  | selected entity      |
-| entry points         | nodes + relationships                | source + provenance  |
-+----------------------+--------------------------------------+----------------------+
+Overview | Data | Evidence | Steps
 ```
 
-The semantic workspace is primary. Avoid dashboard-style collections of unrelated cards.
+### Overview
 
-Narrow layouts preserve task order:
+Prioritize:
 
 ```text
-context
- -> semantic workspace
- -> inspector/source
+identity / kind
+source location
+source snippet
+concise relationship summary
 ```
 
-Simplify layout before removing information. Prefer stacking/overflow over permanently tiny columns.
+### Data
+
+Expose function inputs, outputs, argument mappings, reads/writes, and related source-backed data as compact rows/dividers. Do not wrap every datum in a separate bordered card.
+
+### Evidence
+
+Prioritize semantic relationship kind, evidence kind, relationship identity, reason/provenance, and source location. Unavailable evidence remains explicit; never fill gaps with speculative copy.
+
+### Steps
+
+Static step-through is evidence-oriented navigation over deterministic source-backed possibilities. It is not a runtime debugger or execution playback UI.
+
+Expose step kind, concise value/source expression where available, provenance, and source location. Allow forward/reverse navigation while synchronizing selected function context.
+
+Never fabricate runtime values, chosen branch outcomes, timing, frequency, latency, probability, or confidence percentages.
 
 ## Canvas Language
 
@@ -105,7 +154,7 @@ The canvas is a semantic exploration surface, not canonical model storage and no
 
 Nodes are compact, information-dense semantic entities. Prefer role/kind, name, source metadata, typography, spacing, shape, and border treatment before decorative color.
 
-Avoid per-node gradients, giant rounded cards, oversized icons, glow, and rainbow taxonomy.
+Avoid per-node gradients, giant rounded cards, oversized illustrative icons, glow, and rainbow taxonomy.
 
 ### Relationships
 
@@ -119,78 +168,78 @@ dotted  -> unavailable/unsupported evidence
 
 Calls, reads, writes, mutations, argument passing, returns, and value flow are distinguished primarily through explicit labels/kinds and evidence—not a rainbow palette.
 
+Use stable spatial direction and bounded topology where it improves comprehension. Do not introduce arbitrary physics layout or generic node-editor behavior without product need.
+
 ### Selection
 
 Selection is obvious but restrained. Use the steel-blue active/focus system through border, subtle active surface, and weight—not bloom or saturated fill.
 
 Selection never changes semantic or evidence truth.
 
-## Inspector / Source
+## Interaction Behavior
 
-Prioritize available information in this order:
+Interactions should feel direct and smooth.
+
+- avoid unnecessary modal or multi-step friction;
+- use motion to preserve spatial/causal continuity, not decoration;
+- state changes should be fast and visually legible;
+- loading, unavailable, empty, partial, error, recovery, disabled, selected, and focused states must be explicit;
+- no important action may depend only on hover;
+- motion should be short, restrained, interruptible, and unnecessary for understanding state.
+
+## Responsive Behavior
+
+Desktop favors the semantic workspace + inspector split.
+
+On narrow layouts, preserve the primary semantic canvas and move secondary inspection into a bounded collapsible/drawer surface rather than stacking an unbounded inspector document below the graph.
+
+Task order remains:
 
 ```text
-identity / kind
-source location
-source snippet
-relationship evidence / provenance
-inputs / outputs
-callers / callees
-reads / writes / side effects
-failure paths
-other derived metadata
+repository context
+ -> semantic workspace
+ -> inspector/source
 ```
 
-Do not fill absent information with speculative copy.
-
-Source expansion increases source visibility without replacing the semantic workspace or losing the current selection.
-
-## Static Step-through
-
-Static step-through is evidence-oriented navigation over deterministic source-backed possibilities. It is not a runtime debugger or execution playback UI.
-
-- expose step kind, concise value/source expression where available, provenance, and source location;
-- allow forward/reverse navigation while keeping semantic/source context;
-- synchronize selected function when supported steps cross function boundaries;
-- label branch/failure paths as static possibilities;
-- never fabricate runtime values, chosen branch outcomes, timing, frequency, latency, probability, or confidence percentages;
-- avoid playback/pulse/live-trace metaphors unless real runtime evidence is later introduced and visibly distinguished.
+Simplify layout before removing information. Prefer bounded overflow and contextual surfaces over permanently tiny columns.
 
 ## Accessibility
 
 Minimum durable expectations:
 
-- keyboard-reachable core workflows where applicable;
-- visible focus treatment;
+- keyboard-reachable core workflows;
+- visible focus treatment that is stronger than hover treatment;
 - semantic controls and labels;
 - accessible names for icon-only controls;
-- understandable toggle/pressed/selected states;
+- understandable toggle/pressed/selected/tab states;
 - sufficient contrast in light and dark token sets;
 - no required hover-only interactions;
 - relationship/evidence meaning does not depend only on color;
 - motion is not required to understand state.
+
+Normal reading text should not use microscopic type merely to appear compact. Reserve the lowest-contrast text token for non-essential hints, disabled context, and separators rather than primary metadata.
 
 ## Visual Language
 
 Use the restrained Chatspace workspace language:
 
 - compact spacing;
+- readable dense typography;
 - clean geometry;
 - consistent small radii;
 - thin borders/dividers;
 - subtle depth;
-- crisp typography;
 - limited accent usage;
 - selective translucent/glass surfaces only where layering benefits comprehension.
 
-The canonical secondary/accent direction is **desaturated steel blue** over neutral surfaces. Use it for selected/active context, focus treatment, graph/reference emphasis, and similar meaningful state—not as a wash over ordinary panels.
+The canonical accent is **desaturated steel blue** over neutral surfaces. Use it for selected/active context, focus treatment, graph/reference emphasis, and similar meaningful state—not as a wash over ordinary panels.
 
-Current reference values:
+Reference values:
 
 - dark: `cs-hover #19202a`, `cs-active #1b2636`, `cs-focus #7fa6c9`;
 - light: `cs-hover #f0f4f8`, `cs-active #e8eef6`, `cs-focus #4f7396`.
 
-Do not introduce saturated electric blue, purple-blue gradients, or blue glow to amplify this accent.
+Do not introduce saturated electric blue, purple-blue gradients, or blue glow.
 
 Glassmorphism is an accent, not the interface. Use it only for genuinely layered shell/overlay/floating contexts where translucency communicates hierarchy.
 
@@ -210,7 +259,7 @@ Avoid AI-slop styling:
 
 Use semantic `cs-*` tokens rather than feature-local hard-coded theme colors.
 
-Canonical semantic primitives:
+Canonical semantic primitives include:
 
 ```text
 cs-bg
@@ -228,62 +277,34 @@ cs-text
 cs-muted
 cs-subtle
 cs-danger
+cs-danger-surface
+cs-danger-border
 ```
 
-Dark reference palette:
+Token names describe responsibility. Do not maintain a parallel legacy token vocabulary once migration is complete.
 
-```text
-cs-bg               #0b0b0c
-cs-panel            #101012
-cs-surface          #151517
-cs-raised           #1b1b1e
-cs-border           #29292d
-cs-control          #171719
-cs-hover            #19202a
-cs-active           #1b2636
-cs-focus            #7fa6c9
-cs-primary          #eeeeef
-cs-primary-contrast #111113
-cs-text             #eeeeef
-cs-muted            #9999a2
-cs-subtle           #686872
-cs-danger           #efaaaa
-```
-
-Light reference palette:
-
-```text
-cs-bg               #f7f7f8
-cs-panel            #ffffff
-cs-surface          #f1f1f3
-cs-raised           #e9e9ec
-cs-border           #d8d8dd
-cs-control          #ffffff
-cs-hover            #f0f4f8
-cs-active           #e8eef6
-cs-focus            #4f7396
-cs-primary          #18181b
-cs-primary-contrast #fafafa
-cs-text             #18181b
-cs-muted            #60606a
-cs-subtle           #8a8a94
-cs-danger           #b42318
-```
-
-Both palettes are designed surfaces; light is not a mechanical inversion. Components express semantic intent and allow the theme layer to provide concrete values.
+Dark and light are both designed surfaces. Support explicit user selection, persist that explicit preference, and use system preference only as the initial fallback when the user has not chosen a theme.
 
 ## Component Styling Principles
 
-- Tailwind CSS v4 is the utility/token implementation layer for the web workspace;
+- Tailwind CSS v4 is the utility/token implementation layer;
 - Radix UI Primitives is the default interaction foundation for reusable complex controls;
 - use Radix behavior without importing a generic visual theme that overrides CodeFlow hierarchy or `cs-*` tokens;
-- reusable controls live under `apps/web/src/ui/` and remain product-specific;
-- reuse existing tokens/primitives before adding visual concepts;
+- reusable ordinary controls live under `apps/web/src/ui/` and remain product-specific in appearance;
+- generic controls reuse shared primitives; semantic graph nodes/relationships remain product components rather than being forced into generic controls;
 - Lucide is the standard UI affordance icon set;
 - icon-only controls require accessible names/tooltips;
 - controls with the same semantic action share behavior and visual language;
-- avoid permanent action chrome on every row when contextual discovery is sufficient;
-- do not introduce one-off shadows, gradients, radii, or colors when semantic tokens can express intent.
+- `cs-panel` represents application panels, `cs-surface` nested content surfaces, and `cs-control` interactive control surfaces;
+- avoid one-off shadows, gradients, radii, or colors when semantic tokens can express intent.
+
+## Product Copy
+
+Prefer literal product language over internal milestone terminology or generic marketing language.
+
+- user-facing limits and failures refer to CodeFlow behavior, not internal milestone names;
+- preserve explicit trust boundaries such as `Evidence first · static analysis only` where they clarify real behavior;
+- do not use broad labels such as `repository intelligence` when repository/function context communicates more directly.
 
 ## Design Quality Rule
 
@@ -291,9 +312,10 @@ A design change is complete when the affected surface:
 
 - improves or preserves task clarity;
 - preserves semantic/evidence truth;
-- keeps the primary workspace dominant;
+- keeps the semantic workspace dominant after setup;
 - has clear interaction and UI states;
-- remains keyboard/accessibility sound where applicable;
-- works intentionally with the canonical token palettes;
-- uses glass/depth only where hierarchy benefits;
+- remains keyboard/accessibility sound;
+- works intentionally in light and dark themes;
+- remains task-completable on narrow layouts;
+- uses depth only where hierarchy benefits;
 - does not add decorative complexity without product value.
