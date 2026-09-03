@@ -18,32 +18,28 @@ CI now has complete-change-set scope detection, conservative fallback, pure-CSS/
 
 ## Verification Evidence
 
-Run `33777291853` on commit `2a0823162b1e9208879dd41ff91bcef14356b1dc` established:
+Run `33777291853` established the original shared web-test failure and proved failure artifacts. Run `33777724570` then proved selective verification chose the focused web-test path for a web-test-harness change: frozen install, formatting, lint, and build passed, while the same Radix Select setup failure remained.
 
-- scope detection: passed;
-- frozen dependency installation: passed;
-- formatting: passed;
-- lint: passed;
-- build: passed;
-- test: failed;
-- failure diagnostic artifact: uploaded successfully;
-- deployment checks: correctly not reached after the failing runtime gate.
+The failure artifact and Radix implementation establish the harness defect precisely:
 
-The artifact reduced nine apparent web failures to one shared test-environment defect: `selectEntrySource` sends `pointerdown`, while `test-setup.ts` aliased `PointerEvent` to `MouseEvent`. Radix Select opens its mouse path only when `event.pointerType === 'mouse'`; the alias discarded that property, so the Radix portal never opened and every downstream repository-flow test failed at the same option lookup.
+- `selectEntrySource` sends `pointerdown` to the Radix Select trigger;
+- Radix's mouse-open path requires `event.pointerType === 'mouse'`;
+- Testing Library creates pointer events from the jsdom window constructor;
+- the previous shim did not reliably guarantee a `window.PointerEvent` carrying `pointerType`/`pointerId`;
+- the portal therefore stayed closed and nine downstream tests stopped at the same option lookup.
 
-This is a verification-harness defect, not evidence of nine separate product regressions. Production Select behavior is therefore not being changed for this fix.
+The correction installs one deterministic desktop PointerEvent constructor on both the test global and jsdom window, preserving the actual Radix pointer branch instead of bypassing the component through its hidden native select.
 
 ## Delta
 
-- restore faithful PointerEvent semantics in jsdom while preserving existing pointer-capture shims;
-- rerun CI and confirm web interaction tests pass;
-- because the CI workflow changed earlier in this engineering outcome, obtain full runtime plus required Compose evidence before marking the outcome verified;
-- then return repository state to idle with a final agent-only state update.
+- verify the corrected jsdom PointerEvent boundary with focused web tests;
+- if web tests pass, run one full CI/workflow validation that also reaches required Compose checks for the earlier workflow change;
+- then return repository state to idle with truthful evidence and verify the lightweight agent-only path.
 
 ## Blockers
 
-- current blocker: verification of the PointerEvent harness correction.
+- current blocker: focused verification of the window/global PointerEvent correction.
 
 ## Next Move
 
-Run CI with the corrected PointerEvent polyfill. If a new test failure appears, use the failure artifact to fix only that concrete boundary. If runtime and Compose gates become green, advance state truthfully and verify the lightweight agent-only path with the final state-only update.
+Run CI with the corrected PointerEvent constructor. If `Test` still fails, consume the failure artifact and fix only the next concrete boundary. Do not weaken or remove Radix interaction coverage.
