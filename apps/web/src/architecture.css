@@ -1,0 +1,277 @@
+.architecture-panel {
+  border-top: 1px solid var(--cs-border);
+  border-bottom: 1px solid var(--cs-border);
+  background: var(--cs-surface);
+}
+
+.architecture-heading,
+.architecture-toolbar,
+.architecture-grid {
+  display: flex;
+  gap: 16px;
+}
+
+.architecture-heading {
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 16px 18px 12px;
+}
+
+.architecture-heading h2,
+.architecture-detail h3 {
+  margin: 2px 0 0;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.architecture-copy,
+.architecture-location,
+.architecture-detail-heading p,
+.architecture-empty {
+  margin: 6px 0 0;
+  color: var(--cs-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.architecture-counts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.architecture-counts span {
+  border: 1px solid var(--cs-border);
+  border-radius: 4px;
+  padding: 3px 6px;
+  color: var(--cs-text-muted);
+  font-size: 11px;
+}
+
+.architecture-toolbar {
+  align-items: center;
+  padding: 0 18px 12px;
+}
+
+.architecture-toolbar input {
+  max-width: 420px;
+}
+
+.architecture-search-results {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 1px;
+  margin: 0 18px 12px;
+  border: 1px solid var(--cs-border);
+  background: var(--cs-border);
+}
+
+.architecture-search-results button,
+.architecture-neighborhood button,
+.architecture-relationships button {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  border: 0;
+  background: var(--cs-surface);
+  padding: 8px 10px;
+  color: var(--cs-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.architecture-search-results button:hover,
+.architecture-neighborhood button:hover,
+.architecture-relationships button:hover {
+  background: var(--cs-hover);
+}
+
+.architecture-search-results span,
+.architecture-neighborhood span,
+.architecture-relationships span,
+.architecture-relationships small {
+  overflow: hidden;
+  max-width: 100%;
+  color: var(--cs-text-muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.architecture-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.85fr) minmax(320px, 1.15fr);
+  gap: 0;
+  min-height: 280px;
+  border-top: 1px solid var(--cs-border);
+}
+
+.architecture-tree {
+  min-width: 0;
+  max-height: 420px;
+  overflow: auto;
+  border-right: 1px solid var(--cs-border);
+  padding: 10px;
+}
+
+.architecture-tree-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+}
+
+.architecture-expand,
+.architecture-expand-spacer {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  align-items: center;
+  justify-content: center;
+}
+
+.architecture-expand {
+  border: 0;
+  background: transparent;
+  color: var(--cs-text-muted);
+  cursor: pointer;
+}
+
+.architecture-expand:hover {
+  color: var(--cs-text);
+}
+
+.architecture-entity-button {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  padding: 5px 7px;
+  color: var(--cs-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.architecture-entity-button:hover {
+  background: var(--cs-hover);
+}
+
+.architecture-entity-button[aria-pressed='true'] {
+  background: var(--cs-active);
+}
+
+.architecture-entity-button strong {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 560;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.architecture-entity-button span {
+  flex: 0 0 auto;
+  color: var(--cs-text-muted);
+  font-size: 10px;
+}
+
+.architecture-detail {
+  min-width: 0;
+  padding: 14px 16px 18px;
+}
+
+.architecture-detail-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.architecture-detail-heading > div:first-child {
+  min-width: 0;
+}
+
+.architecture-detail-heading h3,
+.architecture-detail-heading p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.architecture-detail-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
+.architecture-relationships {
+  margin-top: 16px;
+}
+
+.architecture-relationships button {
+  width: 100%;
+  margin-top: 1px;
+  border-top: 1px solid var(--cs-border);
+}
+
+.architecture-relationships button strong {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+.architecture-evidence {
+  margin-top: 16px;
+  border-top: 1px solid var(--cs-border);
+  padding-top: 10px;
+}
+
+.architecture-evidence span {
+  color: var(--cs-text-muted);
+  font-size: 10px;
+}
+
+.architecture-evidence p {
+  margin: 4px 0 0;
+  color: var(--cs-text-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.architecture-neighborhood {
+  display: grid;
+  gap: 1px;
+}
+
+.architecture-neighborhood .panel-kicker {
+  padding: 4px 8px 7px;
+}
+
+@media (max-width: 900px) {
+  .architecture-heading,
+  .architecture-detail-heading {
+    flex-direction: column;
+  }
+
+  .architecture-counts {
+    justify-content: flex-start;
+  }
+
+  .architecture-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .architecture-tree {
+    border-right: 0;
+    border-bottom: 1px solid var(--cs-border);
+  }
+}
