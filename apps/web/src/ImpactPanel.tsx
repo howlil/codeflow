@@ -297,6 +297,12 @@ export function ImpactPanel({
                     Supported static analysis did not find a matching downstream
                     relationship for this scope and filter.
                   </span>
+                  {impact.status === 'partial' ? (
+                    <span>
+                      Impact coverage is partial; absence from the result set is
+                      not a safety guarantee.
+                    </span>
+                  ) : null}
                 </div>
               ) : (
                 visibleResults.map((result) => (
