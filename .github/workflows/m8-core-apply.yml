@@ -1,0 +1,774 @@
+name: M8 Core Apply
+
+on:
+  push:
+    branches: [feat/m8-change-impact-explorer]
+    paths: [.github/workflows/m8-core-apply.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/m8-change-impact-explorer
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Add impact model exports
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          model = Path('packages/analysis-core/src/model.ts')
+          text = model.read_text()
+          marker = 'export interface FlowProjection {'
+          assert marker in text
+          if 'export interface ImpactProjection' not in text:
+              block = '''export type ImpactEntityKind = Exclude<RepositoryEntityKind, 'Repository'> | 'Package';
+
+export type ImpactRelationshipKind =
+  | 'CALLS'
+  | 'REFERENCES'
+  | 'IMPORTS'
+  | 'DEPENDS_ON'
+  | 'EXTENDS'
+  | 'IMPLEMENTS';
+
+export interface ImpactSeed {
+  entityId: string;
+  entityKind: ImpactEntityKind;
+  name: string;
+  path: string | null;
+}
+
+export interface ImpactPathStep {
+  sourceId: string;
+  targetId: string;
+  kind: ImpactRelationshipKind;
+  evidence: Evidence[];
+}
+
+export interface ImpactPath {
+  seedId: string;
+  steps: ImpactPathStep[];
+}
+
+export interface ImpactResult {
+  entityId: string;
+  entityKind: ImpactEntityKind;
+  name: string;
+  path: string | null;
+  distance: number;
+  seedIds: string[];
+  paths: ImpactPath[];
+  evidence: Evidence[];
+}
+
+export interface ImpactSummary {
+  directCount: number;
+  transitiveCount: number;
+  byKind: Partial<Record<ImpactEntityKind, number>>;
+  affectedPackageIds: string[];
+  affectedModuleIds: string[];
+  affectedFileIds: string[];
+}
+
+export interface ImpactProjection {
+  seeds: ImpactSeed[];
+  results: ImpactResult[];
+  summary: ImpactSummary;
+  maxDepth: number;
+  status: 'complete' | 'partial';
+  issues: AnalysisIssue[];
+}
+
+'''
+              text = text.replace(marker, block + marker)
+              model.write_text(text)
+
+          index = Path('packages/analysis-core/src/index.ts')
+          text = index.read_text()
+          if 'ImpactEntityKind,' not in text:
+              text = text.replace('  FunctionReturnProjection,\n', '  FunctionReturnProjection,\n  ImpactEntityKind,\n  ImpactPath,\n  ImpactPathStep,\n  ImpactProjection,\n  ImpactRelationshipKind,\n  ImpactResult,\n  ImpactSeed,\n  ImpactSummary,\n')
+          if "from './impact-analysis.js'" not in text:
+              text += "export { buildImpactProjection } from './impact-analysis.js';\n"
+          index.write_text(text)
+          PY
+      - name: Add impact engine
+        run: |
+          cat > packages/analysis-core/src/impact-analysis.ts <<'EOF'
+          import type {
+            AnalysisIssue,
+            Evidence,
+            FlowProjection,
+            ImpactEntityKind,
+            ImpactPath,
+            ImpactPathStep,
+            ImpactProjection,
+            ImpactRelationshipKind,
+            ImpactResult,
+            RepositoryEntity,
+          } from './model.js';
+
+          const DEFAULT_MAX_DEPTH = 3;
+          const MAX_DEPTH = 4;
+          const MAX_SEEDS = 8;
+          const MAX_RESULTS = 256;
+          const MAX_PATHS_PER_RESULT = 3;
+          const IMPACT_RELATIONSHIPS = new Set<ImpactRelationshipKind>([
+            'CALLS',
+            'REFERENCES',
+            'IMPORTS',
+            'DEPENDS_ON',
+            'EXTENDS',
+            'IMPLEMENTS',
+          ]);
+
+          interface ImpactEntityRecord {
+            id: string;
+            kind: ImpactEntityKind;
+            name: string;
+            path: string | null;
+          }
+
+          interface TraversableRelationship extends ImpactPathStep {
+            id: string;
+          }
+
+          interface QueueItem {
+            currentId: string;
+            seedId: string;
+            distance: number;
+            steps: ImpactPathStep[];
+          }
+
+          export function buildImpactProjection(
+            flow: FlowProjection,
+            seedIds: string[],
+            requestedMaxDepth = DEFAULT_MAX_DEPTH,
+          ): ImpactProjection {
+            const maxDepth = Math.max(1, Math.min(MAX_DEPTH, requestedMaxDepth));
+            const entityById = collectEntities(flow);
+            const issues: AnalysisIssue[] = [];
+            const uniqueSeedIds = [...new Set(seedIds)].slice(0, MAX_SEEDS);
+            if (seedIds.length > MAX_SEEDS) {
+              issues.push({
+                kind: 'limit',
+                message: `Impact scope is bounded to ${MAX_SEEDS} entities.`,
+              });
+            }
+
+            const seeds = uniqueSeedIds.flatMap((entityId) => {
+              const entity = entityById.get(entityId);
+              if (entity === undefined) {
+                issues.push({
+                  kind: 'invalid',
+                  message: `Impact seed ${entityId} is not present in the analyzed semantic model.`,
+                });
+                return [];
+              }
+              return [
+                {
+                  entityId: entity.id,
+                  entityKind: entity.kind,
+                  name: entity.name,
+                  path: entity.path,
+                },
+              ];
+            });
+            const seedSet = new Set(seeds.map((seed) => seed.entityId));
+            const incoming = indexIncomingRelationships(flow);
+            const resultById = new Map<string, ImpactResult>();
+            const queue: QueueItem[] = seeds.map((seed) => ({
+              currentId: seed.entityId,
+              seedId: seed.entityId,
+              distance: 0,
+              steps: [],
+            }));
+            const bestDistance = new Map<string, number>(
+              seeds.map((seed) => [`${seed.entityId}:${seed.entityId}`, 0]),
+            );
+            let truncated = false;
+
+            for (let cursor = 0; cursor < queue.length; cursor += 1) {
+              const current = queue[cursor]!;
+              if (current.distance >= maxDepth) {
+                continue;
+              }
+              for (const relationship of incoming.get(current.currentId) ?? []) {
+                const entity = entityById.get(relationship.sourceId);
+                if (entity === undefined || seedSet.has(entity.id)) {
+                  continue;
+                }
+                const distance = current.distance + 1;
+                const steps = [relationshipStep(relationship), ...current.steps];
+                const path: ImpactPath = { seedId: current.seedId, steps };
+                const existing = resultById.get(entity.id);
+                if (existing === undefined) {
+                  if (resultById.size >= MAX_RESULTS) {
+                    truncated = true;
+                    continue;
+                  }
+                  resultById.set(entity.id, {
+                    entityId: entity.id,
+                    entityKind: entity.kind,
+                    name: entity.name,
+                    path: entity.path,
+                    distance,
+                    seedIds: [current.seedId],
+                    paths: [path],
+                    evidence: collectPathEvidence(path),
+                  });
+                } else {
+                  existing.distance = Math.min(existing.distance, distance);
+                  if (!existing.seedIds.includes(current.seedId)) {
+                    existing.seedIds.push(current.seedId);
+                    existing.seedIds.sort();
+                  }
+                  const pathKey = impactPathKey(path);
+                  if (
+                    existing.paths.length < MAX_PATHS_PER_RESULT &&
+                    !existing.paths.some((candidate) => impactPathKey(candidate) === pathKey)
+                  ) {
+                    existing.paths.push(path);
+                    existing.paths.sort(comparePaths);
+                    existing.evidence = collectResultEvidence(existing.paths);
+                  }
+                }
+
+                const visitKey = `${current.seedId}:${entity.id}`;
+                const previousDistance = bestDistance.get(visitKey);
+                if (previousDistance === undefined || distance < previousDistance) {
+                  bestDistance.set(visitKey, distance);
+                  queue.push({
+                    currentId: entity.id,
+                    seedId: current.seedId,
+                    distance,
+                    steps,
+                  });
+                }
+              }
+            }
+
+            if (truncated) {
+              issues.push({
+                kind: 'limit',
+                message: `Impact projection is bounded to ${MAX_RESULTS} affected entities.`,
+              });
+            }
+
+            const results = [...resultById.values()].sort(compareResults);
+            const summary = summarizeImpact(flow, results, entityById);
+            const inheritedIssues = [
+              ...(flow.analysis.status === 'partial' ? flow.analysis.issues : []),
+              ...(flow.topology?.status === 'partial' ? flow.topology.issues : []),
+            ];
+            const allIssues = dedupeIssues([...issues, ...inheritedIssues]);
+
+            return {
+              seeds,
+              results,
+              summary,
+              maxDepth,
+              status:
+                flow.analysis.status === 'partial' ||
+                flow.topology?.status === 'partial' ||
+                allIssues.length > 0
+                  ? 'partial'
+                  : 'complete',
+              issues: allIssues,
+            };
+          }
+
+          function collectEntities(flow: FlowProjection): Map<string, ImpactEntityRecord> {
+            const entities = new Map<string, ImpactEntityRecord>();
+            for (const entity of flow.topology?.entities ?? []) {
+              if (entity.kind !== 'Package') {
+                continue;
+              }
+              entities.set(entity.id, {
+                id: entity.id,
+                kind: 'Package',
+                name: entity.name,
+                path: entity.path,
+              });
+            }
+            for (const entity of flow.architecture?.entities ?? []) {
+              if (entity.kind === 'Repository') {
+                continue;
+              }
+              entities.set(entity.id, {
+                id: entity.id,
+                kind: entity.kind,
+                name: entity.name,
+                path: entity.path,
+              });
+            }
+            for (const node of flow.nodes) {
+              if (!entities.has(node.id)) {
+                entities.set(node.id, {
+                  id: node.id,
+                  kind: 'Function',
+                  name: node.label,
+                  path: node.location.filePath,
+                });
+              }
+            }
+            return entities;
+          }
+
+          function indexIncomingRelationships(
+            flow: FlowProjection,
+          ): Map<string, TraversableRelationship[]> {
+            const relationships = new Map<string, TraversableRelationship>();
+            for (const edge of flow.edges) {
+              addRelationship(relationships, {
+                id: edge.id,
+                kind: 'CALLS',
+                sourceId: edge.sourceId,
+                targetId: edge.targetId,
+                evidence: edge.evidence,
+              });
+            }
+            for (const relationship of flow.architecture?.relationships ?? []) {
+              if (!IMPACT_RELATIONSHIPS.has(relationship.kind as ImpactRelationshipKind)) {
+                continue;
+              }
+              addRelationship(relationships, {
+                id: relationship.id,
+                kind: relationship.kind as ImpactRelationshipKind,
+                sourceId: relationship.sourceId,
+                targetId: relationship.targetId,
+                evidence: relationship.evidence,
+              });
+            }
+            for (const relationship of flow.topology?.relationships ?? []) {
+              if (relationship.kind !== 'DEPENDS_ON') {
+                continue;
+              }
+              addRelationship(relationships, {
+                id: relationship.id,
+                kind: 'DEPENDS_ON',
+                sourceId: relationship.sourceId,
+                targetId: relationship.targetId,
+                evidence: relationship.evidence,
+              });
+            }
+
+            const incoming = new Map<string, TraversableRelationship[]>();
+            for (const relationship of relationships.values()) {
+              const values = incoming.get(relationship.targetId) ?? [];
+              values.push(relationship);
+              incoming.set(relationship.targetId, values);
+            }
+            for (const values of incoming.values()) {
+              values.sort(compareRelationships);
+            }
+            return incoming;
+          }
+
+          function addRelationship(
+            relationships: Map<string, TraversableRelationship>,
+            relationship: TraversableRelationship,
+          ): void {
+            const key = `${relationship.kind}:${relationship.sourceId}:${relationship.targetId}`;
+            const existing = relationships.get(key);
+            if (existing === undefined) {
+              relationships.set(key, relationship);
+              return;
+            }
+            existing.evidence = dedupeEvidence([...existing.evidence, ...relationship.evidence]);
+          }
+
+          function relationshipStep(relationship: TraversableRelationship): ImpactPathStep {
+            return {
+              sourceId: relationship.sourceId,
+              targetId: relationship.targetId,
+              kind: relationship.kind,
+              evidence: relationship.evidence,
+            };
+          }
+
+          function summarizeImpact(
+            flow: FlowProjection,
+            results: ImpactResult[],
+            entityById: Map<string, ImpactEntityRecord>,
+          ): ImpactProjection['summary'] {
+            const byKind: ImpactProjection['summary']['byKind'] = {};
+            const affectedPackageIds = new Set<string>();
+            const affectedModuleIds = new Set<string>();
+            const affectedFileIds = new Set<string>();
+            const architectureEntities = flow.architecture?.entities ?? [];
+            const fileByPath = new Map(
+              architectureEntities
+                .filter((entity) => entity.kind === 'File')
+                .map((entity) => [entity.path, entity]),
+            );
+            const modules = architectureEntities.filter(
+              (entity): entity is RepositoryEntity => entity.kind === 'Module',
+            );
+            const packages = (flow.topology?.entities ?? []).filter(
+              (entity) => entity.kind === 'Package',
+            );
+
+            for (const result of results) {
+              byKind[result.entityKind] = (byKind[result.entityKind] ?? 0) + 1;
+              if (result.entityKind === 'Package') {
+                affectedPackageIds.add(result.entityId);
+              }
+              if (result.entityKind === 'Module') {
+                affectedModuleIds.add(result.entityId);
+              }
+              if (result.entityKind === 'File') {
+                affectedFileIds.add(result.entityId);
+              }
+              if (result.path === null) {
+                continue;
+              }
+              const file = fileByPath.get(result.path);
+              if (file !== undefined) {
+                affectedFileIds.add(file.id);
+              }
+              const module = deepestContainingModule(modules, result.path);
+              if (module !== undefined) {
+                affectedModuleIds.add(module.id);
+              }
+              const ownerId = flow.topology?.fileOwners[result.path];
+              if (ownerId !== undefined) {
+                affectedPackageIds.add(ownerId);
+              } else {
+                const owner = deepestContainingPackage(packages, result.path);
+                if (owner !== undefined && entityById.has(owner.id)) {
+                  affectedPackageIds.add(owner.id);
+                }
+              }
+            }
+
+            return {
+              directCount: results.filter((result) => result.distance === 1).length,
+              transitiveCount: results.filter((result) => result.distance > 1).length,
+              byKind,
+              affectedPackageIds: [...affectedPackageIds].sort(),
+              affectedModuleIds: [...affectedModuleIds].sort(),
+              affectedFileIds: [...affectedFileIds].sort(),
+            };
+          }
+
+          function deepestContainingModule(
+            modules: RepositoryEntity[],
+            path: string,
+          ): RepositoryEntity | undefined {
+            return modules
+              .filter((module) => path === module.path || path.startsWith(`${module.path}/`))
+              .sort((left, right) => right.path.length - left.path.length)[0];
+          }
+
+          function deepestContainingPackage(
+            packages: NonNullable<FlowProjection['topology']>['entities'],
+            path: string,
+          ) {
+            return packages
+              .filter(
+                (entity) =>
+                  entity.kind === 'Package' &&
+                  (path === entity.path || path.startsWith(`${entity.path}/`)),
+              )
+              .sort((left, right) => right.path.length - left.path.length)[0];
+          }
+
+          function collectResultEvidence(paths: ImpactPath[]): Evidence[] {
+            return dedupeEvidence(paths.flatMap(collectPathEvidence));
+          }
+
+          function collectPathEvidence(path: ImpactPath): Evidence[] {
+            return dedupeEvidence(path.steps.flatMap((step) => step.evidence));
+          }
+
+          function dedupeEvidence(evidence: Evidence[]): Evidence[] {
+            const seen = new Set<string>();
+            return evidence.filter((item) => {
+              const key = `${item.kind}:${item.location.filePath}:${item.location.startLine}:${item.location.startColumn}:${item.reason}`;
+              if (seen.has(key)) {
+                return false;
+              }
+              seen.add(key);
+              return true;
+            });
+          }
+
+          function dedupeIssues(issues: AnalysisIssue[]): AnalysisIssue[] {
+            const seen = new Set<string>();
+            return issues.filter((issue) => {
+              const key = `${issue.kind}:${issue.filePath ?? ''}:${issue.message}`;
+              if (seen.has(key)) {
+                return false;
+              }
+              seen.add(key);
+              return true;
+            });
+          }
+
+          function impactPathKey(path: ImpactPath): string {
+            return `${path.seedId}:${path.steps
+              .map((step) => `${step.kind}:${step.sourceId}:${step.targetId}`)
+              .join('|')}`;
+          }
+
+          function comparePaths(left: ImpactPath, right: ImpactPath): number {
+            return (
+              left.steps.length - right.steps.length ||
+              impactPathKey(left).localeCompare(impactPathKey(right))
+            );
+          }
+
+          function compareRelationships(
+            left: TraversableRelationship,
+            right: TraversableRelationship,
+          ): number {
+            return (
+              left.kind.localeCompare(right.kind) ||
+              left.sourceId.localeCompare(right.sourceId) ||
+              left.targetId.localeCompare(right.targetId)
+            );
+          }
+
+          function compareResults(left: ImpactResult, right: ImpactResult): number {
+            return (
+              left.distance - right.distance ||
+              impactKindRank(left.entityKind) - impactKindRank(right.entityKind) ||
+              left.name.localeCompare(right.name) ||
+              left.entityId.localeCompare(right.entityId)
+            );
+          }
+
+          function impactKindRank(kind: ImpactEntityKind): number {
+            const ranks: Record<ImpactEntityKind, number> = {
+              Package: 0,
+              Module: 1,
+              File: 2,
+              Class: 3,
+              Interface: 4,
+              Type: 5,
+              Enum: 6,
+              Function: 7,
+              Method: 8,
+              Variable: 9,
+            };
+            return ranks[kind];
+          }
+          EOF
+      - name: Add impact engine tests
+        run: |
+          cat > packages/analysis-core/src/impact-analysis.test.ts <<'EOF'
+          import { describe, expect, it } from 'vitest';
+
+          import type { Evidence, FlowProjection } from './model.js';
+          import { buildImpactProjection } from './impact-analysis.js';
+
+          const location = {
+            filePath: 'packages/core/src/core.ts',
+            startLine: 1,
+            startColumn: 1,
+            endLine: 1,
+            endColumn: 10,
+          };
+          const evidence: Evidence[] = [
+            {
+              kind: 'verified-static',
+              source: 'test',
+              location,
+              reason: 'Static dependency fixture.',
+            },
+          ];
+
+          function fixture(): FlowProjection {
+            return {
+              id: 'flow:test',
+              entryPointId: 'function:apps/web/src/page.ts:render',
+              nodes: [
+                {
+                  id: 'function:packages/core/src/core.ts:process',
+                  kind: 'Function',
+                  label: 'process',
+                  location,
+                  entryPoint: false,
+                },
+                {
+                  id: 'function:apps/api/src/handler.ts:handle',
+                  kind: 'Function',
+                  label: 'handle',
+                  location: { ...location, filePath: 'apps/api/src/handler.ts' },
+                  entryPoint: false,
+                },
+                {
+                  id: 'function:apps/web/src/page.ts:render',
+                  kind: 'Function',
+                  label: 'render',
+                  location: { ...location, filePath: 'apps/web/src/page.ts' },
+                  entryPoint: true,
+                },
+              ],
+              edges: [
+                {
+                  id: 'call:handle:process',
+                  kind: 'CALLS',
+                  sourceId: 'function:apps/api/src/handler.ts:handle',
+                  targetId: 'function:packages/core/src/core.ts:process',
+                  evidence,
+                },
+                {
+                  id: 'call:render:handle',
+                  kind: 'CALLS',
+                  sourceId: 'function:apps/web/src/page.ts:render',
+                  targetId: 'function:apps/api/src/handler.ts:handle',
+                  evidence,
+                },
+              ],
+              source: { filePath: 'apps/web/src/page.ts', text: '' },
+              sources: [],
+              analysis: {
+                status: 'complete',
+                analyzedFileCount: 3,
+                ignoredFileCount: 0,
+                issues: [],
+              },
+              functionData: [],
+              staticFlow: { steps: [], relationships: [] },
+              architecture: {
+                rootId: 'repository:.',
+                entities: [
+                  entity('file:packages/core/src/core.ts', 'File', 'core.ts', 'packages/core/src/core.ts'),
+                  entity('module:packages/core/src', 'Module', 'src', 'packages/core/src'),
+                  entity('function:packages/core/src/core.ts:process', 'Function', 'process', 'packages/core/src/core.ts'),
+                  entity('file:apps/api/src/handler.ts', 'File', 'handler.ts', 'apps/api/src/handler.ts'),
+                  entity('module:apps/api/src', 'Module', 'src', 'apps/api/src'),
+                  entity('function:apps/api/src/handler.ts:handle', 'Function', 'handle', 'apps/api/src/handler.ts'),
+                  entity('file:apps/web/src/page.ts', 'File', 'page.ts', 'apps/web/src/page.ts'),
+                  entity('module:apps/web/src', 'Module', 'src', 'apps/web/src'),
+                  entity('function:apps/web/src/page.ts:render', 'Function', 'render', 'apps/web/src/page.ts'),
+                ],
+                relationships: [
+                  {
+                    id: 'ref:web:process',
+                    kind: 'REFERENCES',
+                    sourceId: 'function:apps/web/src/page.ts:render',
+                    targetId: 'function:packages/core/src/core.ts:process',
+                    evidence,
+                  },
+                ],
+              },
+              topology: {
+                rootId: 'workspace:.',
+                entities: [
+                  packageEntity('package:core', '@demo/core', 'packages/core'),
+                  packageEntity('package:api', '@demo/api', 'apps/api'),
+                  packageEntity('package:web', '@demo/web', 'apps/web'),
+                ],
+                relationships: [
+                  dependency('package:api', 'package:core'),
+                  dependency('package:web', 'package:api'),
+                  dependency('package:core', 'package:web'),
+                ],
+                externalDependencies: [],
+                fileOwners: {
+                  'packages/core/src/core.ts': 'package:core',
+                  'apps/api/src/handler.ts': 'package:api',
+                  'apps/web/src/page.ts': 'package:web',
+                },
+                status: 'complete',
+                issues: [],
+              },
+            };
+          }
+
+          describe('buildImpactProjection', () => {
+            it('traces direct and bounded transitive downstream impact with evidence paths', () => {
+              const impact = buildImpactProjection(
+                fixture(),
+                ['function:packages/core/src/core.ts:process'],
+                3,
+              );
+
+              expect(impact.status).toBe('complete');
+              expect(impact.results.map((item) => [item.name, item.distance])).toEqual([
+                ['handle', 1],
+                ['render', 1],
+              ]);
+              expect(impact.results.find((item) => item.name === 'handle')?.paths[0]?.steps).toHaveLength(1);
+              expect(impact.summary.affectedPackageIds).toEqual(['package:api', 'package:web']);
+              expect(impact.summary.affectedFileIds).toEqual([
+                'file:apps/api/src/handler.ts',
+                'file:apps/web/src/page.ts',
+              ]);
+            });
+
+            it('handles package cycles, multiple seeds, invalid seeds, and deterministic deduplication', () => {
+              const impact = buildImpactProjection(
+                fixture(),
+                ['package:core', 'function:packages/core/src/core.ts:process', 'missing'],
+                4,
+              );
+
+              expect(impact.status).toBe('partial');
+              expect(impact.issues.some((issue) => issue.kind === 'invalid')).toBe(true);
+              expect(impact.results.filter((item) => item.entityId === 'package:api')).toHaveLength(1);
+              expect(impact.results.find((item) => item.entityId === 'package:api')?.distance).toBe(1);
+              expect(impact.results.length).toBeLessThan(10);
+            });
+          });
+
+          function entity(
+            id: string,
+            kind: 'Module' | 'File' | 'Function',
+            name: string,
+            path: string,
+          ) {
+            return {
+              id,
+              kind,
+              name,
+              path,
+              location,
+              exported: kind === 'Function',
+              evidence,
+            } as const;
+          }
+
+          function packageEntity(id: string, name: string, path: string) {
+            return {
+              id,
+              kind: 'Package' as const,
+              name,
+              path,
+              location,
+              evidence: [{ ...evidence[0]!, kind: 'configured' as const }],
+            };
+          }
+
+          function dependency(sourceId: string, targetId: string) {
+            return {
+              id: `dep:${sourceId}:${targetId}`,
+              kind: 'DEPENDS_ON' as const,
+              sourceId,
+              targetId,
+              evidence: [{ ...evidence[0]!, kind: 'configured' as const }],
+            };
+          }
+          EOF
+      - run: pnpm exec prettier --write packages/analysis-core/src/model.ts packages/analysis-core/src/index.ts packages/analysis-core/src/impact-analysis.ts packages/analysis-core/src/impact-analysis.test.ts
+      - run: pnpm --filter @codeflow/analysis-core build
+      - run: pnpm --filter @codeflow/analysis-core test
+      - name: Commit core impact engine
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add packages/analysis-core/src/model.ts packages/analysis-core/src/index.ts packages/analysis-core/src/impact-analysis.ts packages/analysis-core/src/impact-analysis.test.ts
+          git commit -m "feat(m8): add evidence-backed impact engine"
+          git push origin HEAD:feat/m8-change-impact-explorer
