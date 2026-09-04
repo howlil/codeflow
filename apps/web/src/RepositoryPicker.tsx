@@ -6,6 +6,9 @@ import { Button, Input, Select } from './ui/primitives';
 const MAX_ANALYZED_FILES = 96;
 const MAX_FILE_BYTES = 128 * 1024;
 const MAX_TOTAL_SOURCE_BYTES = 1_000_000;
+const MAX_METADATA_FILES = 48;
+const MAX_METADATA_FILE_BYTES = 64 * 1024;
+const MAX_TOTAL_METADATA_BYTES = 512 * 1024;
 const IGNORED_DIRECTORY_NAMES = new Set([
   '.git',
   '.next',
@@ -46,8 +49,13 @@ export function RepositoryPicker({
     () => selectTypeScriptSources(selectedFiles),
     [selectedFiles],
   );
-  const ignoredFileCount = selectedFiles.length - candidates.length;
-  const selectionError = getSelectionError(candidates);
+  const metadataCandidates = useMemo(
+    () => selectRepositoryMetadata(selectedFiles),
+    [selectedFiles],
+  );
+  const ignoredFileCount =
+    selectedFiles.length - candidates.length - metadataCandidates.length;
+  const selectionError = getSelectionError(candidates, metadataCandidates);
   const entryOptions =
     candidates.length === 0
       ? [{ value: '', label: 'Select a repository first', disabled: true }]
@@ -85,6 +93,12 @@ export function RepositoryPicker({
           sourceText: await file.text(),
         })),
       );
+      const metadata = await Promise.all(
+        metadataCandidates.map(async ({ file, filePath }) => ({
+          filePath,
+          text: await file.text(),
+        })),
+      );
       const firstPath = candidates[0]?.filePath ?? 'Local repository';
       const rootLabel = firstPath.includes('/')
         ? firstPath.slice(0, firstPath.indexOf('/'))
@@ -93,6 +107,7 @@ export function RepositoryPicker({
       await onAnalyze(
         {
           files,
+          metadata,
           entryPoint: {
             filePath: entryFilePath,
             name: entryPointName.trim(),
@@ -181,6 +196,9 @@ export function RepositoryPicker({
         <p className="repository-selection-note" role="status">
           {candidates.length} TypeScript source file
           {candidates.length === 1 ? '' : 's'} selected
+          {metadataCandidates.length > 0
+            ? ` · ${metadataCandidates.length} workspace/config metadata file${metadataCandidates.length === 1 ? '' : 's'} included`
+            : ''}
           {ignoredFileCount > 0
             ? ` · ${ignoredFileCount} dependency, build, declaration, or unsupported file${ignoredFileCount === 1 ? '' : 's'} ignored before upload`
             : ''}
@@ -204,7 +222,18 @@ function selectTypeScriptSources(files: File[]): SelectedSource[] {
     .sort((left, right) => left.filePath.localeCompare(right.filePath));
 }
 
-function getSelectionError(candidates: SelectedSource[]): string | null {
+function selectRepositoryMetadata(files: File[]): SelectedSource[] {
+  return files
+    .map((file) => ({ file, filePath: repositoryPathOf(file) }))
+    .filter(({ filePath }) => isSupportedMetadataPath(filePath))
+    .filter(({ filePath }) => !isIgnoredPath(filePath))
+    .sort((left, right) => left.filePath.localeCompare(right.filePath));
+}
+
+function getSelectionError(
+  candidates: SelectedSource[],
+  metadataCandidates: SelectedSource[],
+): string | null {
   if (candidates.length > MAX_ANALYZED_FILES) {
     return `CodeFlow analyzes at most ${MAX_ANALYZED_FILES} TypeScript files per request. Choose a narrower repository directory.`;
   }
@@ -220,6 +249,23 @@ function getSelectionError(candidates: SelectedSource[]): string | null {
   );
   if (totalBytes > MAX_TOTAL_SOURCE_BYTES) {
     return `Selected TypeScript source exceeds the ${MAX_TOTAL_SOURCE_BYTES}-byte analysis budget. Choose a narrower directory.`;
+  }
+
+  if (metadataCandidates.length > MAX_METADATA_FILES) {
+    return `CodeFlow reads at most ${MAX_METADATA_FILES} workspace/config metadata files per request.`;
+  }
+  const oversizedMetadata = metadataCandidates.find(
+    ({ file }) => file.size > MAX_METADATA_FILE_BYTES,
+  );
+  if (oversizedMetadata !== undefined) {
+    return `${oversizedMetadata.filePath} exceeds the ${MAX_METADATA_FILE_BYTES}-byte metadata limit.`;
+  }
+  const totalMetadataBytes = metadataCandidates.reduce(
+    (total, { file }) => total + file.size,
+    0,
+  );
+  if (totalMetadataBytes > MAX_TOTAL_METADATA_BYTES) {
+    return `Workspace/config metadata exceeds the ${MAX_TOTAL_METADATA_BYTES}-byte metadata budget.`;
   }
 
   return null;
@@ -244,5 +290,14 @@ function isSupportedTypeScriptPath(filePath: string): boolean {
   return (
     (lowerPath.endsWith('.ts') || lowerPath.endsWith('.tsx')) &&
     !lowerPath.endsWith('.d.ts')
+  );
+}
+
+function isSupportedMetadataPath(filePath: string): boolean {
+  const name = filePath.split('/').at(-1)?.toLowerCase() ?? '';
+  return (
+    name === 'package.json' ||
+    name === 'pnpm-workspace.yaml' ||
+    /^tsconfig(?:\.[^/]+)?\.json$/.test(name)
   );
 }
