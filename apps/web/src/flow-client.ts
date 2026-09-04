@@ -121,6 +121,52 @@ export interface StaticFlowRelationship {
   evidence: FlowEvidence[];
 }
 
+export type RepositoryEntityKind =
+  | 'Repository'
+  | 'Module'
+  | 'File'
+  | 'Function'
+  | 'Method'
+  | 'Class'
+  | 'Interface'
+  | 'Type'
+  | 'Enum'
+  | 'Variable';
+
+export interface RepositoryEntity {
+  id: string;
+  kind: RepositoryEntityKind;
+  name: string;
+  path: string;
+  location: SourceLocation | null;
+  exported: boolean;
+  evidence: FlowEvidence[];
+}
+
+export type RepositoryRelationshipKind =
+  | 'CONTAINS'
+  | 'DEFINES'
+  | 'IMPORTS'
+  | 'DEPENDS_ON'
+  | 'EXPORTS'
+  | 'REFERENCES'
+  | 'EXTENDS'
+  | 'IMPLEMENTS';
+
+export interface RepositoryRelationship {
+  id: string;
+  kind: RepositoryRelationshipKind;
+  sourceId: string;
+  targetId: string;
+  evidence: FlowEvidence[];
+}
+
+export interface RepositoryArchitectureProjection {
+  rootId: string;
+  entities: RepositoryEntity[];
+  relationships: RepositoryRelationship[];
+}
+
 export interface FlowProjection {
   id: string;
   entryPointId: string;
@@ -154,6 +200,8 @@ export interface FlowProjection {
     steps: StaticFlowStep[];
     relationships: StaticFlowRelationship[];
   };
+  /** Added in M6. Optional so older deterministic fixtures remain readable. */
+  architecture?: RepositoryArchitectureProjection;
 }
 
 export interface RepositoryAnalysisRequest {

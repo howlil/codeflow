@@ -2,37 +2,34 @@
 
 Status: COMPLETE
 
-Active Milestone: M5 - GitHub-to-Understanding Workspace
+Active Milestone: M6 - Repository Architecture & Symbol Navigation
 
 ## Outcome
 
-CodeFlow now takes a public GitHub repository URL as the primary entry journey, acquires a bounded TypeScript/TSX source set in memory, discovers deterministic entry-point candidates, and opens the existing evidence-backed semantic workspace. The local repository picker remains available as an explicit secondary path.
+CodeFlow now supports evidence-backed repository orientation above the existing function/data-flow workspace. A developer can move from repository hierarchy and module/file dependencies into symbols, references, and supported function-flow drill-down without leaving the CodeFlow workspace.
 
-All authorized M5 slices are implemented:
+All authorized M6 slices are implemented:
 
-- S1 GitHub acquisition: strict public repository URL parsing, metadata/tree/raw-source retrieval, supported-source filtering, traversal rejection, timeout handling, file/byte bounds, and safe error categories.
-- S2 orientation and entry discovery: exported TypeScript functions are surfaced with deterministic detected/likely confidence labels and repository-relative paths.
-- S3 full-height workspace: the existing M4 semantic workspace is the post-acquisition destination, with repository context and analysis status visible above the canvas.
-- S4 evidence inspection: source-backed nodes, edges, evidence locations, data projections, static-flow steps, and partial-analysis issues remain available for GitHub-acquired sources.
-- S5 search and focus: existing search, focus mode, keyboard navigation, relationship lenses, and inspector behavior are preserved for acquired repositories.
-- S6 lifecycle: change repository, loading, invalid, unavailable, unsupported, bounded, and partial states are explicit; source remains request-scoped and is never persisted or executed.
-- S7 production acceptance: the GitHub route is covered at the API boundary and the primary picker/discovery behavior has focused regression coverage; the existing Compose/CI packaging path remains intact.
+- S1 repository structural model: deterministic repository/module/file hierarchy from bounded analyzed source paths.
+- S2 module/file dependency graph: source-backed `IMPORTS` and derived cross-module `DEPENDS_ON` relationships.
+- S3 generic symbol model: bounded TypeScript functions, methods, classes, interfaces, types, enums, and variables with definition/export evidence.
+- S4 definition/reference navigation: source-backed `DEFINES`, `EXPORTS`, `REFERENCES`, `EXTENDS`, and `IMPLEMENTS` relationships.
+- S5 architecture to function-flow drill-down: architecture functions connect back into the existing M4/M5 semantic/data-flow workspace when a projected or suggested entry function is available.
+- S6 architecture exploration UX: hierarchy expand/collapse, architecture search, relationship inspection, focused direct-neighborhood exploration, and explicit accessible entity labels.
+- S7 production acceptance: analysis-core architecture coverage, web interaction regression coverage, and the existing repository CI gate.
 
 ## Verification Evidence
 
-- `pnpm format:check`
-- `pnpm lint`
-- `pnpm build`
-- `pnpm test`
-- `pnpm check`
-- Pull request verification on the protected `master` branch
-- Post-merge `HEAD`, `origin/master`, and clean-worktree synchronization check
-
-The remote `master` advanced with M4 while this slice was in progress. That revision was integrated before final verification so the M5 adapter composes with the current local-analysis and semantic-workspace contracts.
+- PR #26 runtime verification: GitHub Actions CI #156.
+- `pnpm format:check` passed.
+- `pnpm lint` passed.
+- `pnpm build` passed across analysis-core, web, and API.
+- `pnpm test` passed, including repository architecture projection and architecture workspace interaction tests plus existing M4/M5 regressions.
+- Deployment/Compose checks were correctly skipped because M6 does not modify deployment surfaces.
 
 ## Boundaries Preserved
 
-- Public GitHub repositories only; no private-auth flow or credential storage.
-- TypeScript/TSX only for this iteration; unsupported files are reported rather than fabricated into the model.
-- Bounded request-scoped/in-memory analysis; no persistence, arbitrary repository execution, runtime tracing, or AI explanation was added.
-- Static evidence and inferred entry-point confidence remain distinct from observed runtime behavior.
+- `apps/web -> apps/api -> packages/analysis-core` ownership remains intact.
+- Existing `CALLS`, function data, static-flow relationships, source evidence, GitHub acquisition, and local repository analysis remain intact.
+- No AI explanation, Go/multi-language expansion, private GitHub authentication, persistence, runtime tracing/execution, graph database, queues, collaboration, or framework-specific architecture inference was added.
+- Architecture labels remain structural/static. Missing evidence remains missing rather than being fabricated into product semantics.
