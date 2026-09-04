@@ -35,6 +35,17 @@ export type {
   PackageTopologyProjection,
   ExternalPackageDependency,
 } from './model.js';
+export type {
+  ImpactEntityKind,
+  ImpactPath,
+  ImpactPathStep,
+  ImpactProjection,
+  ImpactRelationshipKind,
+  ImpactResult,
+  ImpactSeed,
+  ImpactSummary,
+} from './impact-analysis.js';
+export { buildImpactProjection } from './impact-analysis.js';
 export { buildSampleRequestFlow } from './sample.js';
 export {
   analyzeTypeScriptFlow,
