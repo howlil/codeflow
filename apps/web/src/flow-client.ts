@@ -194,6 +194,64 @@ export interface PackageTopologyProjection {
   issues: AnalysisIssue[];
 }
 
+export type ImpactEntityKind =
+  | Exclude<RepositoryEntityKind, 'Repository'>
+  | 'Package';
+
+export type ImpactRelationshipKind =
+  | 'CALLS'
+  | 'REFERENCES'
+  | 'IMPORTS'
+  | 'DEPENDS_ON'
+  | 'EXTENDS'
+  | 'IMPLEMENTS';
+
+export interface ImpactSeed {
+  entityId: string;
+  entityKind: ImpactEntityKind;
+  name: string;
+  path: string | null;
+}
+
+export interface ImpactPathStep {
+  sourceId: string;
+  targetId: string;
+  kind: ImpactRelationshipKind;
+  evidence: FlowEvidence[];
+}
+
+export interface ImpactPath {
+  seedId: string;
+  steps: ImpactPathStep[];
+}
+
+export interface ImpactResult {
+  entityId: string;
+  entityKind: ImpactEntityKind;
+  name: string;
+  path: string | null;
+  distance: number;
+  seedIds: string[];
+  paths: ImpactPath[];
+  evidence: FlowEvidence[];
+}
+
+export interface ImpactProjection {
+  seeds: ImpactSeed[];
+  results: ImpactResult[];
+  summary: {
+    directCount: number;
+    transitiveCount: number;
+    byKind: Partial<Record<ImpactEntityKind, number>>;
+    affectedPackageIds: string[];
+    affectedModuleIds: string[];
+    affectedFileIds: string[];
+  };
+  maxDepth: number;
+  status: 'complete' | 'partial';
+  issues: AnalysisIssue[];
+}
+
 export interface FlowProjection {
   id: string;
   entryPointId: string;
@@ -276,6 +334,48 @@ export async function analyzeRepositoryFlow(
   }
 
   return (await response.json()) as FlowProjection;
+}
+
+export async function analyzeImpact(
+  flow: FlowProjection,
+  seedIds: string[],
+  maxDepth = 3,
+): Promise<ImpactProjection> {
+  const semanticProjection = {
+    id: flow.id,
+    entryPointId: flow.entryPointId,
+    nodes: flow.nodes,
+    edges: flow.edges,
+    analysis: flow.analysis,
+    ...(flow.architecture === undefined
+      ? {}
+      : { architecture: flow.architecture }),
+    ...(flow.topology === undefined ? {} : { topology: flow.topology }),
+  };
+  const response = await fetch('/api/flows/impact', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      flow: semanticProjection,
+      seedIds,
+      maxDepth,
+    }),
+  });
+
+  if (!response.ok) {
+    const payload = (await response.json().catch(() => null)) as unknown;
+    if (
+      typeof payload === 'object' &&
+      payload !== null &&
+      'error' in payload &&
+      typeof payload.error === 'string'
+    ) {
+      throw new Error(payload.error);
+    }
+    throw new Error(`Impact analysis failed with status ${response.status}.`);
+  }
+
+  return (await response.json()) as ImpactProjection;
 }
 
 export class GitHubAnalysisError extends Error {
