@@ -1,0 +1,32 @@
+name: M6 Format Debug
+
+on:
+  push:
+    branches:
+      - feat/m6-repository-architecture-symbol-navigation
+
+permissions:
+  contents: read
+
+jobs:
+  format-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Print exact Prettier diff
+        run: |
+          pnpm exec prettier --write \
+            apps/web/src/ArchitecturePanel.test.tsx \
+            apps/web/src/ArchitecturePanel.tsx \
+            packages/analysis-core/src/repository-architecture.ts
+          git diff --no-ext-diff --no-color -- \
+            apps/web/src/ArchitecturePanel.test.tsx \
+            apps/web/src/ArchitecturePanel.tsx \
+            packages/analysis-core/src/repository-architecture.ts
