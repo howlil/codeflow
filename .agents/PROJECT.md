@@ -34,6 +34,7 @@ public GitHub repository URL or explicit local repository selection
  -> semantic workspace
  -> search/focus/navigation
  -> inspect package dependencies + definitions + references + calls + data movement + source provenance
+ -> define an explicit change scope and inspect bounded evidence-backed downstream impact where useful
  -> deterministic static step-through where supported
 ```
 
@@ -59,6 +60,9 @@ The implemented TypeScript path currently supports:
 - bounded TypeScript symbol projection for functions, methods, classes, interfaces, type aliases, enums, and variables;
 - source-backed `CONTAINS`, `DEFINES`, `IMPORTS`, `DEPENDS_ON`, `EXPORTS`, `REFERENCES`, `EXTENDS`, and `IMPLEMENTS` repository/symbol relationships where supported;
 - repository architecture search, hierarchy expand/collapse, relationship inspection, focused direct-neighborhood exploration, and supported architecture-to-function-flow drill-down;
+- explicit impact-scope selection across package, module, file, symbol, and function entities, bounded to a small number of change targets;
+- deterministic direct and bounded transitive downstream impact derived from existing semantic relationships rather than stored as a fabricated canonical `IMPACTS` relationship;
+- cycle-safe multi-seed impact traversal with evidence paths, affected file/module/package aggregation, filtering/focus, and truthful partial coverage including zero-result cases;
 - deterministic exported-function entry-point discovery with confidence labels;
 - request-scoped/in-memory multi-file TypeScript analysis;
 - evidence-backed functions and supported cross-file call relationships;
@@ -80,6 +84,8 @@ The deterministic sample API remains a fixture/demo compatibility path rather th
 - Evidence precedes explanation.
 - Verified, inferred, configured, observed-runtime, and user-asserted evidence remain distinguishable.
 - Workspace/package metadata describes configured software boundaries and dependencies; it must not be relabeled as observed runtime service topology.
+- Impact is a bounded derived query over canonical semantic facts; it must not become an unsupported canonical relationship or a prediction of runtime failure.
+- Missing impact results do not prove safety; incomplete source, unsupported semantics, or bounded traversal remain explicit partial coverage.
 - Missing evidence remains missing/partial; visual completeness must not fabricate semantics.
 - The canvas is a semantic exploration surface, not canonical repository state.
 - Parser/framework-specific objects do not become cross-system contracts.
