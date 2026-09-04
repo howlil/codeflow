@@ -14,6 +14,10 @@ function patch(path, replacements) {
 patch('apps/api/src/change.ts', [["  type AcquiredPullRequest,\n", '']]);
 patch('packages/analysis-core/src/change-analysis.ts', [
   ["  RepositoryRelationshipKind,\n", ''],
+  [
+    "  return inFile.filter((entity) => {\n    if (entity.location === null) return false;\n    return hunks.some((hunk) => {\n      const start = snapshot === 'base' ? hunk.oldStart : hunk.newStart;\n      const lines = snapshot === 'base' ? hunk.oldLines : hunk.newLines;\n      return overlaps(entity.location, start, lines);\n    });\n  });\n",
+    "  return inFile.filter((entity) => {\n    const location = entity.location;\n    if (location === null) return false;\n    return hunks.some((hunk) => {\n      const start = snapshot === 'base' ? hunk.oldStart : hunk.newStart;\n      const lines = snapshot === 'base' ? hunk.oldLines : hunk.newLines;\n      return overlaps(location, start, lines);\n    });\n  });\n",
+  ],
 ]);
 
 patch('apps/api/src/app.ts', [
