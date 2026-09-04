@@ -1,14 +1,14 @@
 # Current Iteration
 
-Status: VERIFYING
+Status: READY_FOR_MILESTONE
 
-Active Milestone: M9 - Diff-Aware Change Understanding
+Last Completed Milestone: M9 - Diff-Aware Change Understanding
 
 ## Outcome
 
 CodeFlow can now take a public GitHub pull request, freeze its exact base/head repository revisions, map the actual diff onto supported TypeScript semantic entities, and reuse the existing evidence-backed impact engine to explain known downstream relationships and relationship deltas without claiming breakage, safety, risk, or runtime behavior.
 
-All authorized M9 product slices are implemented on the milestone branch:
+All authorized M9 product slices are integrated on `master`:
 
 - S1 public GitHub PR acquisition: exact public PR URLs are validated and read-only metadata, changed files, bounded patches, and immutable base/head SHAs are acquired.
 - S2 dual revision analysis: BASE and HEAD are acquired and analyzed independently with existing repository/source/metadata bounds; changed TypeScript paths are prioritized inside the bounded source projection.
@@ -22,14 +22,17 @@ All authorized M9 product slices are implemented on the milestone branch:
 
 ## Verification Evidence
 
-- M9 integration pass verified the full implementation before helper cleanup:
-  - `pnpm format:check` passed.
-  - `pnpm lint` passed.
-  - `pnpm build` passed across analysis-core, web, and API.
-  - analysis-core: 5 test files / 11 tests passed.
-  - web: 7 test files / 24 tests passed, including the M9 change workspace and M4-M8 regressions.
-  - API: 5 test files / 18 tests passed, including public PR acquisition/frozen-revision M9 coverage and M7-M8 regressions.
-- Temporary M9 wiring automation has been removed from the milestone branch; canonical PR CI remains the final merge gate.
+- PR #29 exact head `0992327525d3f2e515a538a499b137fc77fc6346` passed canonical GitHub Actions CI #199.
+- PR #29 was squash-merged as `dc927761bde4e96b9f4d64c9387b46b805e063d1`.
+- Post-merge `master` GitHub Actions CI #200 passed.
+- `pnpm format:check` passed.
+- `pnpm lint` passed.
+- `pnpm build` passed across analysis-core, web, and API.
+- analysis-core: 5 test files / 11 tests passed.
+- web: 7 test files / 24 tests passed, including the M9 change workspace and M4-M8 regressions.
+- API: 5 test files / 18 tests passed, including public PR acquisition/frozen-revision M9 coverage and M7-M8 regressions.
+- Deployment/Compose validation and smoke were correctly skipped because M9 did not modify deployment surfaces.
+- Temporary M9 wiring automation was removed before the canonical PR gate; only canonical `ci.yml` remains.
 
 ## Boundaries Preserved
 
@@ -44,4 +47,4 @@ All authorized M9 product slices are implemented on the milestone branch:
 
 ## Next State
 
-Run canonical pull-request CI on the clean M9 branch. If the exact PR head is green, the milestone is release-ready for squash merge. After merge, verify `master` CI and change this state to `READY_FOR_MILESTONE`.
+Select the next milestone from the highest-value remaining gap in the core program-understanding journey. Do not auto-activate deferred directions merely because they are listed in `PROJECT.md`.
