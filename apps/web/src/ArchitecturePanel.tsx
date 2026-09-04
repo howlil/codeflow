@@ -5,6 +5,7 @@ import type {
   RepositoryEntity,
   RepositoryRelationship,
 } from './flow-client';
+import { ImpactPanel } from './ImpactPanel';
 import { Button, Input } from './ui/primitives';
 import './architecture.css';
 
@@ -54,7 +55,7 @@ export function ArchitecturePanel({
   }, [architecture, entityById]);
 
   if (architecture === undefined) {
-    return null;
+    return <ImpactPanel flow={flow} onOpenFunction={onOpenFunction} />;
   }
 
   const selected =
@@ -105,112 +106,118 @@ export function ArchitecturePanel({
   }
 
   return (
-    <section
-      className="architecture-panel"
-      aria-label="Repository architecture"
-    >
-      <div className="architecture-heading">
-        <div>
-          <p className="panel-kicker">Repository architecture</p>
-          <h2>System → module → file → symbol</h2>
-          <p className="architecture-copy">
-            Deterministic structure and code relationships from the analyzed
-            TypeScript source. Missing evidence stays missing.
-          </p>
+    <>
+      <ImpactPanel flow={flow} onOpenFunction={onOpenFunction} />
+      <section
+        className="architecture-panel"
+        aria-label="Repository architecture"
+      >
+        <div className="architecture-heading">
+          <div>
+            <p className="panel-kicker">Repository architecture</p>
+            <h2>System → module → file → symbol</h2>
+            <p className="architecture-copy">
+              Deterministic structure and code relationships from the analyzed
+              TypeScript source. Missing evidence stays missing.
+            </p>
+          </div>
+          <div
+            className="architecture-counts"
+            aria-label="Architecture summary"
+          >
+            <span>{modules} modules</span>
+            <span>{files} files</span>
+            <span>{symbols} symbols</span>
+          </div>
         </div>
-        <div className="architecture-counts" aria-label="Architecture summary">
-          <span>{modules} modules</span>
-          <span>{files} files</span>
-          <span>{symbols} symbols</span>
-        </div>
-      </div>
 
-      <div className="architecture-toolbar">
-        <Input
-          aria-label="Search repository architecture"
-          type="search"
-          value={query}
-          placeholder="Search module, file, or symbol…"
-          autoComplete="off"
-          onChange={(event) => setQuery(event.target.value)}
-        />
-        {focusedId === null ? null : (
-          <Button variant="ghost" onClick={() => setFocusedId(null)}>
-            Back to repository
-          </Button>
-        )}
-      </div>
-
-      {searchResults.length > 0 ? (
-        <div className="architecture-search-results" role="listbox">
-          {searchResults.map((entity) => (
-            <button
-              key={entity.id}
-              type="button"
-              role="option"
-              aria-selected={selected?.id === entity.id}
-              onClick={() => {
-                selectEntity(entity);
-                setQuery('');
-              }}
-            >
-              <strong>{entity.name}</strong>
-              <span>
-                {entity.kind} · {entity.path}
-              </span>
-            </button>
-          ))}
-        </div>
-      ) : null}
-
-      <div className="architecture-grid">
-        <div className="architecture-tree" aria-label="Repository hierarchy">
-          {focusedId === null ? (
-            <ArchitectureTreeNode
-              entity={entityById.get(architecture.rootId) ?? null}
-              selectedId={selected?.id ?? null}
-              expandedIds={expandedIds}
-              childrenById={childrenById}
-              onSelect={selectEntity}
-              onToggle={toggleExpanded}
-            />
-          ) : (
-            <div className="architecture-neighborhood">
-              <p className="panel-kicker">Focused neighborhood</p>
-              {neighborhood.map(({ entity, relationship, direction }) => (
-                <button
-                  key={`${relationship.id}:${direction}`}
-                  type="button"
-                  onClick={() => selectEntity(entity)}
-                >
-                  <strong>{entity.name}</strong>
-                  <span>
-                    {direction === 'outgoing' ? '→' : '←'} {relationship.kind} ·{' '}
-                    {entity.kind}
-                  </span>
-                </button>
-              ))}
-              {neighborhood.length === 0 ? (
-                <p className="architecture-empty">
-                  No direct repository relationships were projected.
-                </p>
-              ) : null}
-            </div>
+        <div className="architecture-toolbar">
+          <Input
+            aria-label="Search repository architecture"
+            type="search"
+            value={query}
+            placeholder="Search module, file, or symbol…"
+            autoComplete="off"
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          {focusedId === null ? null : (
+            <Button variant="ghost" onClick={() => setFocusedId(null)}>
+              Back to repository
+            </Button>
           )}
         </div>
 
-        <ArchitectureDetail
-          flow={flow}
-          entity={selected}
-          relationships={architecture.relationships}
-          entityById={entityById}
-          focused={selected !== null && focusedId === selected.id}
-          onFocus={() => setFocusedId(selected?.id ?? null)}
-          onSelect={selectEntity}
-          onOpenFunction={onOpenFunction}
-        />
-      </div>
-    </section>
+        {searchResults.length > 0 ? (
+          <div className="architecture-search-results" role="listbox">
+            {searchResults.map((entity) => (
+              <button
+                key={entity.id}
+                type="button"
+                role="option"
+                aria-selected={selected?.id === entity.id}
+                onClick={() => {
+                  selectEntity(entity);
+                  setQuery('');
+                }}
+              >
+                <strong>{entity.name}</strong>
+                <span>
+                  {entity.kind} · {entity.path}
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        <div className="architecture-grid">
+          <div className="architecture-tree" aria-label="Repository hierarchy">
+            {focusedId === null ? (
+              <ArchitectureTreeNode
+                entity={entityById.get(architecture.rootId) ?? null}
+                selectedId={selected?.id ?? null}
+                expandedIds={expandedIds}
+                childrenById={childrenById}
+                onSelect={selectEntity}
+                onToggle={toggleExpanded}
+              />
+            ) : (
+              <div className="architecture-neighborhood">
+                <p className="panel-kicker">Focused neighborhood</p>
+                {neighborhood.map(({ entity, relationship, direction }) => (
+                  <button
+                    key={`${relationship.id}:${direction}`}
+                    type="button"
+                    onClick={() => selectEntity(entity)}
+                  >
+                    <strong>{entity.name}</strong>
+                    <span>
+                      {direction === 'outgoing' ? '→' : '←'} {relationship.kind}{' '}
+                      · {entity.kind}
+                    </span>
+                  </button>
+                ))}
+                {neighborhood.length === 0 ? (
+                  <p className="architecture-empty">
+                    No direct repository relationships were projected.
+                  </p>
+                ) : null}
+              </div>
+            )}
+          </div>
+
+          <ArchitectureDetail
+            flow={flow}
+            entity={selected}
+            relationships={architecture.relationships}
+            entityById={entityById}
+            focused={selected !== null && focusedId === selected.id}
+            onFocus={() => setFocusedId(selected?.id ?? null)}
+            onSelect={selectEntity}
+            onOpenFunction={onOpenFunction}
+          />
+        </div>
+      </section>
+    </>
   );
 }
 
