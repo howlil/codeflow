@@ -1,0 +1,180 @@
+name: M7 Wire Integration
+
+on:
+  push:
+    branches:
+      - feat/m7-workspace-package-topology
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/m7-workspace-package-topology
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Wire M7 metadata and topology
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path_name: str, old: str, new: str):
+              path = Path(path_name)
+              text = path.read_text()
+              if new in text:
+                  return
+              if old not in text:
+                  raise SystemExit(f'target not found in {path_name}: {old[:80]!r}')
+              path.write_text(text.replace(old, new, 1))
+
+          replace_once(
+              'packages/analysis-core/src/typescript-flow.ts',
+              """export interface TypeScriptSourceInput {\n  filePath: string;\n  sourceText: string;\n}\n\nexport interface AnalyzeTypeScriptRepositoryInput {\n  files: TypeScriptSourceInput[];\n  entryPoint: {\n""",
+              """export interface TypeScriptSourceInput {\n  filePath: string;\n  sourceText: string;\n}\n\nexport interface RepositoryMetadataInput {\n  filePath: string;\n  text: string;\n}\n\nexport interface AnalyzeTypeScriptRepositoryInput {\n  files: TypeScriptSourceInput[];\n  metadata?: RepositoryMetadataInput[];\n  entryPoint: {\n""",
+          )
+
+          replace_once(
+              'packages/analysis-core/src/repository-architecture.ts',
+              """import {\n  analyzeTypeScriptRepository as analyzeBaseTypeScriptRepository,\n  type AnalyzeTypeScriptRepositoryInput,\n  type TypeScriptSourceInput,\n} from './typescript-flow.js';\n""",
+              """import {\n  analyzeTypeScriptRepository as analyzeBaseTypeScriptRepository,\n  type AnalyzeTypeScriptRepositoryInput,\n  type TypeScriptSourceInput,\n} from './typescript-flow.js';\nimport { buildPackageTopology } from './package-topology.js';\n""",
+          )
+          replace_once(
+              'packages/analysis-core/src/repository-architecture.ts',
+              """  return {\n    ...flow,\n    architecture: buildRepositoryArchitecture(input.files),\n  };\n""",
+              """  return {\n    ...flow,\n    architecture: buildRepositoryArchitecture(input.files),\n    topology: buildPackageTopology(input.files, input.metadata),\n  };\n""",
+          )
+
+          replace_once(
+              'apps/api/src/github.ts',
+              """  maxFiles: 40,\n  maxFileBytes: 800_000,\n  maxTotalBytes: 4_000_000,\n  timeoutMs: 8_000,\n""",
+              """  maxFiles: 40,\n  maxFileBytes: 800_000,\n  maxTotalBytes: 4_000_000,\n  maxMetadataFiles: 48,\n  maxMetadataFileBytes: 64 * 1024,\n  maxTotalMetadataBytes: 512 * 1024,\n  timeoutMs: 8_000,\n""",
+          )
+          replace_once(
+              'apps/api/src/github.ts',
+              """export interface AcquiredRepository {\n  files: AcquiredSource[];\n  ignoredFiles: string[];\n  repository: RepositorySummary;\n}\n""",
+              """export interface AcquiredRepository {\n  files: AcquiredSource[];\n  metadata: AcquiredSource[];\n  ignoredFiles: string[];\n  repository: RepositorySummary;\n}\n""",
+          )
+          replace_once(
+              'apps/api/src/github.ts',
+              """  const supported = candidates.filter((entry) =>\n    isSupportedSourcePath(entry.path),\n  );\n  ignoredFiles.push(\n    ...candidates\n      .filter((entry) => !isSupportedSourcePath(entry.path))\n      .map((entry) => entry.path),\n  );\n""",
+              """  const supported = candidates.filter((entry) =>\n    isSupportedSourcePath(entry.path),\n  );\n  const metadataCandidates = candidates.filter((entry) =>\n    isSupportedMetadataPath(entry.path),\n  );\n  ignoredFiles.push(\n    ...candidates\n      .filter(\n        (entry) =>\n          !isSupportedSourcePath(entry.path) &&\n          !isSupportedMetadataPath(entry.path),\n      )\n      .map((entry) => entry.path),\n  );\n""",
+          )
+          replace_once(
+              'apps/api/src/github.ts',
+              """  if (files.length === 0) {\n    throw new UnsupportedRepositoryError();\n  }\n\n  return {\n    files,\n    ignoredFiles: [...new Set(ignoredFiles)],\n""",
+              """  if (files.length === 0) {\n    throw new UnsupportedRepositoryError();\n  }\n\n  const metadata: AcquiredSource[] = [];\n  let totalMetadataBytes = 0;\n  const selectedMetadata = metadataCandidates.slice(\n    0,\n    REPOSITORY_LIMITS.maxMetadataFiles,\n  );\n  ignoredFiles.push(\n    ...metadataCandidates\n      .slice(REPOSITORY_LIMITS.maxMetadataFiles)\n      .map((entry) => entry.path),\n  );\n  for (const entry of selectedMetadata) {\n    if (entry.size > REPOSITORY_LIMITS.maxMetadataFileBytes) {\n      ignoredFiles.push(entry.path);\n      continue;\n    }\n    if (totalMetadataBytes + entry.size > REPOSITORY_LIMITS.maxTotalMetadataBytes) {\n      ignoredFiles.push(entry.path);\n      continue;\n    }\n    const rawPath = entry.path.split('/').map(encodeURIComponent).join('/');\n    const rawUrl = `https://raw.githubusercontent.com/${encodeURIComponent(parsed.owner)}/${encodeURIComponent(parsed.repository)}/${encodeURIComponent(branch)}/${rawPath}`;\n    const response = await fetchWithTimeout(rawUrl, fetcher);\n    if (!response.ok) {\n      ignoredFiles.push(entry.path);\n      continue;\n    }\n    const bytes = await readResponseBytes(response);\n    if (bytes.byteLength > REPOSITORY_LIMITS.maxMetadataFileBytes) {\n      ignoredFiles.push(entry.path);\n      continue;\n    }\n    if (\n      totalMetadataBytes + bytes.byteLength >\n      REPOSITORY_LIMITS.maxTotalMetadataBytes\n    ) {\n      ignoredFiles.push(entry.path);\n      continue;\n    }\n    totalMetadataBytes += bytes.byteLength;\n    metadata.push({ filePath: entry.path, text: new TextDecoder().decode(bytes) });\n  }\n\n  return {\n    files,\n    metadata,\n    ignoredFiles: [...new Set(ignoredFiles)],\n""",
+          )
+          github_path = Path('apps/api/src/github.ts')
+          github_text = github_path.read_text()
+          marker = """export function isSupportedSourcePath(filePath: string): boolean {\n"""
+          helper = """export function isSupportedMetadataPath(filePath: string): boolean {\n  const normalized = filePath.replaceAll('\\\\', '/');\n  if (\n    normalized.startsWith('/') ||\n    normalized.split('/').some((segment) => segment === '..' || segment === '')\n  ) {\n    return false;\n  }\n  const segments = normalized.toLowerCase().split('/');\n  const ignoredDirectories = new Set([\n    '.git',\n    'node_modules',\n    'vendor',\n    'dist',\n    'build',\n    'coverage',\n    'generated',\n    '__generated__',\n  ]);\n  if (segments.slice(0, -1).some((segment) => ignoredDirectories.has(segment))) {\n    return false;\n  }\n  const name = segments.at(-1) ?? '';\n  return (\n    name === 'package.json' ||\n    name === 'pnpm-workspace.yaml' ||\n    /^tsconfig(?:\\.[^/]+)?\\.json$/.test(name)\n  );\n}\n\n"""
+          if helper not in github_text:
+              if marker not in github_text:
+                  raise SystemExit('github metadata helper marker not found')
+              github_path.write_text(github_text.replace(marker, helper + marker, 1))
+
+          replace_once(
+              'apps/api/src/app.ts',
+              """  type FlowProjection,\n  type TypeScriptSourceInput,\n} from '@codeflow/analysis-core';\n""",
+              """  type FlowProjection,\n  type RepositoryMetadataInput,\n  type TypeScriptSourceInput,\n} from '@codeflow/analysis-core';\n""",
+          )
+          replace_once(
+              'apps/api/src/app.ts',
+              """const MAX_TOTAL_SOURCE_BYTES = 1_000_000;\n""",
+              """const MAX_TOTAL_SOURCE_BYTES = 1_000_000;\nconst MAX_METADATA_FILES = 48;\nconst MAX_METADATA_FILE_BYTES = 64 * 1024;\nconst MAX_TOTAL_METADATA_BYTES = 512 * 1024;\n""",
+          )
+          replace_once(
+              'apps/api/src/app.ts',
+              """interface AnalyzeRepositoryPayload {\n  files: RepositoryFilePayload[];\n  entryPoint: {\n""",
+              """interface RepositoryMetadataPayload {\n  filePath: string;\n  text: string;\n}\n\ninterface AnalyzeRepositoryPayload {\n  files: RepositoryFilePayload[];\n  metadata: RepositoryMetadataPayload[];\n  entryPoint: {\n""",
+          )
+          replace_once(
+              'apps/api/src/app.ts',
+              """        const projection = analyzeTypeScriptRepository({\n          files,\n          entryPoint: {\n""",
+              """        const projection = analyzeTypeScriptRepository({\n          files,\n          metadata: acquired.metadata,\n          entryPoint: {\n""",
+          )
+          replace_once(
+              'apps/api/src/app.ts',
+              """        const projection = analyzeTypeScriptRepository({\n          files: prepared.files,\n          entryPoint: prepared.entryPoint,\n        });\n""",
+              """        const projection = analyzeTypeScriptRepository({\n          files: prepared.files,\n          metadata: prepared.metadata,\n          entryPoint: prepared.entryPoint,\n        });\n""",
+          )
+          replace_once(
+              'apps/api/src/app.ts',
+              """  if (\n    !isRecord(body.entryPoint) ||\n""",
+              """  const metadataValue = body.metadata;\n  if (metadataValue !== undefined && !Array.isArray(metadataValue)) {\n    throw new InputError(400, 'Repository metadata must be an array when provided.');\n  }\n  const metadata = (metadataValue ?? []).map((item, index) => {\n    if (\n      !isRecord(item) ||\n      typeof item.filePath !== 'string' ||\n      typeof item.text !== 'string'\n    ) {\n      throw new InputError(\n        400,\n        `Repository metadata at index ${index} must contain filePath and text strings.`,\n      );\n    }\n    return { filePath: item.filePath, text: item.text };\n  });\n\n  if (\n    !isRecord(body.entryPoint) ||\n""",
+          )
+          replace_once(
+              'apps/api/src/app.ts',
+              """  return {\n    files,\n    entryPoint: {\n""",
+              """  return {\n    files,\n    metadata,\n    entryPoint: {\n""",
+          )
+          replace_once(
+              'apps/api/src/app.ts',
+              """function prepareRepositoryInput(payload: AnalyzeRepositoryPayload): {\n  files: TypeScriptSourceInput[];\n  entryPoint: AnalyzeRepositoryPayload['entryPoint'];\n  issues: AnalysisIssue[];\n} {\n""",
+              """function prepareRepositoryInput(payload: AnalyzeRepositoryPayload): {\n  files: TypeScriptSourceInput[];\n  metadata: RepositoryMetadataInput[];\n  entryPoint: AnalyzeRepositoryPayload['entryPoint'];\n  issues: AnalysisIssue[];\n} {\n""",
+          )
+          replace_once(
+              'apps/api/src/app.ts',
+              """  if (files.length === 0) {\n""",
+              """  const metadata = prepareRepositoryMetadata(payload.metadata, issues);\n\n  if (files.length === 0) {\n""",
+          )
+          replace_once(
+              'apps/api/src/app.ts',
+              """  return { files, entryPoint, issues };\n}\n\nfunction mergeInputIssues(\n""",
+              """  return { files, metadata, entryPoint, issues };\n}\n\nfunction prepareRepositoryMetadata(\n  input: RepositoryMetadataPayload[],\n  issues: AnalysisIssue[],\n): RepositoryMetadataInput[] {\n  const metadata: RepositoryMetadataInput[] = [];\n  const seen = new Set<string>();\n  let totalBytes = 0;\n  for (const item of input) {\n    const filePath = normalizeRepositoryPath(item.filePath);\n    if (seen.has(filePath)) {\n      throw new InputError(400, `Duplicate repository metadata path: ${filePath}.`);\n    }\n    seen.add(filePath);\n    if (!isSupportedMetadataPath(filePath)) {\n      issues.push({\n        kind: 'unsupported',\n        filePath,\n        message: 'Only package.json, pnpm-workspace.yaml, and tsconfig*.json are accepted as topology metadata.',\n      });\n      continue;\n    }\n    const bytes = Buffer.byteLength(item.text, 'utf8');\n    if (bytes > MAX_METADATA_FILE_BYTES) {\n      issues.push({ kind: 'limit', filePath, message: `Metadata exceeds the ${MAX_METADATA_FILE_BYTES}-byte per-file limit.` });\n      continue;\n    }\n    if (metadata.length >= MAX_METADATA_FILES || totalBytes + bytes > MAX_TOTAL_METADATA_BYTES) {\n      issues.push({ kind: 'limit', filePath, message: 'Repository topology metadata exceeds the bounded metadata budget.' });\n      continue;\n    }\n    metadata.push({ filePath, text: item.text });\n    totalBytes += bytes;\n  }\n  return metadata;\n}\n\nfunction mergeInputIssues(\n""",
+          )
+          app_path = Path('apps/api/src/app.ts')
+          app_text = app_path.read_text()
+          marker = """function isSupportedTypeScriptPath(filePath: string): boolean {\n"""
+          metadata_helper = """function isSupportedMetadataPath(filePath: string): boolean {\n  const name = filePath.split('/').at(-1)?.toLowerCase() ?? '';\n  return (\n    name === 'package.json' ||\n    name === 'pnpm-workspace.yaml' ||\n    /^tsconfig(?:\\.[^/]+)?\\.json$/.test(name)\n  );\n}\n\n"""
+          if metadata_helper not in app_text:
+              if marker not in app_text:
+                  raise SystemExit('api metadata helper marker not found')
+              app_path.write_text(app_text.replace(marker, metadata_helper + marker, 1))
+
+          replace_once(
+              'apps/web/src/App.tsx',
+              """import { ArchitecturePanel } from './ArchitecturePanel';\n""",
+              """import { ArchitecturePanel } from './ArchitecturePanel';\nimport { PackageTopologyPanel } from './PackageTopologyPanel';\n""",
+          )
+          app_web = Path('apps/web/src/App.tsx')
+          web_text = app_web.read_text()
+          architecture = """          <ArchitecturePanel\n            flow={flow}\n            onOpenFunction={openArchitectureFunction}\n          />\n"""
+          topology = """          <PackageTopologyPanel\n            flow={flow}\n            onOpenFunction={openArchitectureFunction}\n          />\n"""
+          if topology not in web_text:
+              if web_text.count(architecture) != 2:
+                  raise SystemExit('expected two architecture panel insertions')
+              web_text = web_text.replace(architecture, topology + architecture)
+              app_web.write_text(web_text)
+          PY
+          pnpm exec prettier --write \
+            packages/analysis-core/src/typescript-flow.ts \
+            packages/analysis-core/src/repository-architecture.ts \
+            packages/analysis-core/src/package-topology.ts \
+            packages/analysis-core/src/package-topology.test.ts \
+            apps/api/src/github.ts \
+            apps/api/src/app.ts \
+            apps/web/src/App.tsx \
+            apps/web/src/PackageTopologyPanel.tsx \
+            apps/web/src/PackageTopologyPanel.test.tsx \
+            apps/web/src/package-topology.css \
+            apps/web/src/RepositoryPicker.tsx \
+            apps/web/src/flow-client.ts
+          if git diff --quiet; then
+            echo 'M7 integration already wired.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add packages/analysis-core/src apps/api/src apps/web/src
+          git commit -m 'feat(m7): wire metadata topology end to end'
+          git push origin HEAD:feat/m7-workspace-package-topology
