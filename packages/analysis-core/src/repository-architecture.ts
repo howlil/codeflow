@@ -34,10 +34,11 @@ export function analyzeTypeScriptRepository(
   input: AnalyzeTypeScriptRepositoryInput,
 ): FlowProjection {
   const flow = analyzeBaseTypeScriptRepository(input);
+  const topology = buildPackageTopology(input.files, input.metadata);
   return {
     ...flow,
     architecture: buildRepositoryArchitecture(input.files),
-    topology: buildPackageTopology(input.files, input.metadata),
+    ...(topology === undefined ? {} : { topology }),
   };
 }
 
