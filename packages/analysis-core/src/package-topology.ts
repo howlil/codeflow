@@ -75,7 +75,7 @@ export function buildPackageTopology(
       metadata.find(
         (item) =>
           basename(item.filePath) === 'package.json' &&
-          dirname(item.filePath) === '.',
+          item.text.includes('workspaces'),
       );
     entities.push({
       id: rootId,
@@ -273,18 +273,22 @@ function collectWorkspacePatterns(
 ): string[] {
   const patterns = new Set<string>();
   for (const manifest of manifests) {
-    if (manifest.rootPath === '.') {
-      manifest.workspacePatterns.forEach((pattern) =>
-        patterns.add(normalizePattern(pattern)),
-      );
-    }
+    manifest.workspacePatterns.forEach((pattern) =>
+      patterns.add(
+        normalizePath(`${manifest.rootPath}/${normalizePattern(pattern)}`),
+      ),
+    );
   }
   for (const item of metadata.filter(
     (candidate) => basename(candidate.filePath) === 'pnpm-workspace.yaml',
   )) {
     try {
       for (const pattern of parsePnpmWorkspacePatterns(item.text)) {
-        patterns.add(normalizePattern(pattern));
+        patterns.add(
+          normalizePath(
+            `${dirname(item.filePath)}/${normalizePattern(pattern)}`,
+          ),
+        );
       }
     } catch {
       issues.push({

@@ -215,27 +215,6 @@ function parseGitHubAnalysisPayload(body: unknown): GitHubAnalysisPayload {
   if (body.entryPoint === undefined) {
     return { repositoryUrl: body.repositoryUrl };
   }
-  const metadataValue = body.metadata;
-  if (metadataValue !== undefined && !Array.isArray(metadataValue)) {
-    throw new InputError(
-      400,
-      'Repository metadata must be an array when provided.',
-    );
-  }
-  const metadata = (metadataValue ?? []).map((item, index) => {
-    if (
-      !isRecord(item) ||
-      typeof item.filePath !== 'string' ||
-      typeof item.text !== 'string'
-    ) {
-      throw new InputError(
-        400,
-        `Repository metadata at index ${index} must contain filePath and text strings.`,
-      );
-    }
-    return { filePath: item.filePath, text: item.text };
-  });
-
   if (
     !isRecord(body.entryPoint) ||
     typeof body.entryPoint.filePath !== 'string' ||
@@ -292,6 +271,27 @@ function parseAnalyzeRepositoryPayload(
       filePath: file.filePath,
       sourceText: file.sourceText,
     };
+  });
+
+  const metadataValue = body.metadata;
+  if (metadataValue !== undefined && !Array.isArray(metadataValue)) {
+    throw new InputError(
+      400,
+      'Repository metadata must be an array when provided.',
+    );
+  }
+  const metadata = (metadataValue ?? []).map((item, index) => {
+    if (
+      !isRecord(item) ||
+      typeof item.filePath !== 'string' ||
+      typeof item.text !== 'string'
+    ) {
+      throw new InputError(
+        400,
+        `Repository metadata at index ${index} must contain filePath and text strings.`,
+      );
+    }
+    return { filePath: item.filePath, text: item.text };
   });
 
   if (
