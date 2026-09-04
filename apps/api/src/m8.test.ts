@@ -27,13 +27,22 @@ describe('M8 impact analysis API', () => {
     expect(response.statusCode).toBe(200);
     const body = response.json<{
       status: string;
-      results: Array<{ entityId: string; distance: number }>;
+      results: Array<{
+        entityId: string;
+        distance: number;
+        paths: Array<{ steps: Array<{ kind: string }> }>;
+        evidence: Array<{ kind: string }>;
+      }>;
     }>();
     expect(body.status).toBe('complete');
-    expect(body.results).toEqual([
+    expect(
+      body.results.map(({ entityId, distance }) => ({ entityId, distance })),
+    ).toEqual([
       { entityId: 'function:api:handle', distance: 1 },
       { entityId: 'function:web:render', distance: 2 },
     ]);
+    expect(body.results[0]?.paths[0]?.steps[0]?.kind).toBe('CALLS');
+    expect(body.results[0]?.evidence[0]?.kind).toBe('verified-static');
   });
 
   it('rejects an unbounded change scope', async () => {
