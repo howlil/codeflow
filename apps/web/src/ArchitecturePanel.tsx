@@ -77,11 +77,7 @@ export function ArchitecturePanel({
   const neighborhood =
     focusedId === null
       ? []
-      : directNeighborhood(
-          focusedId,
-          architecture.relationships,
-          entityById,
-        );
+      : directNeighborhood(focusedId, architecture.relationships, entityById);
   const modules = architecture.entities.filter(
     (entity) => entity.kind === 'Module',
   ).length;
@@ -109,7 +105,10 @@ export function ArchitecturePanel({
   }
 
   return (
-    <section className="architecture-panel" aria-label="Repository architecture">
+    <section
+      className="architecture-panel"
+      aria-label="Repository architecture"
+    >
       <div className="architecture-heading">
         <div>
           <p className="panel-kicker">Repository architecture</p>
@@ -243,7 +242,10 @@ function ArchitectureTreeNode({
 
   return (
     <div className="architecture-tree-node">
-      <div className="architecture-tree-row" style={{ paddingLeft: depth * 12 }}>
+      <div
+        className="architecture-tree-row"
+        style={{ paddingLeft: depth * 12 }}
+      >
         {visibleChildren.length > 0 ? (
           <button
             className="architecture-expand"
@@ -326,7 +328,8 @@ function ArchitectureDetail({
     (flow.nodes.some((node) => node.id === entity.id) ||
       (flow.entryPoints ?? []).some(
         (entryPoint) =>
-          entryPoint.filePath === entity.path && entryPoint.name === entity.name,
+          entryPoint.filePath === entity.path &&
+          entryPoint.name === entity.name,
       ));
 
   return (
@@ -427,7 +430,9 @@ function RelationshipGroup({
           >
             <strong>{relationship.kind}</strong>
             <span>{peer.name}</span>
-            <small>{relationship.evidence[0]?.kind ?? 'evidence-unavailable'}</small>
+            <small>
+              {relationship.evidence[0]?.kind ?? 'evidence-unavailable'}
+            </small>
           </button>
         );
       })}
@@ -466,10 +471,17 @@ function directNeighborhood(
 }
 
 function isSymbol(entity: RepositoryEntity): boolean {
-  return entity.kind !== 'Repository' && entity.kind !== 'Module' && entity.kind !== 'File';
+  return (
+    entity.kind !== 'Repository' &&
+    entity.kind !== 'Module' &&
+    entity.kind !== 'File'
+  );
 }
 
-function compareEntities(left: RepositoryEntity, right: RepositoryEntity): number {
+function compareEntities(
+  left: RepositoryEntity,
+  right: RepositoryEntity,
+): number {
   const rank: Record<RepositoryEntity['kind'], number> = {
     Repository: 0,
     Module: 1,

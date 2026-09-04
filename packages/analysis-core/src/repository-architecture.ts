@@ -125,13 +125,19 @@ export function buildRepositoryArchitecture(
     );
   }
 
-  collectImportsAndModuleDependencies(
-    context,
-    fileEntityByPath,
+  collectImportsAndModuleDependencies(context, fileEntityByPath, relationships);
+  collectHeritageRelationships(
+    context.checker,
+    symbolRecords,
+    recordBySymbol,
     relationships,
   );
-  collectHeritageRelationships(context.checker, symbolRecords, recordBySymbol, relationships);
-  collectReferenceRelationships(context.checker, symbolRecords, recordBySymbol, relationships);
+  collectReferenceRelationships(
+    context.checker,
+    symbolRecords,
+    recordBySymbol,
+    relationships,
+  );
 
   return {
     rootId,
@@ -553,7 +559,12 @@ function collectImportsAndModuleDependencies(
       );
       addRelationship(
         relationships,
-        relationship('IMPORTS', sourceEntity.id, targetEntity.id, importEvidence),
+        relationship(
+          'IMPORTS',
+          sourceEntity.id,
+          targetEntity.id,
+          importEvidence,
+        ),
       );
 
       const sourceModule = dirname(filePath);
@@ -705,9 +716,10 @@ function resolveAlias(checker: ts.TypeChecker, symbol: ts.Symbol): ts.Symbol {
 function hasExportModifier(node: ts.Node): boolean {
   return (
     ts.canHaveModifiers(node) &&
-    (ts.getModifiers(node)?.some(
-      (modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword,
-    ) ?? false)
+    (ts
+      .getModifiers(node)
+      ?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword) ??
+      false)
   );
 }
 

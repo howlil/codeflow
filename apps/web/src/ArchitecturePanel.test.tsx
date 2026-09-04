@@ -113,9 +113,7 @@ afterEach(cleanup);
 describe('ArchitecturePanel', () => {
   it('searches repository entities and opens projected function flow', () => {
     const onOpenFunction = vi.fn();
-    render(
-      <ArchitecturePanel flow={flow} onOpenFunction={onOpenFunction} />,
-    );
+    render(<ArchitecturePanel flow={flow} onOpenFunction={onOpenFunction} />);
 
     expect(screen.getByText('System → module → file → symbol')).toBeTruthy();
     expect(screen.getByText('1 modules')).toBeTruthy();
@@ -125,7 +123,9 @@ describe('ArchitecturePanel', () => {
     });
     fireEvent.click(screen.getByRole('option', { name: /handleUser/i }));
 
-    expect(screen.getByText('Defined at apps/api/src/handler.ts:L1')).toBeTruthy();
+    expect(
+      screen.getByText('Defined at apps/api/src/handler.ts:L1'),
+    ).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Open function flow' }));
 
     expect(onOpenFunction).toHaveBeenCalledWith(
@@ -143,6 +143,8 @@ describe('ArchitecturePanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Focus' }));
 
     expect(screen.getByText('Focused neighborhood')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Back to repository' })).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Back to repository' }),
+    ).toBeTruthy();
   });
 });
