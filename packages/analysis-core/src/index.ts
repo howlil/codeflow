@@ -46,6 +46,22 @@ export type {
   ImpactSummary,
 } from './impact-analysis.js';
 export { buildImpactProjection } from './impact-analysis.js';
+export type {
+  ChangeHunk,
+  RelationshipDelta,
+  RelationshipDeltaEndpoint,
+  RepositoryChangedFile,
+  RepositoryChangeFileInput,
+  RepositoryChangeProjection,
+  RepositoryChangeSource,
+  RepositoryFileChangeKind,
+  SemanticChangeEntity,
+  SemanticChangeKind,
+} from './change-analysis.js';
+export {
+  buildRepositoryChangeProjection,
+  parseUnifiedPatchHunks,
+} from './change-analysis.js';
 export { buildSampleRequestFlow } from './sample.js';
 export {
   analyzeTypeScriptFlow,
