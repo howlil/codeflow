@@ -45,11 +45,6 @@ describe('repository architecture projection', () => {
     expect(architecture?.rootId).toBe('repository:.');
 
     const kinds = new Set(architecture?.entities.map((entity) => entity.kind));
-    expect(kinds).toEqual(
-      expect.objectContaining({
-        has: expect.any(Function),
-      }),
-    );
     expect(kinds.has('Repository')).toBe(true);
     expect(kinds.has('Module')).toBe(true);
     expect(kinds.has('File')).toBe(true);
