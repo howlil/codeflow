@@ -1,3 +1,4 @@
+# Temporary M9 integration helper; remove before merge.
 name: M9 Wire
 
 on:
