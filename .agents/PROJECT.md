@@ -24,15 +24,16 @@ A developer who needs to understand an unfamiliar or complex codebase quickly an
 
 ```text
 public GitHub repository URL or explicit local repository selection
- -> bounded supported source input
+ -> bounded supported source + architecture metadata input
+ -> configured workspace/package topology where repository evidence exists
  -> deterministic repository/module/file architecture projection
- -> symbol and dependency exploration
+ -> package, symbol, and dependency exploration
  -> deterministic entry-point discovery
  -> deterministic semantic analysis
  -> evidence-backed semantic/data-flow projection
  -> semantic workspace
  -> search/focus/navigation
- -> inspect definitions + references + calls + data movement + source provenance
+ -> inspect package dependencies + definitions + references + calls + data movement + source provenance
  -> deterministic static step-through where supported
 ```
 
@@ -44,6 +45,15 @@ The implemented TypeScript path currently supports:
 
 - bounded public GitHub repository acquisition with authoritative URL/tree/source validation;
 - explicit browser-selected local repository input as a secondary path;
+- separately bounded acquisition of `package.json`, `pnpm-workspace.yaml`, and `tsconfig*.json` architecture metadata without consuming the TypeScript source budget;
+- configured Workspace and Package entities with package identity and workspace membership derived from repository metadata rather than directory naming alone;
+- deterministic source-file ownership by the deepest configured package boundary;
+- internal package `DEPENDS_ON` relationships from manifests, with supported source imports adding verified-static evidence to the same relationship;
+- declared external package dependencies as secondary package context without expanding external dependencies into the primary internal topology graph;
+- bounded TypeScript `baseUrl`/`paths` alias resolution for supported cross-package static dependency evidence;
+- system topology exploration with incoming/outgoing package dependencies and package -> file -> symbol -> function-flow drill-down in the existing semantic workspace;
+- topology orientation to the package that owns the active entry point where ownership evidence is available;
+- explicit partial topology behavior when metadata is invalid, unsupported, unresolved, or outside metadata limits while valid source analysis remains usable;
 - deterministic repository/module/file hierarchy from analyzed repository-relative source paths;
 - source-backed file imports and derived cross-module dependencies;
 - bounded TypeScript symbol projection for functions, methods, classes, interfaces, type aliases, enums, and variables;
@@ -69,6 +79,7 @@ The deterministic sample API remains a fixture/demo compatibility path rather th
 
 - Evidence precedes explanation.
 - Verified, inferred, configured, observed-runtime, and user-asserted evidence remain distinguishable.
+- Workspace/package metadata describes configured software boundaries and dependencies; it must not be relabeled as observed runtime service topology.
 - Missing evidence remains missing/partial; visual completeness must not fabricate semantics.
 - The canvas is a semantic exploration surface, not canonical repository state.
 - Parser/framework-specific objects do not become cross-system contracts.
@@ -83,9 +94,10 @@ Repository input is untrusted and may be confidential.
 
 - Browser filtering may minimize source sent, but API validation remains authoritative.
 - Repository-relative path handling must reject traversal and unsafe paths.
-- File count, per-file size, total source size, request size, and expensive work remain bounded.
+- File count, per-file size, total source size, metadata count/size, request size, and expensive work remain bounded.
+- Source and architecture-metadata budgets remain separate so topology acquisition cannot silently expand source ingestion.
 - Dependency/vendor/build/VCS/generated directories should be excluded where appropriate.
-- Repository source and analysis remain request-scoped/in-memory unless persistence is explicitly authorized.
+- Repository source, metadata, and analysis remain request-scoped/in-memory unless persistence is explicitly authorized.
 - Logs, errors, analytics, and future AI context must not expose arbitrary private source without explicit need.
 - Runtime repository execution requires a separately approved sandbox design covering resource, filesystem, process, network, timeout, and secret isolation.
 
@@ -107,7 +119,7 @@ Do not infer current scope from historical ideas or generic best practices. In p
 These are possible future directions, not ordered milestones, commitments, or default next work:
 
 - prove the shared semantic model with another language adapter such as Go;
-- understand multi-application/service repositories and cross-application relationships;
+- understand multi-application/service repositories and cross-application relationships beyond configured package topology;
 - add infrastructure/configuration semantics where target repositories justify them;
 - add grounded AI explanation over selected semantic/evidence context;
 - validate runtime observations and how `observed-runtime` evidence maps to stable semantic identity;
