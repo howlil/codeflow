@@ -54,7 +54,11 @@ export function buildPackageTopology(
     };
   }
 
-  const workspacePatterns = collectWorkspacePatterns(metadata, manifests, issues);
+  const workspacePatterns = collectWorkspacePatterns(
+    metadata,
+    manifests,
+    issues,
+  );
   const workspaceConfigured = workspacePatterns.length > 0;
   const entities: PackageTopologyEntity[] = [];
   const relationships = new Map<string, PackageTopologyRelationship>();
@@ -65,9 +69,13 @@ export function buildPackageTopology(
   if (workspaceConfigured) {
     rootId = 'workspace:.';
     const workspaceMetadata =
-      metadata.find((item) => basename(item.filePath) === 'pnpm-workspace.yaml') ??
       metadata.find(
-        (item) => basename(item.filePath) === 'package.json' && dirname(item.filePath) === '.',
+        (item) => basename(item.filePath) === 'pnpm-workspace.yaml',
+      ) ??
+      metadata.find(
+        (item) =>
+          basename(item.filePath) === 'package.json' &&
+          dirname(item.filePath) === '.',
       );
     entities.push({
       id: rootId,
@@ -95,7 +103,9 @@ export function buildPackageTopology(
     if (
       workspaceConfigured &&
       manifest.rootPath !== '.' &&
-      !workspacePatterns.some((pattern) => matchesWorkspacePattern(manifest.rootPath, pattern))
+      !workspacePatterns.some((pattern) =>
+        matchesWorkspacePattern(manifest.rootPath, pattern),
+      )
     ) {
       continue;
     }
@@ -135,7 +145,9 @@ export function buildPackageTopology(
     if (sourceEntity === undefined || !activePackages.has(sourceEntity)) {
       continue;
     }
-    const manifestMetadata = metadata.find((item) => item.filePath === manifest.filePath)!;
+    const manifestMetadata = metadata.find(
+      (item) => item.filePath === manifest.filePath,
+    )!;
     for (const dependency of manifest.dependencies) {
       const targetManifest = packageByName.get(dependency);
       const targetEntity =
@@ -192,7 +204,9 @@ export function buildPackageTopology(
 
   return {
     rootId,
-    entities: entities.sort((left, right) => left.path.localeCompare(right.path)),
+    entities: entities.sort((left, right) =>
+      left.path.localeCompare(right.path),
+    ),
     relationships: [...relationships.values()].sort((left, right) =>
       left.id.localeCompare(right.id),
     ),
@@ -226,7 +240,9 @@ function parsePackageManifest(
       ...keysOfRecord(parsed.optionalDependencies),
     ];
     const workspacePatterns = Array.isArray(parsed.workspaces)
-      ? parsed.workspaces.filter((value): value is string => typeof value === 'string')
+      ? parsed.workspaces.filter(
+          (value): value is string => typeof value === 'string',
+        )
       : isRecord(parsed.workspaces) && Array.isArray(parsed.workspaces.packages)
         ? parsed.workspaces.packages.filter(
             (value): value is string => typeof value === 'string',
@@ -243,7 +259,8 @@ function parsePackageManifest(
     issues.push({
       kind: 'invalid',
       filePath: metadata.filePath,
-      message: 'Package metadata could not be parsed; other repository evidence remains usable.',
+      message:
+        'Package metadata could not be parsed; other repository evidence remains usable.',
     });
     return null;
   }
@@ -257,7 +274,9 @@ function collectWorkspacePatterns(
   const patterns = new Set<string>();
   for (const manifest of manifests) {
     if (manifest.rootPath === '.') {
-      manifest.workspacePatterns.forEach((pattern) => patterns.add(normalizePattern(pattern)));
+      manifest.workspacePatterns.forEach((pattern) =>
+        patterns.add(normalizePattern(pattern)),
+      );
     }
   }
   for (const item of metadata.filter(
@@ -271,7 +290,8 @@ function collectWorkspacePatterns(
       issues.push({
         kind: 'invalid',
         filePath: item.filePath,
-        message: 'pnpm workspace metadata could not be parsed; package manifests remain usable.',
+        message:
+          'pnpm workspace metadata could not be parsed; package manifests remain usable.',
       });
     }
   }
@@ -313,7 +333,8 @@ function collectAliasRules(
       issues.push({
         kind: 'invalid',
         filePath: item.filePath,
-        message: 'TypeScript configuration could not be parsed; static source analysis remains available.',
+        message:
+          'TypeScript configuration could not be parsed; static source analysis remains available.',
       });
       continue;
     }
@@ -322,8 +343,12 @@ function collectAliasRules(
       : {};
     const paths = isRecord(compilerOptions.paths) ? compilerOptions.paths : {};
     const baseUrl =
-      typeof compilerOptions.baseUrl === 'string' ? compilerOptions.baseUrl : '.';
-    const configDirectory = normalizePath(`${dirname(item.filePath)}/${baseUrl}`);
+      typeof compilerOptions.baseUrl === 'string'
+        ? compilerOptions.baseUrl
+        : '.';
+    const configDirectory = normalizePath(
+      `${dirname(item.filePath)}/${baseUrl}`,
+    );
     for (const [key, rawTargets] of Object.entries(paths)) {
       if (!Array.isArray(rawTargets)) continue;
       const targets = rawTargets.filter(
@@ -359,7 +384,9 @@ function collectStaticPackageDependencies(
       file.sourceText,
       ts.ScriptTarget.Latest,
       true,
-      file.filePath.toLowerCase().endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
+      file.filePath.toLowerCase().endsWith('.tsx')
+        ? ts.ScriptKind.TSX
+        : ts.ScriptKind.TS,
     );
     for (const statement of sourceFile.statements) {
       if (
@@ -422,7 +449,9 @@ function resolveAliasTarget(
     const wildcard = matchAlias(rule.key, specifier);
     if (wildcard === null) continue;
     for (const target of rule.targets) {
-      const mapped = target.includes('*') ? target.replace('*', wildcard) : target;
+      const mapped = target.includes('*')
+        ? target.replace('*', wildcard)
+        : target;
       const base = normalizePath(`${rule.configDirectory}/${mapped}`);
       const candidates = [
         base,
@@ -431,7 +460,9 @@ function resolveAliasTarget(
         `${base}/index.ts`,
         `${base}/index.tsx`,
       ];
-      const resolved = candidates.find((candidate) => availableFiles.has(candidate));
+      const resolved = candidates.find((candidate) =>
+        availableFiles.has(candidate),
+      );
       if (resolved !== undefined) return resolved;
     }
   }
@@ -524,7 +555,9 @@ function staticEvidence(
   filePath: string,
   reason: string,
 ): Evidence {
-  const start = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
+  const start = sourceFile.getLineAndCharacterOfPosition(
+    node.getStart(sourceFile),
+  );
   const end = sourceFile.getLineAndCharacterOfPosition(node.getEnd());
   return {
     kind: 'verified-static',
@@ -609,7 +642,9 @@ function normalizePath(path: string): string {
 }
 
 function isAncestor(ancestor: string, path: string): boolean {
-  return ancestor === '.' || path === ancestor || path.startsWith(`${ancestor}/`);
+  return (
+    ancestor === '.' || path === ancestor || path.startsWith(`${ancestor}/`)
+  );
 }
 
 function dedupeExternalDependencies(

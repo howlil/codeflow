@@ -4,6 +4,7 @@ import {
   discoverEntryPoints,
   type AnalysisIssue,
   type FlowProjection,
+  type RepositoryMetadataInput,
   type TypeScriptSourceInput,
 } from '@codeflow/analysis-core';
 import Fastify, { type FastifyInstance } from 'fastify';
@@ -19,6 +20,9 @@ const MAX_FILE_RECORDS = 256;
 const MAX_ANALYZED_FILES = 96;
 const MAX_FILE_BYTES = 128 * 1024;
 const MAX_TOTAL_SOURCE_BYTES = 1_000_000;
+const MAX_METADATA_FILES = 48;
+const MAX_METADATA_FILE_BYTES = 64 * 1024;
+const MAX_TOTAL_METADATA_BYTES = 512 * 1024;
 const IGNORED_DIRECTORY_NAMES = new Set([
   '.git',
   '.next',
@@ -34,8 +38,14 @@ interface RepositoryFilePayload {
   sourceText: string;
 }
 
+interface RepositoryMetadataPayload {
+  filePath: string;
+  text: string;
+}
+
 interface AnalyzeRepositoryPayload {
   files: RepositoryFilePayload[];
+  metadata: RepositoryMetadataPayload[];
   entryPoint: {
     filePath: string;
     name: string;
@@ -93,6 +103,7 @@ export function buildApp(): FastifyInstance {
 
         const projection = analyzeTypeScriptRepository({
           files,
+          metadata: acquired.metadata,
           entryPoint: {
             filePath: entryPoint.filePath,
             name: entryPoint.name,
@@ -168,6 +179,7 @@ export function buildApp(): FastifyInstance {
         const prepared = prepareRepositoryInput(payload);
         const projection = analyzeTypeScriptRepository({
           files: prepared.files,
+          metadata: prepared.metadata,
           entryPoint: prepared.entryPoint,
         });
 
@@ -203,6 +215,27 @@ function parseGitHubAnalysisPayload(body: unknown): GitHubAnalysisPayload {
   if (body.entryPoint === undefined) {
     return { repositoryUrl: body.repositoryUrl };
   }
+  const metadataValue = body.metadata;
+  if (metadataValue !== undefined && !Array.isArray(metadataValue)) {
+    throw new InputError(
+      400,
+      'Repository metadata must be an array when provided.',
+    );
+  }
+  const metadata = (metadataValue ?? []).map((item, index) => {
+    if (
+      !isRecord(item) ||
+      typeof item.filePath !== 'string' ||
+      typeof item.text !== 'string'
+    ) {
+      throw new InputError(
+        400,
+        `Repository metadata at index ${index} must contain filePath and text strings.`,
+      );
+    }
+    return { filePath: item.filePath, text: item.text };
+  });
+
   if (
     !isRecord(body.entryPoint) ||
     typeof body.entryPoint.filePath !== 'string' ||
@@ -275,6 +308,7 @@ function parseAnalyzeRepositoryPayload(
 
   return {
     files,
+    metadata,
     entryPoint: {
       filePath: body.entryPoint.filePath,
       name: body.entryPoint.name.trim(),
@@ -284,6 +318,7 @@ function parseAnalyzeRepositoryPayload(
 
 function prepareRepositoryInput(payload: AnalyzeRepositoryPayload): {
   files: TypeScriptSourceInput[];
+  metadata: RepositoryMetadataInput[];
   entryPoint: AnalyzeRepositoryPayload['entryPoint'];
   issues: AnalysisIssue[];
 } {
@@ -366,6 +401,8 @@ function prepareRepositoryInput(payload: AnalyzeRepositoryPayload): {
     totalSourceBytes += sourceBytes;
   }
 
+  const metadata = prepareRepositoryMetadata(payload.metadata, issues);
+
   if (files.length === 0) {
     throw new InputError(
       422,
@@ -379,7 +416,59 @@ function prepareRepositoryInput(payload: AnalyzeRepositoryPayload): {
     );
   }
 
-  return { files, entryPoint, issues };
+  return { files, metadata, entryPoint, issues };
+}
+
+function prepareRepositoryMetadata(
+  input: RepositoryMetadataPayload[],
+  issues: AnalysisIssue[],
+): RepositoryMetadataInput[] {
+  const metadata: RepositoryMetadataInput[] = [];
+  const seen = new Set<string>();
+  let totalBytes = 0;
+  for (const item of input) {
+    const filePath = normalizeRepositoryPath(item.filePath);
+    if (seen.has(filePath)) {
+      throw new InputError(
+        400,
+        `Duplicate repository metadata path: ${filePath}.`,
+      );
+    }
+    seen.add(filePath);
+    if (!isSupportedMetadataPath(filePath)) {
+      issues.push({
+        kind: 'unsupported',
+        filePath,
+        message:
+          'Only package.json, pnpm-workspace.yaml, and tsconfig*.json are accepted as topology metadata.',
+      });
+      continue;
+    }
+    const bytes = Buffer.byteLength(item.text, 'utf8');
+    if (bytes > MAX_METADATA_FILE_BYTES) {
+      issues.push({
+        kind: 'limit',
+        filePath,
+        message: `Metadata exceeds the ${MAX_METADATA_FILE_BYTES}-byte per-file limit.`,
+      });
+      continue;
+    }
+    if (
+      metadata.length >= MAX_METADATA_FILES ||
+      totalBytes + bytes > MAX_TOTAL_METADATA_BYTES
+    ) {
+      issues.push({
+        kind: 'limit',
+        filePath,
+        message:
+          'Repository topology metadata exceeds the bounded metadata budget.',
+      });
+      continue;
+    }
+    metadata.push({ filePath, text: item.text });
+    totalBytes += bytes;
+  }
+  return metadata;
 }
 
 function mergeInputIssues(
@@ -430,6 +519,15 @@ function isIgnoredPath(filePath: string): boolean {
   return filePath
     .split('/')
     .some((segment) => IGNORED_DIRECTORY_NAMES.has(segment.toLowerCase()));
+}
+
+function isSupportedMetadataPath(filePath: string): boolean {
+  const name = filePath.split('/').at(-1)?.toLowerCase() ?? '';
+  return (
+    name === 'package.json' ||
+    name === 'pnpm-workspace.yaml' ||
+    /^tsconfig(?:\.[^/]+)?\.json$/.test(name)
+  );
 }
 
 function isSupportedTypeScriptPath(filePath: string): boolean {

@@ -17,6 +17,7 @@ import {
   type RepositoryEntity,
 } from './flow-client';
 import { ArchitecturePanel } from './ArchitecturePanel';
+import { PackageTopologyPanel } from './PackageTopologyPanel';
 import { GitHubRepositoryPicker } from './GitHubRepositoryPicker';
 import {
   RepositoryPicker,
@@ -366,6 +367,10 @@ export function App() {
               }
             }}
           />
+          <PackageTopologyPanel
+            flow={flow}
+            onOpenFunction={openArchitectureFunction}
+          />
           <ArchitecturePanel
             flow={flow}
             onOpenFunction={openArchitectureFunction}
@@ -388,6 +393,10 @@ export function App() {
                 void analyzeGitHub(githubRepositoryUrl, nextEntryPoint);
               }
             }}
+          />
+          <PackageTopologyPanel
+            flow={flow}
+            onOpenFunction={openArchitectureFunction}
           />
           <ArchitecturePanel
             flow={flow}

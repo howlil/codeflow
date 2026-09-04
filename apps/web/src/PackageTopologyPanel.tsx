@@ -23,7 +23,9 @@ export function PackageTopologyPanel({
         .sort((left, right) => left.name.localeCompare(right.name)),
     [topology],
   );
-  const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
+  const [selectedPackageId, setSelectedPackageId] = useState<string | null>(
+    null,
+  );
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
 
   if (topology === undefined || packages.length === 0) {
@@ -32,7 +34,9 @@ export function PackageTopologyPanel({
 
   const selectedPackage =
     packages.find((entity) => entity.id === selectedPackageId) ?? packages[0]!;
-  const entityById = new Map(topology.entities.map((entity) => [entity.id, entity]));
+  const entityById = new Map(
+    topology.entities.map((entity) => [entity.id, entity]),
+  );
   const outgoing = topology.relationships
     .filter(
       (relationship) =>
@@ -44,8 +48,12 @@ export function PackageTopologyPanel({
       entity: entityById.get(relationship.targetId),
     }))
     .filter(
-      (item): item is { relationship: (typeof topology.relationships)[number]; entity: PackageTopologyEntity } =>
-        item.entity !== undefined,
+      (
+        item,
+      ): item is {
+        relationship: (typeof topology.relationships)[number];
+        entity: PackageTopologyEntity;
+      } => item.entity !== undefined,
     );
   const incoming = topology.relationships
     .filter(
@@ -58,8 +66,12 @@ export function PackageTopologyPanel({
       entity: entityById.get(relationship.sourceId),
     }))
     .filter(
-      (item): item is { relationship: (typeof topology.relationships)[number]; entity: PackageTopologyEntity } =>
-        item.entity !== undefined,
+      (
+        item,
+      ): item is {
+        relationship: (typeof topology.relationships)[number];
+        entity: PackageTopologyEntity;
+      } => item.entity !== undefined,
     );
   const external = topology.externalDependencies.filter(
     (dependency) => dependency.packageId === selectedPackage.id,
@@ -71,7 +83,7 @@ export function PackageTopologyPanel({
   const selectedFile =
     selectedFilePath !== null && filePaths.includes(selectedFilePath)
       ? selectedFilePath
-      : filePaths[0] ?? null;
+      : (filePaths[0] ?? null);
   const symbols =
     selectedFile === null
       ? []
@@ -92,14 +104,21 @@ export function PackageTopologyPanel({
           <p className="panel-kicker">System topology</p>
           <h2>Workspace → package → implementation</h2>
           <p>
-            Package boundaries come from repository configuration; source imports add
-            static evidence without inventing runtime services.
+            Package boundaries come from repository configuration; source
+            imports add static evidence without inventing runtime services.
           </p>
         </div>
-        <div className="package-topology__summary" aria-label="Topology summary">
+        <div
+          className="package-topology__summary"
+          aria-label="Topology summary"
+        >
           <span>{packages.length} packages</span>
           <span>
-            {topology.relationships.filter((item) => item.kind === 'DEPENDS_ON').length}{' '}
+            {
+              topology.relationships.filter(
+                (item) => item.kind === 'DEPENDS_ON',
+              ).length
+            }{' '}
             dependencies
           </span>
           <span>{topology.status}</span>
@@ -107,7 +126,10 @@ export function PackageTopologyPanel({
       </header>
 
       <div className="package-topology__grid">
-        <nav className="package-topology__packages" aria-label="Workspace packages">
+        <nav
+          className="package-topology__packages"
+          aria-label="Workspace packages"
+        >
           {packages.map((entity) => (
             <button
               key={entity.id}
@@ -142,7 +164,9 @@ export function PackageTopologyPanel({
             <section>
               <p className="panel-kicker">External</p>
               {external.length === 0 ? (
-                <span className="package-topology__empty">No declared external dependencies.</span>
+                <span className="package-topology__empty">
+                  No declared external dependencies.
+                </span>
               ) : (
                 <ul>
                   {external.slice(0, 12).map((dependency) => (
@@ -192,7 +216,11 @@ export function PackageTopologyPanel({
                         <span>{symbol.kind}</span>
                       </div>
                       {symbol.kind === 'Function' ? (
-                        <Button size="sm" variant="ghost" onClick={() => onOpenFunction(symbol)}>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => onOpenFunction(symbol)}
+                        >
                           Open flow
                         </Button>
                       ) : null}
@@ -228,7 +256,9 @@ function DependencyGroup({
 }: {
   title: string;
   items: Array<{
-    relationship: NonNullable<FlowProjection['topology']>['relationships'][number];
+    relationship: NonNullable<
+      FlowProjection['topology']
+    >['relationships'][number];
     entity: PackageTopologyEntity;
   }>;
 }) {
@@ -236,13 +266,17 @@ function DependencyGroup({
     <section>
       <p className="panel-kicker">{title}</p>
       {items.length === 0 ? (
-        <span className="package-topology__empty">None inside this repository.</span>
+        <span className="package-topology__empty">
+          None inside this repository.
+        </span>
       ) : (
         <ul>
           {items.map(({ entity, relationship }) => (
             <li key={relationship.id}>
               <strong>{entity.name}</strong>
-              <span>{relationship.evidence.map((item) => item.kind).join(' + ')}</span>
+              <span>
+                {relationship.evidence.map((item) => item.kind).join(' + ')}
+              </span>
             </li>
           ))}
         </ul>

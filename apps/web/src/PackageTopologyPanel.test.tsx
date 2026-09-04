@@ -33,7 +33,12 @@ const flow: FlowProjection = {
   edges: [],
   source: { filePath: location.filePath, text: 'export function app() {}' },
   sources: [{ filePath: location.filePath, text: 'export function app() {}' }],
-  analysis: { status: 'complete', analyzedFileCount: 1, ignoredFileCount: 0, issues: [] },
+  analysis: {
+    status: 'complete',
+    analyzedFileCount: 1,
+    ignoredFileCount: 0,
+    issues: [],
+  },
   architecture: {
     rootId: 'repository:.',
     entities: [
@@ -61,12 +66,39 @@ const flow: FlowProjection = {
   topology: {
     rootId: 'workspace:.',
     entities: [
-      { id: 'workspace:.', kind: 'Workspace', name: 'Workspace', path: '.', location: null, evidence: [evidence] },
-      { id: 'package:apps/web', kind: 'Package', name: '@demo/web', path: 'apps/web', location, evidence: [evidence] },
-      { id: 'package:packages/core', kind: 'Package', name: '@demo/core', path: 'packages/core', location, evidence: [evidence] },
+      {
+        id: 'workspace:.',
+        kind: 'Workspace',
+        name: 'Workspace',
+        path: '.',
+        location: null,
+        evidence: [evidence],
+      },
+      {
+        id: 'package:apps/web',
+        kind: 'Package',
+        name: '@demo/web',
+        path: 'apps/web',
+        location,
+        evidence: [evidence],
+      },
+      {
+        id: 'package:packages/core',
+        kind: 'Package',
+        name: '@demo/core',
+        path: 'packages/core',
+        location,
+        evidence: [evidence],
+      },
     ],
     relationships: [
-      { id: 'depends_on:web:core', kind: 'DEPENDS_ON', sourceId: 'package:apps/web', targetId: 'package:packages/core', evidence: [evidence] },
+      {
+        id: 'depends_on:web:core',
+        kind: 'DEPENDS_ON',
+        sourceId: 'package:apps/web',
+        targetId: 'package:packages/core',
+        evidence: [evidence],
+      },
     ],
     externalDependencies: [{ packageId: 'package:apps/web', name: 'react' }],
     fileOwners: { 'apps/web/src/app.ts': 'package:apps/web' },
@@ -80,9 +112,13 @@ afterEach(cleanup);
 describe('PackageTopologyPanel', () => {
   it('shows package dependencies and drills into a function flow', () => {
     const onOpenFunction = vi.fn();
-    render(<PackageTopologyPanel flow={flow} onOpenFunction={onOpenFunction} />);
+    render(
+      <PackageTopologyPanel flow={flow} onOpenFunction={onOpenFunction} />,
+    );
 
-    expect(screen.getByRole('region', { name: 'System topology' })).toBeTruthy();
+    expect(
+      screen.getByRole('region', { name: 'System topology' }),
+    ).toBeTruthy();
     expect(screen.getByText('@demo/core')).toBeTruthy();
     expect(screen.getByText('react')).toBeTruthy();
     expect(screen.getByText('apps/web/src/app.ts')).toBeTruthy();

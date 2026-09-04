@@ -65,7 +65,9 @@ describe('buildPackageTopology', () => {
     expect(dependency?.evidence.map((item) => item.kind)).toEqual(
       expect.arrayContaining(['configured', 'verified-static']),
     );
-    expect(topology?.fileOwners['apps/web/src/app.ts']).toBe('package:apps/web');
+    expect(topology?.fileOwners['apps/web/src/app.ts']).toBe(
+      'package:apps/web',
+    );
     expect(topology?.fileOwners['packages/core/src/index.ts']).toBe(
       'package:packages/core',
     );
@@ -90,8 +92,8 @@ describe('buildPackageTopology', () => {
         }),
       ]),
     );
-    expect(topology?.entities.some((entity) => entity.name === '@demo/web')).toBe(
-      true,
-    );
+    expect(
+      topology?.entities.some((entity) => entity.name === '@demo/web'),
+    ).toBe(true);
   });
 });

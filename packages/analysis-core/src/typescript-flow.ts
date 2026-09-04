@@ -29,8 +29,14 @@ export interface TypeScriptSourceInput {
   sourceText: string;
 }
 
+export interface RepositoryMetadataInput {
+  filePath: string;
+  text: string;
+}
+
 export interface AnalyzeTypeScriptRepositoryInput {
   files: TypeScriptSourceInput[];
+  metadata?: RepositoryMetadataInput[];
   entryPoint: {
     filePath: string;
     name: string;
