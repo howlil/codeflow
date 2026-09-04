@@ -24,13 +24,21 @@ export type {
   EntryPointConfidence,
   EntryPointSuggestion,
   RepositorySummary,
+  RepositoryArchitectureProjection,
+  RepositoryEntity,
+  RepositoryEntityKind,
+  RepositoryRelationship,
+  RepositoryRelationshipKind,
 } from './model.js';
 export { buildSampleRequestFlow } from './sample.js';
 export {
   analyzeTypeScriptFlow,
-  analyzeTypeScriptRepository,
   type AnalyzeTypeScriptFlowInput,
   type AnalyzeTypeScriptRepositoryInput,
   type TypeScriptSourceInput,
 } from './typescript-flow.js';
+export {
+  analyzeTypeScriptRepository,
+  buildRepositoryArchitecture,
+} from './repository-architecture.js';
 export { discoverEntryPoints } from './entry-discovery.js';
