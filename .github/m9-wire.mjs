@@ -19,6 +19,12 @@ patch('packages/analysis-core/src/change-analysis.ts', [
     "  return inFile.filter((entity) => {\n    const location = entity.location;\n    if (location === null) return false;\n    return hunks.some((hunk) => {\n      const start = snapshot === 'base' ? hunk.oldStart : hunk.newStart;\n      const lines = snapshot === 'base' ? hunk.oldLines : hunk.newLines;\n      return overlaps(location, start, lines);\n    });\n  });\n",
   ],
 ]);
+patch('apps/web/src/ChangeWorkspace.test.tsx', [
+  [
+    "    expect(screen.getByText('+  return 2;')).toBeTruthy();\n",
+    "    expect(screen.getByText(/return 2;/)).toBeTruthy();\n",
+  ],
+]);
 
 patch('apps/api/src/app.ts', [
   [
