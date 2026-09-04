@@ -11,6 +11,11 @@ function patch(path, replacements) {
   writeFileSync(path, text);
 }
 
+patch('apps/api/src/change.ts', [["  type AcquiredPullRequest,\n", '']]);
+patch('packages/analysis-core/src/change-analysis.ts', [
+  ["  RepositoryRelationshipKind,\n", ''],
+]);
+
 patch('apps/api/src/app.ts', [
   [
     "import { registerImpactRoute } from './impact.js';\n",
