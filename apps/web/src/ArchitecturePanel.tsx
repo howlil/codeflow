@@ -262,6 +262,7 @@ function ArchitectureTreeNode({
         <button
           className="architecture-entity-button"
           type="button"
+          aria-label={`${entity.name} ${entity.kind}`}
           aria-pressed={selectedId === entity.id}
           onClick={() => onSelect(entity)}
         >
