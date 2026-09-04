@@ -1,0 +1,38 @@
+name: M9 Wire
+
+on:
+  push:
+    branches:
+      - feat/m9-diff-aware-change-understanding
+    paths:
+      - .github/workflows/m9-wire.yml
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/m9-diff-aware-change-understanding
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: node .github/m9-wire.mjs
+      - run: pnpm exec prettier --write apps/api/src/app.ts apps/web/src/App.tsx apps/web/src/change-client.ts apps/web/src/GitHubPullRequestPicker.tsx apps/web/src/ChangeWorkspace.tsx apps/web/src/change-workspace.css apps/api/src/change.ts apps/api/src/github-pr.ts packages/analysis-core/src/change-analysis.ts packages/analysis-core/src/change-analysis.test.ts packages/analysis-core/src/index.ts
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm build
+      - run: pnpm test
+      - run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add apps/api/src/app.ts apps/web/src/App.tsx apps/web/src/change-client.ts apps/web/src/GitHubPullRequestPicker.tsx apps/web/src/ChangeWorkspace.tsx apps/web/src/change-workspace.css apps/api/src/change.ts apps/api/src/github-pr.ts packages/analysis-core/src/change-analysis.ts packages/analysis-core/src/change-analysis.test.ts packages/analysis-core/src/index.ts
+          git commit -m "feat(m9): wire diff-aware pull request analysis"
+          git push origin HEAD:feat/m9-diff-aware-change-understanding
