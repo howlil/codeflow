@@ -25,7 +25,7 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: node .github/m9-wire.mjs
-      - run: pnpm exec prettier --write apps/api/src/app.ts apps/web/src/App.tsx apps/web/src/change-client.ts apps/web/src/GitHubPullRequestPicker.tsx apps/web/src/ChangeWorkspace.tsx apps/web/src/change-workspace.css apps/api/src/change.ts apps/api/src/github-pr.ts packages/analysis-core/src/change-analysis.ts packages/analysis-core/src/change-analysis.test.ts packages/analysis-core/src/index.ts
+      - run: pnpm exec prettier --write .github/m9-wire.mjs apps/api/src/app.ts apps/web/src/App.tsx apps/web/src/change-client.ts apps/web/src/GitHubPullRequestPicker.tsx apps/web/src/ChangeWorkspace.tsx apps/web/src/change-workspace.css apps/api/src/change.ts apps/api/src/github-pr.ts packages/analysis-core/src/change-analysis.ts packages/analysis-core/src/change-analysis.test.ts packages/analysis-core/src/index.ts
       - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm build
