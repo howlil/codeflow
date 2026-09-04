@@ -106,11 +106,11 @@ export async function acquirePublicGitHubRepository(
 ): Promise<AcquiredRepository> {
   const parsed = parseGitHubRepositoryUrl(value);
   const apiBase = `https://api.github.com/repos/${encodeURIComponent(parsed.owner)}/${encodeURIComponent(parsed.repository)}`;
-  const metadata = await fetchJson<{ default_branch?: string; name?: string }>(
-    `${apiBase}`,
-    fetcher,
-  );
-  const branch = metadata.default_branch;
+  const repositoryMetadata = await fetchJson<{
+    default_branch?: string;
+    name?: string;
+  }>(`${apiBase}`, fetcher);
+  const branch = repositoryMetadata.default_branch;
   if (branch === undefined || branch === '') {
     throw new RepositoryAcquisitionError(
       'remote-failure',
@@ -247,7 +247,7 @@ export async function acquirePublicGitHubRepository(
     metadata,
     ignoredFiles: [...new Set(ignoredFiles)],
     repository: {
-      name: metadata.name ?? parsed.repository,
+      name: repositoryMetadata.name ?? parsed.repository,
       url: parsed.canonicalUrl,
       branch,
     },
