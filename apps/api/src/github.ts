@@ -9,11 +9,15 @@ export const REPOSITORY_LIMITS = {
   maxFiles: 40,
   maxFileBytes: 800_000,
   maxTotalBytes: 4_000_000,
+  maxMetadataFiles: 48,
+  maxMetadataFileBytes: 64 * 1024,
+  maxTotalMetadataBytes: 512 * 1024,
   timeoutMs: 8_000,
 } as const;
 
 export interface AcquiredRepository {
   files: AcquiredSource[];
+  metadata: AcquiredSource[];
   ignoredFiles: string[];
   repository: RepositorySummary;
 }
@@ -102,11 +106,11 @@ export async function acquirePublicGitHubRepository(
 ): Promise<AcquiredRepository> {
   const parsed = parseGitHubRepositoryUrl(value);
   const apiBase = `https://api.github.com/repos/${encodeURIComponent(parsed.owner)}/${encodeURIComponent(parsed.repository)}`;
-  const metadata = await fetchJson<{ default_branch?: string; name?: string }>(
-    `${apiBase}`,
-    fetcher,
-  );
-  const branch = metadata.default_branch;
+  const repositoryMetadata = await fetchJson<{
+    default_branch?: string;
+    name?: string;
+  }>(`${apiBase}`, fetcher);
+  const branch = repositoryMetadata.default_branch;
   if (branch === undefined || branch === '') {
     throw new RepositoryAcquisitionError(
       'remote-failure',
@@ -130,9 +134,16 @@ export async function acquirePublicGitHubRepository(
   const supported = candidates.filter((entry) =>
     isSupportedSourcePath(entry.path),
   );
+  const metadataCandidates = candidates.filter((entry) =>
+    isSupportedMetadataPath(entry.path),
+  );
   ignoredFiles.push(
     ...candidates
-      .filter((entry) => !isSupportedSourcePath(entry.path))
+      .filter(
+        (entry) =>
+          !isSupportedSourcePath(entry.path) &&
+          !isSupportedMetadataPath(entry.path),
+      )
       .map((entry) => entry.path),
   );
 
@@ -182,15 +193,97 @@ export async function acquirePublicGitHubRepository(
     throw new UnsupportedRepositoryError();
   }
 
+  const metadata: AcquiredSource[] = [];
+  let totalMetadataBytes = 0;
+  const selectedMetadata = metadataCandidates.slice(
+    0,
+    REPOSITORY_LIMITS.maxMetadataFiles,
+  );
+  ignoredFiles.push(
+    ...metadataCandidates
+      .slice(REPOSITORY_LIMITS.maxMetadataFiles)
+      .map((entry) => entry.path),
+  );
+  for (const entry of selectedMetadata) {
+    if (entry.size > REPOSITORY_LIMITS.maxMetadataFileBytes) {
+      ignoredFiles.push(entry.path);
+      continue;
+    }
+    if (
+      totalMetadataBytes + entry.size >
+      REPOSITORY_LIMITS.maxTotalMetadataBytes
+    ) {
+      ignoredFiles.push(entry.path);
+      continue;
+    }
+    const rawPath = entry.path.split('/').map(encodeURIComponent).join('/');
+    const rawUrl = `https://raw.githubusercontent.com/${encodeURIComponent(parsed.owner)}/${encodeURIComponent(parsed.repository)}/${encodeURIComponent(branch)}/${rawPath}`;
+    const response = await fetchWithTimeout(rawUrl, fetcher);
+    if (!response.ok) {
+      ignoredFiles.push(entry.path);
+      continue;
+    }
+    const bytes = await readResponseBytes(response);
+    if (bytes.byteLength > REPOSITORY_LIMITS.maxMetadataFileBytes) {
+      ignoredFiles.push(entry.path);
+      continue;
+    }
+    if (
+      totalMetadataBytes + bytes.byteLength >
+      REPOSITORY_LIMITS.maxTotalMetadataBytes
+    ) {
+      ignoredFiles.push(entry.path);
+      continue;
+    }
+    totalMetadataBytes += bytes.byteLength;
+    metadata.push({
+      filePath: entry.path,
+      text: new TextDecoder().decode(bytes),
+    });
+  }
+
   return {
     files,
+    metadata,
     ignoredFiles: [...new Set(ignoredFiles)],
     repository: {
-      name: metadata.name ?? parsed.repository,
+      name: repositoryMetadata.name ?? parsed.repository,
       url: parsed.canonicalUrl,
       branch,
     },
   };
+}
+
+export function isSupportedMetadataPath(filePath: string): boolean {
+  const normalized = filePath.replaceAll('\\', '/');
+  if (
+    normalized.startsWith('/') ||
+    normalized.split('/').some((segment) => segment === '..' || segment === '')
+  ) {
+    return false;
+  }
+  const segments = normalized.toLowerCase().split('/');
+  const ignoredDirectories = new Set([
+    '.git',
+    'node_modules',
+    'vendor',
+    'dist',
+    'build',
+    'coverage',
+    'generated',
+    '__generated__',
+  ]);
+  if (
+    segments.slice(0, -1).some((segment) => ignoredDirectories.has(segment))
+  ) {
+    return false;
+  }
+  const name = segments.at(-1) ?? '';
+  return (
+    name === 'package.json' ||
+    name === 'pnpm-workspace.yaml' ||
+    /^tsconfig(?:\.[^/]+)?\.json$/.test(name)
+  );
 }
 
 export function isSupportedSourcePath(filePath: string): boolean {

@@ -204,6 +204,40 @@ export interface RepositoryArchitectureProjection {
   relationships: RepositoryRelationship[];
 }
 
+export type PackageTopologyEntityKind = 'Workspace' | 'Package';
+
+export interface PackageTopologyEntity {
+  id: string;
+  kind: PackageTopologyEntityKind;
+  name: string;
+  path: string;
+  location: SourceLocation | null;
+  evidence: Evidence[];
+}
+
+export interface PackageTopologyRelationship {
+  id: string;
+  kind: 'CONTAINS' | 'DEPENDS_ON';
+  sourceId: string;
+  targetId: string;
+  evidence: Evidence[];
+}
+
+export interface ExternalPackageDependency {
+  packageId: string;
+  name: string;
+}
+
+export interface PackageTopologyProjection {
+  rootId: string | null;
+  entities: PackageTopologyEntity[];
+  relationships: PackageTopologyRelationship[];
+  externalDependencies: ExternalPackageDependency[];
+  fileOwners: Record<string, string>;
+  status: 'complete' | 'partial';
+  issues: AnalysisIssue[];
+}
+
 export interface FlowProjection {
   id: string;
   entryPointId: string;
@@ -220,6 +254,8 @@ export interface FlowProjection {
   staticFlow: StaticFlowProjection;
   /** Repository/module/file/symbol topology used for architecture-first exploration. */
   architecture?: RepositoryArchitectureProjection;
+  /** Configured workspace/package topology layered above source architecture. */
+  topology?: PackageTopologyProjection;
   repository?: RepositorySummary;
   entryPoints?: EntryPointSuggestion[];
 }

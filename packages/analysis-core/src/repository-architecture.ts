@@ -15,6 +15,7 @@ import {
   type AnalyzeTypeScriptRepositoryInput,
   type TypeScriptSourceInput,
 } from './typescript-flow.js';
+import { buildPackageTopology } from './package-topology.js';
 
 interface SymbolRecord {
   entity: RepositoryEntity;
@@ -33,9 +34,11 @@ export function analyzeTypeScriptRepository(
   input: AnalyzeTypeScriptRepositoryInput,
 ): FlowProjection {
   const flow = analyzeBaseTypeScriptRepository(input);
+  const topology = buildPackageTopology(input.files, input.metadata);
   return {
     ...flow,
     architecture: buildRepositoryArchitecture(input.files),
+    ...(topology === undefined ? {} : { topology }),
   };
 }
 

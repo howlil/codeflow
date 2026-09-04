@@ -167,6 +167,33 @@ export interface RepositoryArchitectureProjection {
   relationships: RepositoryRelationship[];
 }
 
+export interface PackageTopologyEntity {
+  id: string;
+  kind: 'Workspace' | 'Package';
+  name: string;
+  path: string;
+  location: SourceLocation | null;
+  evidence: FlowEvidence[];
+}
+
+export interface PackageTopologyRelationship {
+  id: string;
+  kind: 'CONTAINS' | 'DEPENDS_ON';
+  sourceId: string;
+  targetId: string;
+  evidence: FlowEvidence[];
+}
+
+export interface PackageTopologyProjection {
+  rootId: string | null;
+  entities: PackageTopologyEntity[];
+  relationships: PackageTopologyRelationship[];
+  externalDependencies: Array<{ packageId: string; name: string }>;
+  fileOwners: Record<string, string>;
+  status: 'complete' | 'partial';
+  issues: AnalysisIssue[];
+}
+
 export interface FlowProjection {
   id: string;
   entryPointId: string;
@@ -202,12 +229,18 @@ export interface FlowProjection {
   };
   /** Added in M6. Optional so older deterministic fixtures remain readable. */
   architecture?: RepositoryArchitectureProjection;
+  /** Added in M7. Configured workspace/package topology above source architecture. */
+  topology?: PackageTopologyProjection;
 }
 
 export interface RepositoryAnalysisRequest {
   files: Array<{
     filePath: string;
     sourceText: string;
+  }>;
+  metadata?: Array<{
+    filePath: string;
+    text: string;
   }>;
   entryPoint: {
     filePath: string;
