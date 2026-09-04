@@ -1,7 +1,9 @@
 .architecture-panel {
-  border-top: 1px solid var(--cs-border);
-  border-bottom: 1px solid var(--cs-border);
-  background: var(--cs-surface);
+  width: min(100%, 1680px);
+  margin-inline: auto;
+  border: 1px solid var(--color-cs-border);
+  border-radius: var(--radius-panel);
+  background: var(--color-cs-panel);
 }
 
 .architecture-heading,
@@ -14,7 +16,7 @@
 .architecture-heading {
   align-items: flex-start;
   justify-content: space-between;
-  padding: 16px 18px 12px;
+  padding: 14px 16px 10px;
 }
 
 .architecture-heading h2,
@@ -29,7 +31,7 @@
 .architecture-detail-heading p,
 .architecture-empty {
   margin: 6px 0 0;
-  color: var(--cs-text-muted);
+  color: var(--color-cs-muted);
   font-size: 12px;
   line-height: 1.5;
 }
@@ -42,16 +44,16 @@
 }
 
 .architecture-counts span {
-  border: 1px solid var(--cs-border);
+  border: 1px solid var(--color-cs-border);
   border-radius: 4px;
   padding: 3px 6px;
-  color: var(--cs-text-muted);
+  color: var(--color-cs-muted);
   font-size: 11px;
 }
 
 .architecture-toolbar {
   align-items: center;
-  padding: 0 18px 12px;
+  padding: 0 16px 10px;
 }
 
 .architecture-toolbar input {
@@ -64,9 +66,9 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 1px;
-  margin: 0 18px 12px;
-  border: 1px solid var(--cs-border);
-  background: var(--cs-border);
+  margin: 0 16px 10px;
+  border: 1px solid var(--color-cs-border);
+  background: var(--color-cs-border);
 }
 
 .architecture-search-results button,
@@ -78,9 +80,9 @@
   align-items: flex-start;
   gap: 2px;
   border: 0;
-  background: var(--cs-surface);
+  background: var(--color-cs-surface);
   padding: 8px 10px;
-  color: var(--cs-text);
+  color: var(--color-cs-text);
   text-align: left;
   cursor: pointer;
 }
@@ -88,7 +90,7 @@
 .architecture-search-results button:hover,
 .architecture-neighborhood button:hover,
 .architecture-relationships button:hover {
-  background: var(--cs-hover);
+  background: var(--color-cs-hover);
 }
 
 .architecture-search-results span,
@@ -97,7 +99,7 @@
 .architecture-relationships small {
   overflow: hidden;
   max-width: 100%;
-  color: var(--cs-text-muted);
+  color: var(--color-cs-muted);
   font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -108,14 +110,14 @@
   grid-template-columns: minmax(260px, 0.85fr) minmax(320px, 1.15fr);
   gap: 0;
   min-height: 280px;
-  border-top: 1px solid var(--cs-border);
+  border-top: 1px solid var(--color-cs-border);
 }
 
 .architecture-tree {
   min-width: 0;
   max-height: 420px;
   overflow: auto;
-  border-right: 1px solid var(--cs-border);
+  border-right: 1px solid var(--color-cs-border);
   padding: 10px;
 }
 
@@ -139,12 +141,12 @@
 .architecture-expand {
   border: 0;
   background: transparent;
-  color: var(--cs-text-muted);
+  color: var(--color-cs-muted);
   cursor: pointer;
 }
 
 .architecture-expand:hover {
-  color: var(--cs-text);
+  color: var(--color-cs-text);
 }
 
 .architecture-entity-button {
@@ -158,17 +160,17 @@
   border-radius: 4px;
   background: transparent;
   padding: 5px 7px;
-  color: var(--cs-text);
+  color: var(--color-cs-text);
   text-align: left;
   cursor: pointer;
 }
 
 .architecture-entity-button:hover {
-  background: var(--cs-hover);
+  background: var(--color-cs-hover);
 }
 
 .architecture-entity-button[aria-pressed='true'] {
-  background: var(--cs-active);
+  background: var(--color-cs-active);
 }
 
 .architecture-entity-button strong {
@@ -181,7 +183,7 @@
 
 .architecture-entity-button span {
   flex: 0 0 auto;
-  color: var(--cs-text-muted);
+  color: var(--color-cs-muted);
   font-size: 10px;
 }
 
@@ -221,7 +223,7 @@
 .architecture-relationships button {
   width: 100%;
   margin-top: 1px;
-  border-top: 1px solid var(--cs-border);
+  border-top: 1px solid var(--color-cs-border);
 }
 
 .architecture-relationships button strong {
@@ -231,18 +233,18 @@
 
 .architecture-evidence {
   margin-top: 16px;
-  border-top: 1px solid var(--cs-border);
+  border-top: 1px solid var(--color-cs-border);
   padding-top: 10px;
 }
 
 .architecture-evidence span {
-  color: var(--cs-text-muted);
+  color: var(--color-cs-muted);
   font-size: 10px;
 }
 
 .architecture-evidence p {
   margin: 4px 0 0;
-  color: var(--cs-text-muted);
+  color: var(--color-cs-muted);
   font-size: 11px;
   line-height: 1.45;
 }
@@ -272,6 +274,6 @@
 
   .architecture-tree {
     border-right: 0;
-    border-bottom: 1px solid var(--cs-border);
+    border-bottom: 1px solid var(--color-cs-border);
   }
 }
