@@ -14,7 +14,9 @@ import {
   type FlowNode,
   type FlowProjection,
   type RepositoryAnalysisRequest,
+  type RepositoryEntity,
 } from './flow-client';
+import { ArchitecturePanel } from './ArchitecturePanel';
 import { GitHubRepositoryPicker } from './GitHubRepositoryPicker';
 import {
   RepositoryPicker,
@@ -230,6 +232,27 @@ export function App() {
     setQuery('');
   }
 
+  function openArchitectureFunction(entity: RepositoryEntity) {
+    if (flow === null || entity.kind !== 'Function') {
+      return;
+    }
+    const projectedNode = flow.nodes.find((node) => node.id === entity.id);
+    if (projectedNode !== undefined) {
+      navigateToNode(projectedNode.id);
+      return;
+    }
+    const entryPoint = (flow.entryPoints ?? []).find(
+      (candidate) =>
+        candidate.filePath === entity.path && candidate.name === entity.name,
+    );
+    if (entryPoint !== undefined && githubRepositoryUrl !== null) {
+      void analyzeGitHub(githubRepositoryUrl, {
+        filePath: entryPoint.filePath,
+        name: entryPoint.name,
+      });
+    }
+  }
+
   function selectEdge(edgeId: string) {
     setSelectedEdgeId(edgeId);
     setInspectorTab('evidence');
@@ -343,6 +366,10 @@ export function App() {
               }
             }}
           />
+          <ArchitecturePanel
+            flow={flow}
+            onOpenFunction={openArchitectureFunction}
+          />
           <section className="state-panel" role="status">
             <strong>No functions projected</strong>
             <span>{projectionStatus.message}</span>
@@ -361,6 +388,10 @@ export function App() {
                 void analyzeGitHub(githubRepositoryUrl, nextEntryPoint);
               }
             }}
+          />
+          <ArchitecturePanel
+            flow={flow}
+            onOpenFunction={openArchitectureFunction}
           />
           <div
             className={`workspace-grid${
