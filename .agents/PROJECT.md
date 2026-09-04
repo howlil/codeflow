@@ -25,12 +25,14 @@ A developer who needs to understand an unfamiliar or complex codebase quickly an
 ```text
 public GitHub repository URL or explicit local repository selection
  -> bounded supported source input
+ -> deterministic repository/module/file architecture projection
+ -> symbol and dependency exploration
  -> deterministic entry-point discovery
  -> deterministic semantic analysis
  -> evidence-backed semantic/data-flow projection
  -> semantic workspace
  -> search/focus/navigation
- -> inspect calls + data movement + source provenance
+ -> inspect definitions + references + calls + data movement + source provenance
  -> deterministic static step-through where supported
 ```
 
@@ -42,6 +44,11 @@ The implemented TypeScript path currently supports:
 
 - bounded public GitHub repository acquisition with authoritative URL/tree/source validation;
 - explicit browser-selected local repository input as a secondary path;
+- deterministic repository/module/file hierarchy from analyzed repository-relative source paths;
+- source-backed file imports and derived cross-module dependencies;
+- bounded TypeScript symbol projection for functions, methods, classes, interfaces, type aliases, enums, and variables;
+- source-backed `CONTAINS`, `DEFINES`, `IMPORTS`, `DEPENDS_ON`, `EXPORTS`, `REFERENCES`, `EXTENDS`, and `IMPLEMENTS` repository/symbol relationships where supported;
+- repository architecture search, hierarchy expand/collapse, relationship inspection, focused direct-neighborhood exploration, and supported architecture-to-function-flow drill-down;
 - deterministic exported-function entry-point discovery with confidence labels;
 - request-scoped/in-memory multi-file TypeScript analysis;
 - evidence-backed functions and supported cross-file call relationships;
