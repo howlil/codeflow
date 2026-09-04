@@ -1,0 +1,222 @@
+.package-topology {
+  border-block: 1px solid var(--cs-border);
+  background: var(--cs-surface);
+}
+
+.package-topology__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--cs-border);
+}
+
+.package-topology__header h2,
+.package-topology__identity h3 {
+  margin: 2px 0 0;
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.package-topology__header p:not(.panel-kicker) {
+  max-width: 720px;
+  margin: 5px 0 0;
+  color: var(--cs-muted);
+  font-size: 12px;
+}
+
+.package-topology__summary {
+  display: flex;
+  gap: 8px;
+  color: var(--cs-muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.package-topology__summary span + span::before {
+  content: '·';
+  margin-right: 8px;
+}
+
+.package-topology__grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 260px) minmax(0, 1fr);
+  min-height: 260px;
+}
+
+.package-topology__packages {
+  border-right: 1px solid var(--cs-border);
+  padding: 6px;
+}
+
+.package-topology__packages button,
+.package-topology__file-list button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--cs-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.package-topology__packages button {
+  display: grid;
+  gap: 2px;
+  padding: 7px 8px;
+  border-radius: 4px;
+}
+
+.package-topology__packages button:hover,
+.package-topology__packages button[aria-pressed='true'],
+.package-topology__file-list button:hover,
+.package-topology__file-list button[aria-pressed='true'] {
+  background: var(--cs-hover);
+}
+
+.package-topology__packages strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.package-topology__packages span,
+.package-topology__identity span,
+.package-topology__symbol span,
+.package-topology__relations li span {
+  color: var(--cs-muted);
+  font-size: 11px;
+}
+
+.package-topology__detail {
+  min-width: 0;
+}
+
+.package-topology__identity {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--cs-border);
+}
+
+.package-topology__evidence {
+  padding: 2px 6px;
+  border: 1px solid var(--cs-border);
+  border-radius: 999px;
+}
+
+.package-topology__relations,
+.package-topology__drilldown {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-bottom: 1px solid var(--cs-border);
+}
+
+.package-topology__relations > section,
+.package-topology__drilldown > section {
+  min-width: 0;
+  padding: 10px 12px;
+}
+
+.package-topology__relations > section + section,
+.package-topology__drilldown > section + section {
+  border-left: 1px solid var(--cs-border);
+}
+
+.package-topology__relations ul,
+.package-topology__issues ul {
+  margin: 7px 0 0;
+  padding-left: 16px;
+}
+
+.package-topology__relations li,
+.package-topology__issues li {
+  margin: 3px 0;
+  font-size: 11px;
+}
+
+.package-topology__relations li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.package-topology__drilldown {
+  grid-template-columns: minmax(220px, 0.9fr) minmax(0, 1.1fr);
+  border-bottom: 0;
+}
+
+.package-topology__file-list,
+.package-topology__symbol-list {
+  max-height: 220px;
+  margin-top: 6px;
+  overflow: auto;
+}
+
+.package-topology__file-list button {
+  padding: 5px 6px;
+  border-radius: 3px;
+  font-family: var(--cs-font-mono, ui-monospace, monospace);
+  font-size: 11px;
+}
+
+.package-topology__symbol {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--cs-border);
+}
+
+.package-topology__symbol > div {
+  display: grid;
+  gap: 1px;
+}
+
+.package-topology__symbol strong {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.package-topology__empty {
+  display: inline-block;
+  margin-top: 6px;
+  color: var(--cs-muted);
+  font-size: 11px;
+}
+
+.package-topology__issues {
+  padding: 8px 14px;
+  border-top: 1px solid var(--cs-border);
+  color: var(--cs-muted);
+  font-size: 11px;
+}
+
+@media (max-width: 820px) {
+  .package-topology__header,
+  .package-topology__summary {
+    display: block;
+  }
+
+  .package-topology__summary {
+    margin-top: 8px;
+  }
+
+  .package-topology__grid,
+  .package-topology__relations,
+  .package-topology__drilldown {
+    grid-template-columns: 1fr;
+  }
+
+  .package-topology__packages,
+  .package-topology__relations > section + section,
+  .package-topology__drilldown > section + section {
+    border-right: 0;
+    border-left: 0;
+    border-top: 1px solid var(--cs-border);
+  }
+}
