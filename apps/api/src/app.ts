@@ -14,6 +14,7 @@ import {
   RepositoryAcquisitionError,
   UnsupportedRepositoryError,
 } from './github.js';
+import { registerChangeRoute } from './change.js';
 import { registerImpactRoute } from './impact.js';
 
 const MAX_REQUEST_BYTES = 1_500_000;
@@ -80,6 +81,7 @@ export function buildApp(): FastifyInstance {
 
   app.get('/api/flows/sample', async () => buildSampleRequestFlow());
   registerImpactRoute(app);
+  registerChangeRoute(app);
 
   app.post<{ Body: unknown }>(
     '/api/analyses',
