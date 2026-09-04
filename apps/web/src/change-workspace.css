@@ -59,7 +59,10 @@
 
 .change-grid {
   display: grid;
-  grid-template-columns: minmax(240px, 0.7fr) minmax(420px, 1.35fr) minmax(340px, 0.95fr);
+  grid-template-columns: minmax(240px, 0.7fr) minmax(420px, 1.35fr) minmax(
+      340px,
+      0.95fr
+    );
   min-height: 560px;
   border-top: 1px solid var(--color-cs-border);
 }

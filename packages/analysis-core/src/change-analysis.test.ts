@@ -65,7 +65,8 @@ describe('M9 repository change projection', () => {
           status: 'modified',
           additions: 1,
           deletions: 1,
-          patch: '@@ -1,3 +1,3 @@\n export function processPayment() {\n-  return 1;\n+  return 2;\n }',
+          patch:
+            '@@ -1,3 +1,3 @@\n export function processPayment() {\n-  return 1;\n+  return 2;\n }',
         },
       ],
     });
@@ -130,7 +131,8 @@ describe('M9 repository change projection', () => {
           status: 'modified',
           additions: 1,
           deletions: 2,
-          patch: "@@ -1,2 +1,1 @@\n-import { processPayment } from './core';\n-export function handle() { return processPayment(); }\n+export function handle() { return 0; }",
+          patch:
+            "@@ -1,2 +1,1 @@\n-import { processPayment } from './core';\n-export function handle() { return processPayment(); }\n+export function handle() { return 0; }",
         },
       ],
     });

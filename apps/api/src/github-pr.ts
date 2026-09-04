@@ -69,7 +69,10 @@ export function parseGitHubPullRequestUrl(value: string): ParsedPullRequestUrl {
     );
   }
 
-  if (url.protocol !== 'https:' || url.hostname.toLowerCase() !== 'github.com') {
+  if (
+    url.protocol !== 'https:' ||
+    url.hostname.toLowerCase() !== 'github.com'
+  ) {
     throw new RepositoryAcquisitionError(
       'invalid-url',
       'Only public https://github.com/owner/repository/pull/number URLs are supported.',
@@ -81,7 +84,11 @@ export function parseGitHubPullRequestUrl(value: string): ParsedPullRequestUrl {
     segments.length !== 4 ||
     segments[2] !== 'pull' ||
     segments.some((segment, index) =>
-      index === 3 ? !/^\d+$/.test(segment) : index === 2 ? false : !/^[\w.-]+$/.test(segment),
+      index === 3
+        ? !/^\d+$/.test(segment)
+        : index === 2
+          ? false
+          : !/^[\w.-]+$/.test(segment),
     )
   ) {
     throw new RepositoryAcquisitionError(
@@ -93,8 +100,15 @@ export function parseGitHubPullRequestUrl(value: string): ParsedPullRequestUrl {
   const owner = segments[0]!;
   const repository = segments[1]!.replace(/\.git$/i, '');
   const pullRequestNumber = Number(segments[3]);
-  if (repository === '' || !Number.isSafeInteger(pullRequestNumber) || pullRequestNumber < 1) {
-    throw new RepositoryAcquisitionError('invalid-url', 'The GitHub pull request URL is invalid.');
+  if (
+    repository === '' ||
+    !Number.isSafeInteger(pullRequestNumber) ||
+    pullRequestNumber < 1
+  ) {
+    throw new RepositoryAcquisitionError(
+      'invalid-url',
+      'The GitHub pull request URL is invalid.',
+    );
   }
 
   return {
@@ -211,7 +225,12 @@ async function acquireRevision(
   fetcher: typeof fetch,
 ): Promise<AcquiredRepository> {
   const [owner, repository] = repositoryFullName.split('/');
-  if (owner === undefined || repository === undefined || owner === '' || repository === '') {
+  if (
+    owner === undefined ||
+    repository === undefined ||
+    owner === '' ||
+    repository === ''
+  ) {
     throw new RepositoryAcquisitionError(
       'remote-failure',
       'GitHub returned an invalid repository identity for one pull request revision.',
@@ -229,12 +248,16 @@ async function acquireRevision(
 
   const ignoredFiles: string[] = [];
   if (tree.truncated === true) {
-    ignoredFiles.push(`GitHub tree for revision ${revision.slice(0, 12)} was truncated.`);
+    ignoredFiles.push(
+      `GitHub tree for revision ${revision.slice(0, 12)} was truncated.`,
+    );
   }
   const candidates = (tree.tree ?? [])
     .filter((entry) => entry.type === 'blob' && typeof entry.path === 'string')
     .map((entry) => ({ path: entry.path as string, size: entry.size ?? 0 }));
-  const sourceCandidates = candidates.filter((entry) => isSupportedSourcePath(entry.path));
+  const sourceCandidates = candidates.filter((entry) =>
+    isSupportedSourcePath(entry.path),
+  );
   const metadataCandidates = candidates
     .filter((entry) => isSupportedMetadataPath(entry.path))
     .sort((left, right) => left.path.localeCompare(right.path));
@@ -327,7 +350,10 @@ async function acquireFiles(
       continue;
     }
     totalBytes += bytes.byteLength;
-    result.push({ filePath: entry.path, text: new TextDecoder().decode(bytes) });
+    result.push({
+      filePath: entry.path,
+      text: new TextDecoder().decode(bytes),
+    });
   }
   return result;
 }
@@ -358,9 +384,15 @@ async function fetchJson<T>(
   return (await response.json()) as T;
 }
 
-async function fetchWithTimeout(url: string, fetcher: typeof fetch): Promise<Response> {
+async function fetchWithTimeout(
+  url: string,
+  fetcher: typeof fetch,
+): Promise<Response> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REPOSITORY_LIMITS.timeoutMs);
+  const timeout = setTimeout(
+    () => controller.abort(),
+    REPOSITORY_LIMITS.timeoutMs,
+  );
   try {
     return await fetcher(url, {
       headers: {

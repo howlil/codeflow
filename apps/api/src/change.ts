@@ -8,10 +8,7 @@ import {
 } from '@codeflow/analysis-core';
 import type { FastifyInstance } from 'fastify';
 
-import {
-  acquirePublicGitHubPullRequest,
-  type AcquiredPullRequest,
-} from './github-pr.js';
+import { acquirePublicGitHubPullRequest } from './github-pr.js';
 import {
   RepositoryAcquisitionError,
   UnsupportedRepositoryError,

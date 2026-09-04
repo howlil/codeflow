@@ -61,19 +61,24 @@ export function ChangeWorkspace({
   const selectedFile =
     change.files.find(
       (file) =>
-        file.path === selectedFilePath || file.previousPath === selectedFilePath,
+        file.path === selectedFilePath ||
+        file.previousPath === selectedFilePath,
     ) ??
     change.files.find(
       (file) =>
         selectedChange !== null &&
-        (file.path === selectedChange.path || file.previousPath === selectedChange.path),
+        (file.path === selectedChange.path ||
+          file.previousPath === selectedChange.path),
     ) ??
     change.files[0] ??
     null;
   const groups = groupChanges(change.entities, analysis);
 
   return (
-    <section className="change-workspace" aria-label="Pull request change workspace">
+    <section
+      className="change-workspace"
+      aria-label="Pull request change workspace"
+    >
       <header className="change-header">
         <div>
           <p className="panel-kicker">
@@ -91,7 +96,10 @@ export function ChangeWorkspace({
         </Button>
       </header>
 
-      <div className="change-summary" aria-label="Pull request semantic summary">
+      <div
+        className="change-summary"
+        aria-label="Pull request semantic summary"
+      >
         <span>{change.files.length} changed files</span>
         <span>{change.entities.length} semantic changes</span>
         <span>{change.relationshipDeltas.length} relationship deltas</span>
@@ -128,7 +136,9 @@ export function ChangeWorkspace({
                       setSelectedImpactId(null);
                     }}
                   >
-                    <span className={`change-kind change-kind--${entity.changeKind}`}>
+                    <span
+                      className={`change-kind change-kind--${entity.changeKind}`}
+                    >
                       {changeKindLabel(entity.changeKind)}
                     </span>
                     <span className="change-entity-copy">
@@ -169,7 +179,10 @@ export function ChangeWorkspace({
           <ChangeDiff file={selectedFile} />
         </section>
 
-        <aside className="change-impact" aria-label="Potential downstream impact">
+        <aside
+          className="change-impact"
+          aria-label="Potential downstream impact"
+        >
           <ImpactInspector
             selectedChange={selectedChange}
             snapshot={snapshot}
@@ -266,7 +279,9 @@ function ImpactInspector({
     return (
       <section>
         <p className="panel-kicker">Potential downstream</p>
-        <p className="change-empty">Select a semantic change to trace impact.</p>
+        <p className="change-empty">
+          Select a semantic change to trace impact.
+        </p>
       </section>
     );
   }
@@ -281,10 +296,12 @@ function ImpactInspector({
           <p className="panel-kicker">Potential downstream</p>
           <h3>{selectedChange.name}</h3>
           <p>
-            {snapshot.toUpperCase()} snapshot · {results.length} known downstream
+            {snapshot.toUpperCase()} snapshot · {results.length} known
+            downstream
           </p>
         </div>
-        {selectedChange.entityKind === 'Function' && selectedEntityId !== null ? (
+        {selectedChange.entityKind === 'Function' &&
+        selectedEntityId !== null ? (
           <Button
             size="sm"
             onClick={() => onOpenFunction(snapshot, flow, selectedEntityId)}
@@ -317,14 +334,21 @@ function ImpactInspector({
                   {result.entityKind} · {result.path ?? 'configured boundary'}
                 </span>
               </div>
-              <small>{result.distance === 1 ? 'direct' : `${result.distance} hops`}</small>
+              <small>
+                {result.distance === 1 ? 'direct' : `${result.distance} hops`}
+              </small>
             </button>
           ))}
         </div>
       )}
 
       {selectedResult === null ? null : (
-        <ImpactEvidence result={selectedResult} flow={flow} snapshot={snapshot} onOpenFunction={onOpenFunction} />
+        <ImpactEvidence
+          result={selectedResult}
+          flow={flow}
+          snapshot={snapshot}
+          onOpenFunction={onOpenFunction}
+        />
       )}
     </section>
   );
@@ -367,7 +391,9 @@ function ImpactEvidence({
           {path.steps.map((step, index) => {
             const evidence = step.evidence[0];
             return (
-              <li key={`${step.kind}:${step.sourceId}:${step.targetId}:${index}`}>
+              <li
+                key={`${step.kind}:${step.sourceId}:${step.targetId}:${index}`}
+              >
                 <strong>{step.kind}</strong>
                 <span>
                   {step.sourceId} → {step.targetId}
@@ -471,8 +497,10 @@ function changeKindLabel(kind: SemanticChangeEntity['changeKind']): string {
 
 function countImpact(change: PullRequestAnalysis['change']): number {
   const ids = new Set<string>();
-  for (const result of change.impact.base?.results ?? []) ids.add(`base:${result.entityId}`);
-  for (const result of change.impact.head?.results ?? []) ids.add(`head:${result.entityId}`);
+  for (const result of change.impact.base?.results ?? [])
+    ids.add(`base:${result.entityId}`);
+  for (const result of change.impact.head?.results ?? [])
+    ids.add(`head:${result.entityId}`);
   return ids.size;
 }
 

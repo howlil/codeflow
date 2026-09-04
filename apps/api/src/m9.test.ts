@@ -158,7 +158,9 @@ function rawFor(
   revision: string,
 ): Response {
   const marker = `/${revision}/`;
-  const path = decodeURIComponent(url.slice(url.indexOf(marker) + marker.length));
+  const path = decodeURIComponent(
+    url.slice(url.indexOf(marker) + marker.length),
+  );
   const text = files[path];
   return text === undefined
     ? new Response('not found', { status: 404 })

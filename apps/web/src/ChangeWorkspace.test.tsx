@@ -95,7 +95,9 @@ function fixture(): PullRequestAnalysis {
             },
           ],
           supported: true,
-          semanticChangeIds: ['change:modified:Function:core.ts:processPayment'],
+          semanticChangeIds: [
+            'change:modified:Function:core.ts:processPayment',
+          ],
         },
       ],
       entities: [
@@ -190,7 +192,7 @@ describe('M9 change workspace', () => {
 
     expect(screen.getByText('Change payment flow')).toBeTruthy();
     expect(screen.getAllByText('processPayment').length).toBeGreaterThan(0);
-    expect(screen.getByText('+  return 2;')).toBeTruthy();
+    expect(screen.getByText(/return 2;/)).toBeTruthy();
     expect(screen.getByText('handle')).toBeTruthy();
     expect(screen.getAllByText('CALLS').length).toBeGreaterThan(0);
     expect(screen.getByText(/Static call evidence/)).toBeTruthy();

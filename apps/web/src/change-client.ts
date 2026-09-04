@@ -58,7 +58,13 @@ export interface RelationshipDeltaEndpoint {
 export interface RelationshipDelta {
   id: string;
   changeKind: 'added' | 'removed';
-  relationshipKind: 'CALLS' | 'REFERENCES' | 'IMPORTS' | 'DEPENDS_ON' | 'EXTENDS' | 'IMPLEMENTS';
+  relationshipKind:
+    | 'CALLS'
+    | 'REFERENCES'
+    | 'IMPORTS'
+    | 'DEPENDS_ON'
+    | 'EXTENDS'
+    | 'IMPLEMENTS';
   source: RelationshipDeltaEndpoint;
   target: RelationshipDeltaEndpoint;
 }
@@ -110,7 +116,9 @@ export async function analyzeGitHubPullRequest(
     ) {
       throw new Error(payload.message);
     }
-    throw new Error(`Pull request analysis failed with status ${response.status}.`);
+    throw new Error(
+      `Pull request analysis failed with status ${response.status}.`,
+    );
   }
   return (await response.json()) as PullRequestAnalysis;
 }

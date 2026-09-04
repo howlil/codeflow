@@ -3,7 +3,6 @@ import type {
   FlowProjection,
   RepositoryEntity,
   RepositoryEntityKind,
-  RepositoryRelationshipKind,
   SourceLocation,
 } from './model.js';
 import {
@@ -239,8 +238,10 @@ function projectChangedFile(
   input: RepositoryChangeFileInput,
   issues: AnalysisIssue[],
 ): RepositoryChangedFile {
-  const supported = isSupportedTypeScriptPath(input.path) ||
-    (input.previousPath !== undefined && isSupportedTypeScriptPath(input.previousPath));
+  const supported =
+    isSupportedTypeScriptPath(input.path) ||
+    (input.previousPath !== undefined &&
+      isSupportedTypeScriptPath(input.previousPath));
   const patch = input.patch ?? null;
   const hunks = patch === null ? [] : parseUnifiedPatchHunks(patch);
 
@@ -248,19 +249,22 @@ function projectChangedFile(
     issues.push({
       kind: 'unsupported',
       filePath: input.path,
-      message: 'This changed file is visible in the pull request, but semantic change mapping currently supports TypeScript/TSX source only.',
+      message:
+        'This changed file is visible in the pull request, but semantic change mapping currently supports TypeScript/TSX source only.',
     });
   } else if (patch === null) {
     issues.push({
       kind: 'unsupported',
       filePath: input.path,
-      message: 'GitHub did not provide a patch for this changed file; file-level change is known but changed-line semantic mapping is unavailable.',
+      message:
+        'GitHub did not provide a patch for this changed file; file-level change is known but changed-line semantic mapping is unavailable.',
     });
   } else if (hunks.length === 0) {
     issues.push({
       kind: 'invalid',
       filePath: input.path,
-      message: 'The GitHub patch did not contain a supported unified-diff hunk header.',
+      message:
+        'The GitHub patch did not contain a supported unified-diff hunk header.',
     });
   }
 
@@ -286,8 +290,12 @@ function mapSemanticChanges(
   const changes = new Map<string, SemanticChangeEntity>();
   const baseEntities = repositoryEntities(base);
   const headEntities = repositoryEntities(head);
-  const baseByKey = new Map(baseEntities.map((entity) => [entityStableKey(entity), entity]));
-  const headByKey = new Map(headEntities.map((entity) => [entityStableKey(entity), entity]));
+  const baseByKey = new Map(
+    baseEntities.map((entity) => [entityStableKey(entity), entity]),
+  );
+  const headByKey = new Map(
+    headEntities.map((entity) => [entityStableKey(entity), entity]),
+  );
 
   for (const file of files) {
     if (!file.supported) {
@@ -295,8 +303,18 @@ function mapSemanticChanges(
     }
 
     const basePath = file.previousPath ?? file.path;
-    const baseCandidates = matchingEntities(baseEntities, basePath, file.hunks, 'base');
-    const headCandidates = matchingEntities(headEntities, file.path, file.hunks, 'head');
+    const baseCandidates = matchingEntities(
+      baseEntities,
+      basePath,
+      file.hunks,
+      'base',
+    );
+    const headCandidates = matchingEntities(
+      headEntities,
+      file.path,
+      file.hunks,
+      'head',
+    );
     const candidateKeys = new Set([
       ...baseCandidates.map(entityStableKey),
       ...headCandidates.map(entityStableKey),
@@ -317,19 +335,24 @@ function mapSemanticChanges(
       issues.push({
         kind: 'unsupported',
         filePath: file.path,
-        message: 'The changed TypeScript file is known, but no analyzed semantic entity could be mapped inside the current bounded source projection.',
+        message:
+          'The changed TypeScript file is known, but no analyzed semantic entity could be mapped inside the current bounded source projection.',
       });
       continue;
     }
 
     for (const key of candidateKeys) {
-      const baseEntity = baseByKey.get(key) ??
-        findEquivalentEntity(baseEntities, key, basePath);
-      const headEntity = headByKey.get(key) ??
+      const baseEntity =
+        baseByKey.get(key) ?? findEquivalentEntity(baseEntities, key, basePath);
+      const headEntity =
+        headByKey.get(key) ??
         findEquivalentEntity(headEntities, key, file.path);
 
       let changeKind: SemanticChangeKind;
-      if (file.status === 'added' || (baseEntity === undefined && headEntity !== undefined)) {
+      if (
+        file.status === 'added' ||
+        (baseEntity === undefined && headEntity !== undefined)
+      ) {
         changeKind = 'added';
       } else if (
         file.status === 'removed' ||
@@ -395,16 +418,21 @@ function matchingEntities(
     return [];
   }
   return inFile.filter((entity) => {
-    if (entity.location === null) return false;
+    const location = entity.location;
+    if (location === null) return false;
     return hunks.some((hunk) => {
       const start = snapshot === 'base' ? hunk.oldStart : hunk.newStart;
       const lines = snapshot === 'base' ? hunk.oldLines : hunk.newLines;
-      return overlaps(entity.location, start, lines);
+      return overlaps(location, start, lines);
     });
   });
 }
 
-function overlaps(location: SourceLocation, start: number, lines: number): boolean {
+function overlaps(
+  location: SourceLocation,
+  start: number,
+  lines: number,
+): boolean {
   if (lines <= 0) return false;
   const end = start + lines - 1;
   return location.startLine <= end && location.endLine >= start;
@@ -421,7 +449,8 @@ function findEquivalentEntity(
 ): RepositoryEntity | undefined {
   const [kind, , name] = key.split('|');
   return entities.find(
-    (entity) => entity.kind === kind && entity.path === path && entity.name === name,
+    (entity) =>
+      entity.kind === kind && entity.path === path && entity.name === name,
   );
 }
 
@@ -476,15 +505,13 @@ function buildRelationshipDeltas(
   );
 }
 
-function relationshipRecords(flow: FlowProjection): Map<string, RelationshipRecord> {
+function relationshipRecords(
+  flow: FlowProjection,
+): Map<string, RelationshipRecord> {
   const entityById = collectRelationshipEntities(flow);
   const records = new Map<string, RelationshipRecord>();
 
-  const add = (
-    kind: string,
-    sourceId: string,
-    targetId: string,
-  ): void => {
+  const add = (kind: string, sourceId: string, targetId: string): void => {
     if (!SUPPORTED_RELATIONSHIPS.has(kind as ImpactRelationshipKind)) return;
     const source = entityById.get(sourceId);
     const target = entityById.get(targetId);
@@ -511,7 +538,9 @@ function relationshipRecords(flow: FlowProjection): Map<string, RelationshipReco
   return records;
 }
 
-function collectRelationshipEntities(flow: FlowProjection): Map<string, EntityRecord> {
+function collectRelationshipEntities(
+  flow: FlowProjection,
+): Map<string, EntityRecord> {
   const entities = new Map<string, EntityRecord>();
   for (const entity of flow.architecture?.entities ?? []) {
     entities.set(entity.id, {
@@ -552,14 +581,19 @@ function entityRecordKey(entity: EntityRecord): string {
 
 function isSupportedTypeScriptPath(path: string): boolean {
   const lower = path.toLowerCase();
-  return (lower.endsWith('.ts') || lower.endsWith('.tsx')) && !lower.endsWith('.d.ts');
+  return (
+    (lower.endsWith('.ts') || lower.endsWith('.tsx')) &&
+    !lower.endsWith('.d.ts')
+  );
 }
 
 function changeKindRank(kind: SemanticChangeKind): number {
   return kind === 'modified' ? 0 : kind === 'removed' ? 1 : 2;
 }
 
-function entityKindRank(kind: Exclude<RepositoryEntityKind, 'Repository'>): number {
+function entityKindRank(
+  kind: Exclude<RepositoryEntityKind, 'Repository'>,
+): number {
   const rank: Record<Exclude<RepositoryEntityKind, 'Repository'>, number> = {
     Module: 0,
     File: 1,

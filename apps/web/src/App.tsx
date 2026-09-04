@@ -16,9 +16,15 @@ import {
   type RepositoryAnalysisRequest,
   type RepositoryEntity,
 } from './flow-client';
+import {
+  analyzeGitHubPullRequest,
+  type PullRequestAnalysis,
+} from './change-client';
 import { ArchitecturePanel } from './ArchitecturePanel';
+import { ChangeWorkspace } from './ChangeWorkspace';
 import { PackageTopologyPanel } from './PackageTopologyPanel';
 import { GitHubRepositoryPicker } from './GitHubRepositoryPicker';
+import { GitHubPullRequestPicker } from './GitHubPullRequestPicker';
 import {
   RepositoryPicker,
   type RepositorySelectionSummary,
@@ -50,6 +56,8 @@ const THEME_STORAGE_KEY = 'codeflow-theme';
 
 export function App() {
   const [flow, setFlow] = useState<FlowProjection | null>(null);
+  const [changeAnalysis, setChangeAnalysis] =
+    useState<PullRequestAnalysis | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
@@ -134,6 +142,7 @@ export function App() {
   ) {
     setAnalyzing(true);
     setError(null);
+    setChangeAnalysis(null);
     setSelectionSummary(summary);
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
@@ -166,6 +175,7 @@ export function App() {
   ) {
     setAnalyzing(true);
     setError(null);
+    setChangeAnalysis(null);
     setGithubRepositoryUrl(repositoryUrl);
     setSelectionSummary(null);
     setSelectedNodeId(null);
@@ -201,8 +211,68 @@ export function App() {
     }
   }
 
+  async function analyzePullRequest(pullRequestUrl: string) {
+    setAnalyzing(true);
+    setError(null);
+    setFlow(null);
+    setChangeAnalysis(null);
+    setSelectionSummary(null);
+    setGithubRepositoryUrl(null);
+    setSelectedNodeId(null);
+    setSelectedEdgeId(null);
+    setFocusMode(false);
+    setSourceSplitMode(false);
+    setInspectorTab('overview');
+    setInspectorOpen(false);
+    setRelationshipLens('ALL');
+    setQuery('');
+
+    try {
+      const loaded = await analyzeGitHubPullRequest(pullRequestUrl);
+      setChangeAnalysis(loaded);
+    } catch (caughtError: unknown) {
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'Unable to analyze the public GitHub pull request.',
+      );
+    } finally {
+      setAnalyzing(false);
+    }
+  }
+
+  function openChangeFunction(
+    _snapshot: 'base' | 'head',
+    snapshotFlow: FlowProjection,
+    entityId: string,
+  ) {
+    const node = snapshotFlow.nodes.find(
+      (candidate) => candidate.id === entityId,
+    );
+    if (node === undefined) {
+      return;
+    }
+    setChangeAnalysis(null);
+    setFlow(snapshotFlow);
+    setGithubRepositoryUrl(null);
+    setSelectionSummary({
+      rootLabel: snapshotFlow.repository?.name ?? 'Pull request revision',
+      selectedFileCount: snapshotFlow.sources.length,
+      ignoredFileCount: snapshotFlow.analysis.ignoredFileCount,
+    });
+    setSelectedNodeId(node.id);
+    setSelectedEdgeId(null);
+    setFocusMode(true);
+    setSourceSplitMode(false);
+    setInspectorTab('overview');
+    setInspectorOpen(true);
+    setRelationshipLens('ALL');
+    setQuery('');
+  }
+
   function resetRepository() {
     setFlow(null);
+    setChangeAnalysis(null);
     setSelectionSummary(null);
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
@@ -319,8 +389,12 @@ export function App() {
         </IconButton>
       </header>
 
-      {flow === null && !analyzing ? (
+      {flow === null && changeAnalysis === null && !analyzing ? (
         <>
+          <GitHubPullRequestPicker
+            busy={analyzing}
+            onAnalyze={analyzePullRequest}
+          />
           <GitHubRepositoryPicker
             busy={analyzing}
             error={null}
@@ -335,11 +409,19 @@ export function App() {
 
       {analyzing ? (
         <section className="state-panel" role="status">
-          <strong>Analyzing selected TypeScript repository…</strong>
+          <strong>
+            Analyzing selected TypeScript repository or pull request…
+          </strong>
           <span>
-            Building an evidence-backed projection without executing code.
+            Building bounded evidence-backed projections without executing code.
           </span>
         </section>
+      ) : changeAnalysis !== null ? (
+        <ChangeWorkspace
+          analysis={changeAnalysis}
+          onOpenFunction={openChangeFunction}
+          onChangeRepository={resetRepository}
+        />
       ) : error !== null ? (
         <section className="state-panel state-panel--error" role="alert">
           <strong>Repository analysis unavailable</strong>
