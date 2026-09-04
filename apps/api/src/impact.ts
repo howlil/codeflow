@@ -48,7 +48,10 @@ class ImpactInputError extends Error {
 
 function parseImpactAnalysisPayload(body: unknown): ImpactAnalysisPayload {
   if (!isRecord(body) || !isRecord(body.flow)) {
-    throw new ImpactInputError(400, 'Impact analysis requires a flow projection.');
+    throw new ImpactInputError(
+      400,
+      'Impact analysis requires a flow projection.',
+    );
   }
   if (!Array.isArray(body.seedIds) || body.seedIds.length === 0) {
     throw new ImpactInputError(

@@ -195,16 +195,10 @@ export interface PackageTopologyProjection {
 }
 
 export type ImpactEntityKind =
-  | Exclude<RepositoryEntityKind, 'Repository'>
-  | 'Package';
+  Exclude<RepositoryEntityKind, 'Repository'> | 'Package';
 
 export type ImpactRelationshipKind =
-  | 'CALLS'
-  | 'REFERENCES'
-  | 'IMPORTS'
-  | 'DEPENDS_ON'
-  | 'EXTENDS'
-  | 'IMPLEMENTS';
+  'CALLS' | 'REFERENCES' | 'IMPORTS' | 'DEPENDS_ON' | 'EXTENDS' | 'IMPLEMENTS';
 
 export interface ImpactSeed {
   entityId: string;

@@ -193,25 +193,35 @@ describe('ImpactPanel', () => {
       }),
     ).toBeTruthy();
 
-    fireEvent.click(within(region).getByRole('button', { name: 'Trace impact' }));
+    fireEvent.click(
+      within(region).getByRole('button', { name: 'Trace impact' }),
+    );
 
     await waitFor(() => {
       expect(within(region).getByText('1 direct')).toBeTruthy();
       expect(within(region).getByText('1 transitive')).toBeTruthy();
     });
 
-    const results = within(region).getByLabelText('Potential downstream impact');
+    const results = within(region).getByLabelText(
+      'Potential downstream impact',
+    );
     fireEvent.click(within(results).getByRole('button', { name: /handle/i }));
     expect(within(region).getByText('Direct · 1 hop')).toBeTruthy();
-    expect(within(region).getByText(/packages\/core\/src\/core.ts:L8/)).toBeTruthy();
-    expect(within(region).getByText('handle calls process in analyzed source.')).toBeTruthy();
+    expect(
+      within(region).getByText(/packages\/core\/src\/core.ts:L8/),
+    ).toBeTruthy();
+    expect(
+      within(region).getByText('handle calls process in analyzed source.'),
+    ).toBeTruthy();
 
     fireEvent.click(within(region).getByRole('button', { name: 'Focus path' }));
     expect(
       within(region).getByRole('button', { name: 'Back to impact results' }),
     ).toBeTruthy();
 
-    fireEvent.click(within(region).getByRole('button', { name: 'Open function flow' }));
+    fireEvent.click(
+      within(region).getByRole('button', { name: 'Open function flow' }),
+    );
     expect(onOpenFunction).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'function:apps/api/src/handler.ts:handle',
@@ -225,23 +235,24 @@ describe('ImpactPanel', () => {
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ({
-          ...impact,
-          results: [],
-          summary: {
-            ...impact.summary,
-            directCount: 0,
-            transitiveCount: 0,
-          },
-          status: 'partial',
-          issues: [
-            {
-              kind: 'limit',
-              filePath: 'large.ts',
-              message: 'Source was outside the bounded analysis.',
+        json: async () =>
+          ({
+            ...impact,
+            results: [],
+            summary: {
+              ...impact.summary,
+              directCount: 0,
+              transitiveCount: 0,
             },
-          ],
-        } satisfies ImpactProjection),
+            status: 'partial',
+            issues: [
+              {
+                kind: 'limit',
+                filePath: 'large.ts',
+                message: 'Source was outside the bounded analysis.',
+              },
+            ],
+          }) satisfies ImpactProjection,
       }),
     );
 
@@ -254,11 +265,21 @@ describe('ImpactPanel', () => {
       { target: { value: 'process' } },
     );
     fireEvent.click(within(region).getByRole('option', { name: /process/i }));
-    fireEvent.click(within(region).getByRole('button', { name: 'Trace impact' }));
+    fireEvent.click(
+      within(region).getByRole('button', { name: 'Trace impact' }),
+    );
 
-    expect(await within(region).findByText('No known downstream dependency found.')).toBeTruthy();
-    expect(within(region).getByText(/absence from the result set is not a safety guarantee/i)).toBeTruthy();
-    expect(within(region).getByText(/Source was outside the bounded analysis/)).toBeTruthy();
+    expect(
+      await within(region).findByText('No known downstream dependency found.'),
+    ).toBeTruthy();
+    expect(
+      within(region).getByText(
+        /absence from the result set is not a safety guarantee/i,
+      ),
+    ).toBeTruthy();
+    expect(
+      within(region).getByText(/Source was outside the bounded analysis/),
+    ).toBeTruthy();
   });
 });
 

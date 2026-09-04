@@ -8,16 +8,10 @@ import type {
 } from './model.js';
 
 export type ImpactEntityKind =
-  | Exclude<RepositoryEntityKind, 'Repository'>
-  | 'Package';
+  Exclude<RepositoryEntityKind, 'Repository'> | 'Package';
 
 export type ImpactRelationshipKind =
-  | 'CALLS'
-  | 'REFERENCES'
-  | 'IMPORTS'
-  | 'DEPENDS_ON'
-  | 'EXTENDS'
-  | 'IMPLEMENTS';
+  'CALLS' | 'REFERENCES' | 'IMPORTS' | 'DEPENDS_ON' | 'EXTENDS' | 'IMPLEMENTS';
 
 export interface ImpactSeed {
   entityId: string;
@@ -307,9 +301,7 @@ function indexIncomingRelationships(
 
   for (const relationship of flow.architecture?.relationships ?? []) {
     if (
-      !IMPACT_RELATIONSHIPS.has(
-        relationship.kind as ImpactRelationshipKind,
-      )
+      !IMPACT_RELATIONSHIPS.has(relationship.kind as ImpactRelationshipKind)
     ) {
       continue;
     }
@@ -453,8 +445,7 @@ function deepestContainingModule(
 ): RepositoryEntity | undefined {
   return modules
     .filter(
-      (module) =>
-        path === module.path || path.startsWith(`${module.path}/`),
+      (module) => path === module.path || path.startsWith(`${module.path}/`),
     )
     .sort((left, right) => right.path.length - left.path.length)[0];
 }

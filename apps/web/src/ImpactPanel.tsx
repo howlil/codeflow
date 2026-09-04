@@ -90,7 +90,9 @@ export function ImpactPanel({
     } catch (cause: unknown) {
       setImpact(null);
       setSelectedResultId(null);
-      setError(cause instanceof Error ? cause.message : 'Impact analysis failed.');
+      setError(
+        cause instanceof Error ? cause.message : 'Impact analysis failed.',
+      );
     } finally {
       setLoading(false);
     }
@@ -148,7 +150,10 @@ export function ImpactPanel({
             autoComplete="off"
             onChange={(event) => setQuery(event.target.value)}
           />
-          <Button disabled={scope.length === 0 || loading} onClick={traceImpact}>
+          <Button
+            disabled={scope.length === 0 || loading}
+            onClick={traceImpact}
+          >
             {loading ? 'Tracing…' : 'Trace impact'}
           </Button>
         </div>
@@ -186,7 +191,10 @@ export function ImpactPanel({
             change scope.
           </p>
         ) : (
-          <div className="impact-scope-items" aria-label="Selected change targets">
+          <div
+            className="impact-scope-items"
+            aria-label="Selected change targets"
+          >
             {scope.map((candidate) => (
               <button
                 key={candidate.id}
@@ -214,7 +222,10 @@ export function ImpactPanel({
       {impact === null ? null : (
         <>
           <div className="impact-toolbar">
-            <div className="impact-layer-filter" aria-label="Impact layer filter">
+            <div
+              className="impact-layer-filter"
+              aria-label="Impact layer filter"
+            >
               {(['all', 'direct', 'transitive'] as const).map((filter) => (
                 <Button
                   key={filter}
@@ -275,7 +286,10 @@ export function ImpactPanel({
           ) : null}
 
           <div className="impact-grid">
-            <div className="impact-results" aria-label="Potential downstream impact">
+            <div
+              className="impact-results"
+              aria-label="Potential downstream impact"
+            >
               {visibleResults.length === 0 ? (
                 <div className="impact-empty-state">
                   <strong>No known downstream dependency found.</strong>
@@ -295,7 +309,8 @@ export function ImpactPanel({
                     <div>
                       <strong>{result.name}</strong>
                       <span>
-                        {result.entityKind} · {result.path ?? 'configured boundary'}
+                        {result.entityKind} ·{' '}
+                        {result.path ?? 'configured boundary'}
                       </span>
                     </div>
                     <small>
@@ -366,7 +381,9 @@ function ImpactDetail({
   if (result === null) {
     return (
       <aside className="impact-detail">
-        <p className="impact-empty">Select an affected entity to inspect why.</p>
+        <p className="impact-empty">
+          Select an affected entity to inspect why.
+        </p>
       </aside>
     );
   }
@@ -417,7 +434,9 @@ function ImpactDetail({
               const target = candidateById.get(step.targetId);
               const evidence = step.evidence[0];
               return (
-                <li key={`${step.kind}:${step.sourceId}:${step.targetId}:${index}`}>
+                <li
+                  key={`${step.kind}:${step.sourceId}:${step.targetId}:${index}`}
+                >
                   <div className="impact-path-edge">
                     <strong>{source?.name ?? step.sourceId}</strong>
                     <span>

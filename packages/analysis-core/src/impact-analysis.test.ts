@@ -50,11 +50,7 @@ describe('buildImpactProjection', () => {
   it('handles package cycles, multiple seeds, invalid seeds, and deterministic deduplication', () => {
     const impact = buildImpactProjection(
       fixture(),
-      [
-        'package:core',
-        'function:packages/core/src/core.ts:process',
-        'missing',
-      ],
+      ['package:core', 'function:packages/core/src/core.ts:process', 'missing'],
       4,
     );
 
@@ -66,9 +62,9 @@ describe('buildImpactProjection', () => {
     expect(
       impact.results.find((item) => item.entityId === 'package:api')?.distance,
     ).toBe(1);
-    expect(impact.results.some((item) => item.entityId === 'package:core')).toBe(
-      false,
-    );
+    expect(
+      impact.results.some((item) => item.entityId === 'package:core'),
+    ).toBe(false);
   });
 
   it('uses references, imports, extends, and implements as impact evidence without traversing containment', () => {
@@ -116,7 +112,9 @@ describe('buildImpactProjection', () => {
       ['interface:packages/core/src/core.ts:Contract:1'],
       2,
     );
-    expect(contractImpact.results.map((item) => item.name)).toContain('Handler');
+    expect(contractImpact.results.map((item) => item.name)).toContain(
+      'Handler',
+    );
 
     const fileImpact = buildImpactProjection(
       flow,
@@ -259,12 +257,7 @@ function fixture(): FlowProjection {
 
 function entity(
   id: string,
-  kind:
-    | 'Module'
-    | 'File'
-    | 'Function'
-    | 'Class'
-    | 'Interface',
+  kind: 'Module' | 'File' | 'Function' | 'Class' | 'Interface',
   name: string,
   path: string,
 ) {
