@@ -139,7 +139,6 @@ describe('ArchitecturePanel', () => {
   it('can focus a selected architecture entity', () => {
     render(<ArchitecturePanel flow={flow} onOpenFunction={vi.fn()} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /Expand Repository/i }));
     fireEvent.click(screen.getByRole('button', { name: /apps Module/i }));
     fireEvent.click(screen.getByRole('button', { name: 'Focus' }));
 
