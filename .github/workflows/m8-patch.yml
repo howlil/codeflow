@@ -1,0 +1,35 @@
+name: M8 Patch
+
+on:
+  push:
+    branches:
+      - feat/m8-change-impact-explorer
+    paths:
+      - .github/workflows/m8-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/m8-change-impact-explorer
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: node .github/m8-fix.mjs
+      - run: pnpm exec prettier --write apps/web/src/ImpactPanel.tsx
+      - run: pnpm --filter @codeflow/web test -- ImpactPanel.test.tsx
+      - run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add apps/web/src/ImpactPanel.tsx
+          git commit -m "fix(m8): keep partial impact empty state truthful"
+          git push origin HEAD:feat/m8-change-impact-explorer
