@@ -32,8 +32,17 @@ export function PackageTopologyPanel({
     return null;
   }
 
+  const activeEntryEntity = flow.architecture?.entities.find(
+    (entity) => entity.id === flow.entryPointId,
+  );
+  const contextualPackageId =
+    activeEntryEntity === undefined
+      ? undefined
+      : topology.fileOwners[activeEntryEntity.path];
   const selectedPackage =
-    packages.find((entity) => entity.id === selectedPackageId) ?? packages[0]!;
+    packages.find((entity) => entity.id === selectedPackageId) ??
+    packages.find((entity) => entity.id === contextualPackageId) ??
+    packages[0]!;
   const entityById = new Map(
     topology.entities.map((entity) => [entity.id, entity]),
   );
@@ -134,6 +143,7 @@ export function PackageTopologyPanel({
             <button
               key={entity.id}
               type="button"
+              aria-label={`${entity.name} package ${entity.path}`}
               aria-pressed={entity.id === selectedPackage.id}
               onClick={() => {
                 setSelectedPackageId(entity.id);

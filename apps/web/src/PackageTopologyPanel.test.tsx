@@ -119,7 +119,9 @@ describe('PackageTopologyPanel', () => {
     expect(
       screen.getByRole('region', { name: 'System topology' }),
     ).toBeTruthy();
-    expect(screen.getByText('@demo/core')).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: '@demo/core package packages/core' }),
+    ).toBeTruthy();
     expect(screen.getByText('react')).toBeTruthy();
     expect(screen.getByText('apps/web/src/app.ts')).toBeTruthy();
 
