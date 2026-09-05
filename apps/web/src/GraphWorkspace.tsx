@@ -496,7 +496,8 @@ function GraphContextBar({
   searchResults: SemanticGraphNode[];
   activeSearchIndex: number;
   searchInputRef: React.RefObject<HTMLInputElement | null>;
-  currentEntryPoint: FlowProjection['entryPoints'][number] | undefined;
+  currentEntryPoint:
+    NonNullable<FlowProjection['entryPoints']>[number] | undefined;
   onQueryChange: (value: string) => void;
   onSearchKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
   onActiveSearchIndexChange: (index: number) => void;
