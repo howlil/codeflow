@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import './index.css';
 import './workbench.css';
-import './product-workbench.css';
+import './graph-workspace.css';
 
 const root = document.getElementById('root');
 

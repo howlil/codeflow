@@ -31,11 +31,11 @@ export function GitHubRepositoryPicker({
       aria-labelledby="github-acquisition-title"
     >
       <div>
-        <p className="panel-kicker">Start with a repository</p>
-        <h2 id="github-acquisition-title">Understand an unfamiliar codebase</h2>
+        <p className="panel-kicker">Repository</p>
+        <h2 id="github-acquisition-title">Open a public GitHub repository</h2>
         <p>
-          Paste a public GitHub URL. CodeFlow will find deterministic entry
-          points and open the evidence-backed semantic workspace.
+          CodeFlow finds entry points and builds a bounded semantic graph of
+          source-backed code relationships.
         </p>
       </div>
       <form onSubmit={handleSubmit}>
@@ -53,7 +53,7 @@ export function GitHubRepositoryPicker({
             onChange={(event) => setRepositoryUrl(event.target.value)}
           />
           <button className="primary-action" type="submit" disabled={busy}>
-            {busy ? 'Analyzing…' : 'Analyze GitHub repository'}
+            {busy ? 'Analyzing…' : 'Open code graph'}
           </button>
         </div>
         <p className="github-note">
