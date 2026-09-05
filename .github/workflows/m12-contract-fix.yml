@@ -1,0 +1,39 @@
+name: Finalize M12 contracts
+
+on:
+  push:
+    branches:
+      - refactor/m12-graph-first-codeflow
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Align graph-first tests and format
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          path = Path('apps/web/src/App.test.tsx')
+          text = path.read_text()
+          text = text.replace("name: 'Analyze pull request'", "name: 'Open change graph'")
+          path.write_text(text)
+          PY
+          pnpm exec prettier --write apps/web/src/App.test.tsx apps/web/src/GitHubPullRequestPicker.tsx
+          rm .github/workflows/m12-contract-fix.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "test: align graph-first interaction contracts"
+          git push
