@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import type {
+  FunctionBehaviorDelta,
   PullRequestAnalysis,
   RelationshipDelta,
   RepositoryChangedFile,
@@ -73,6 +74,12 @@ export function ChangeWorkspace({
     change.files[0] ??
     null;
   const groups = groupChanges(change.entities, analysis);
+  const behaviorDelta =
+    selectedChange === null
+      ? null
+      : (change.behaviorDeltas.find(
+          (delta) => delta.changeEntityId === selectedChange.id,
+        ) ?? null);
 
   return (
     <section
@@ -102,6 +109,7 @@ export function ChangeWorkspace({
       >
         <span>{change.files.length} changed files</span>
         <span>{change.entities.length} semantic changes</span>
+        <span>{countBehaviorDeltas(change)} static behavior deltas</span>
         <span>{change.relationshipDeltas.length} relationship deltas</span>
         <span>{countImpact(change)} downstream results</span>
         <span>{change.coverage.status} coverage</span>
@@ -183,6 +191,7 @@ export function ChangeWorkspace({
           className="change-impact"
           aria-label="Potential downstream impact"
         >
+          <BehaviorDeltaInspector delta={behaviorDelta} />
           <ImpactInspector
             selectedChange={selectedChange}
             snapshot={snapshot}
@@ -251,6 +260,71 @@ function ChangeDiff({ file }: { file: RepositoryChangedFile | null }) {
         </pre>
       )}
     </>
+  );
+}
+
+function BehaviorDeltaInspector({
+  delta,
+}: {
+  delta: FunctionBehaviorDelta | null;
+}) {
+  if (delta === null) {
+    return null;
+  }
+
+  return (
+    <section className="behavior-deltas change-impact-section">
+      <header className="change-pane-heading">
+        <div>
+          <p className="panel-kicker">Static behavior delta</p>
+          <h3>{delta.functionName}</h3>
+          <p>
+            BASE → HEAD · +{delta.summary.addedCount} −
+            {delta.summary.removedCount} supported static facts
+          </p>
+        </div>
+      </header>
+
+      {delta.items.length === 0 ? (
+        <div className="change-empty-state">
+          <strong>No supported static behavior delta detected.</strong>
+          <span>
+            Contract and projected static-flow facts are unchanged. This does
+            not prove runtime equivalence.
+          </span>
+        </div>
+      ) : (
+        <div className="behavior-delta-list">
+          {delta.items.map((item) => {
+            const evidence = item.evidence[0];
+            const location = item.location ?? evidence?.location ?? null;
+            return (
+              <div key={item.id}>
+                <span className={`change-kind change-kind--${item.changeKind}`}>
+                  {item.changeKind === 'added' ? 'A' : 'R'}
+                </span>
+                <div>
+                  <strong>
+                    {behaviorCategoryLabel(item.category)} · {item.kind}
+                  </strong>
+                  <span>{item.label}</span>
+                  {item.detail === null ? null : <small>{item.detail}</small>}
+                  {location === null ? null : (
+                    <small>
+                      {item.snapshot.toUpperCase()} · {location.filePath}:L
+                      {location.startLine}
+                    </small>
+                  )}
+                  {evidence === undefined ? null : (
+                    <small>{evidence.reason}</small>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -493,6 +567,22 @@ function snapshotForChange(entity: SemanticChangeEntity | null): SnapshotKind {
 
 function changeKindLabel(kind: SemanticChangeEntity['changeKind']): string {
   return kind === 'added' ? 'A' : kind === 'removed' ? 'R' : 'M';
+}
+
+function countBehaviorDeltas(change: PullRequestAnalysis['change']): number {
+  return change.behaviorDeltas.reduce(
+    (count, delta) => count + delta.items.length,
+    0,
+  );
+}
+
+function behaviorCategoryLabel(
+  category: FunctionBehaviorDelta['items'][number]['category'],
+): string {
+  if (category === 'parameter') return 'Input';
+  if (category === 'return') return 'Return';
+  if (category === 'relationship') return 'Data flow';
+  return 'Step';
 }
 
 function countImpact(change: PullRequestAnalysis['change']): number {

@@ -1,5 +1,6 @@
 import type {
   AnalysisIssue,
+  FlowEvidence,
   FlowProjection,
   ImpactProjection,
   RepositoryEntityKind,
@@ -69,6 +70,40 @@ export interface RelationshipDelta {
   target: RelationshipDeltaEndpoint;
 }
 
+export type BehaviorDeltaChangeKind = 'added' | 'removed';
+export type BehaviorDeltaCategory =
+  'parameter' | 'return' | 'step' | 'relationship';
+export type BehaviorDeltaSnapshot = 'base' | 'head';
+
+export interface FunctionBehaviorDeltaItem {
+  id: string;
+  changeKind: BehaviorDeltaChangeKind;
+  category: BehaviorDeltaCategory;
+  kind: string;
+  label: string;
+  detail: string | null;
+  snapshot: BehaviorDeltaSnapshot;
+  location: SourceLocation | null;
+  evidence: FlowEvidence[];
+}
+
+export interface FunctionBehaviorDelta {
+  changeEntityId: string;
+  functionName: string;
+  path: string;
+  baseFunctionId: string | null;
+  headFunctionId: string | null;
+  items: FunctionBehaviorDeltaItem[];
+  summary: {
+    addedCount: number;
+    removedCount: number;
+    parameterCount: number;
+    returnCount: number;
+    stepCount: number;
+    relationshipCount: number;
+  };
+}
+
 export interface RepositoryChangeProjection {
   source: {
     provider: 'github';
@@ -81,6 +116,7 @@ export interface RepositoryChangeProjection {
   };
   files: RepositoryChangedFile[];
   entities: SemanticChangeEntity[];
+  behaviorDeltas: FunctionBehaviorDelta[];
   relationshipDeltas: RelationshipDelta[];
   impact: {
     base: ImpactProjection | null;

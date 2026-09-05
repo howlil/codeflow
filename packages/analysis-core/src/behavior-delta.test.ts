@@ -119,7 +119,9 @@ export function processPayment(amount: number) {
     ])[0];
 
     expect(delta?.items.length).toBeGreaterThan(0);
-    expect(delta?.items.every((item) => item.changeKind === 'added')).toBe(true);
+    expect(delta?.items.every((item) => item.changeKind === 'added')).toBe(
+      true,
+    );
     expect(delta?.items.every((item) => item.snapshot === 'head')).toBe(true);
   });
 });

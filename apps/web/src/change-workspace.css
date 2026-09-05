@@ -321,6 +321,43 @@
   line-height: 1.45;
 }
 
+.behavior-deltas {
+  padding-bottom: 0;
+}
+
+.behavior-delta-list {
+  border-top: 1px solid var(--color-cs-border);
+}
+
+.behavior-delta-list > div {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 7px;
+  border-bottom: 1px solid var(--color-cs-border);
+  padding: 7px 10px;
+}
+
+.behavior-delta-list > div > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.behavior-delta-list strong {
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.behavior-delta-list span,
+.behavior-delta-list small {
+  overflow: hidden;
+  color: var(--color-cs-muted);
+  font-size: 9px;
+  line-height: 1.45;
+  text-overflow: ellipsis;
+}
+
 .relationship-deltas {
   padding-bottom: 10px;
 }

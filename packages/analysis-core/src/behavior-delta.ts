@@ -8,10 +8,7 @@ import type {
 
 export type BehaviorDeltaChangeKind = 'added' | 'removed';
 export type BehaviorDeltaCategory =
-  | 'parameter'
-  | 'return'
-  | 'step'
-  | 'relationship';
+  'parameter' | 'return' | 'step' | 'relationship';
 export type BehaviorDeltaSnapshot = 'base' | 'head';
 
 export interface FunctionBehaviorDeltaItem {
@@ -85,9 +82,13 @@ function buildFunctionBehaviorDelta(
   change: ChangedFunctionRef,
 ): FunctionBehaviorDelta {
   const baseFacts =
-    change.baseEntityId === null ? [] : functionFacts(base, change.baseEntityId);
+    change.baseEntityId === null
+      ? []
+      : functionFacts(base, change.baseEntityId);
   const headFacts =
-    change.headEntityId === null ? [] : functionFacts(head, change.headEntityId);
+    change.headEntityId === null
+      ? []
+      : functionFacts(head, change.headEntityId);
   const items = diffFacts(change.id, baseFacts, headFacts);
 
   return {
@@ -101,7 +102,10 @@ function buildFunctionBehaviorDelta(
   };
 }
 
-function functionFacts(flow: FlowProjection, functionId: string): BehaviorFact[] {
+function functionFacts(
+  flow: FlowProjection,
+  functionId: string,
+): BehaviorFact[] {
   const facts: BehaviorFact[] = [];
   const data = flow.functionData.find(
     (projection) => projection.functionId === functionId,
@@ -133,7 +137,8 @@ function functionFacts(flow: FlowProjection, functionId: string): BehaviorFact[]
       ]),
       category: 'return',
       kind: 'return',
-      label: returnPath.expressionText === null ? 'Return' : 'Return expression',
+      label:
+        returnPath.expressionText === null ? 'Return' : 'Return expression',
       detail: returnPath.expressionText,
       location: returnPath.location,
       evidence: returnPath.evidence,
@@ -178,16 +183,17 @@ function relationshipFact(
   const source =
     relationship.sourceStepId === null
       ? null
-      : stepById.get(relationship.sourceStepId) ?? null;
+      : (stepById.get(relationship.sourceStepId) ?? null);
   const target =
     relationship.targetStepId === null
       ? null
-      : stepById.get(relationship.targetStepId) ?? null;
+      : (stepById.get(relationship.targetStepId) ?? null);
   const sourceKey = source === null ? 'boundary' : stepSemanticKey(source);
   const targetKey = target === null ? 'boundary' : stepSemanticKey(target);
   const sourceLabel = source?.label ?? 'function boundary';
   const targetLabel = target?.label ?? 'function boundary';
-  const location = relationship.evidence[0]?.location ?? target?.location ?? null;
+  const location =
+    relationship.evidence[0]?.location ?? target?.location ?? null;
 
   return {
     key: factKey([
@@ -275,16 +281,21 @@ function groupFacts(facts: BehaviorFact[]): Map<string, BehaviorFact[]> {
     grouped.set(fact.key, current);
   }
   for (const group of grouped.values()) {
-    group.sort((left, right) => compareLocations(left.location, right.location));
+    group.sort((left, right) =>
+      compareLocations(left.location, right.location),
+    );
   }
   return grouped;
 }
 
-function summarize(items: FunctionBehaviorDeltaItem[]): FunctionBehaviorDeltaSummary {
+function summarize(
+  items: FunctionBehaviorDeltaItem[],
+): FunctionBehaviorDeltaSummary {
   return {
     addedCount: items.filter((item) => item.changeKind === 'added').length,
     removedCount: items.filter((item) => item.changeKind === 'removed').length,
-    parameterCount: items.filter((item) => item.category === 'parameter').length,
+    parameterCount: items.filter((item) => item.category === 'parameter')
+      .length,
     returnCount: items.filter((item) => item.category === 'return').length,
     stepCount: items.filter((item) => item.category === 'step').length,
     relationshipCount: items.filter((item) => item.category === 'relationship')
@@ -301,7 +312,10 @@ function normalize(value: string): string {
 }
 
 function compareFacts(left: BehaviorFact, right: BehaviorFact): number {
-  return left.key.localeCompare(right.key) || compareLocations(left.location, right.location);
+  return (
+    left.key.localeCompare(right.key) ||
+    compareLocations(left.location, right.location)
+  );
 }
 
 function compareLocations(
