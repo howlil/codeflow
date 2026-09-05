@@ -5,6 +5,7 @@ import { App } from './App';
 import './index.css';
 import './workbench.css';
 import './graph-workspace.css';
+import './anthropic-theme.css';
 
 const root = document.getElementById('root');
 
