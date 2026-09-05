@@ -558,7 +558,10 @@ h2 {
 
 /* PR change workspace */
 .change-grid {
-  grid-template-columns: minmax(220px, 0.72fr) minmax(420px, 1.55fr) minmax(320px, 0.95fr);
+  grid-template-columns: minmax(220px, 0.72fr) minmax(420px, 1.55fr) minmax(
+      320px,
+      0.95fr
+    );
   min-height: 620px;
 }
 
