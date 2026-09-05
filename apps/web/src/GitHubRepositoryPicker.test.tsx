@@ -6,21 +6,21 @@ import { GitHubRepositoryPicker } from './GitHubRepositoryPicker';
 describe('GitHubRepositoryPicker', () => {
   afterEach(cleanup);
 
-  it('presents GitHub acquisition as the primary repository journey', () => {
+  it('presents GitHub acquisition as the primary code-graph journey', () => {
     render(
       <GitHubRepositoryPicker busy={false} error={null} onAnalyze={vi.fn()} />,
     );
 
     expect(
       screen.getByRole('heading', {
-        name: 'Understand an unfamiliar codebase',
+        name: 'Open a public GitHub repository',
       }),
     ).toBeInTheDocument();
     expect(
       screen.getByLabelText('Public GitHub repository URL'),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Analyze GitHub repository' }),
+      screen.getByRole('button', { name: 'Open code graph' }),
     ).toBeInTheDocument();
   });
 
@@ -37,9 +37,7 @@ describe('GitHubRepositoryPicker', () => {
     fireEvent.change(screen.getByLabelText('Public GitHub repository URL'), {
       target: { value: 'https://github.com/howlil/codeflow/src/index.ts' },
     });
-    fireEvent.submit(
-      screen.getByRole('button', { name: 'Analyze GitHub repository' }),
-    );
+    fireEvent.submit(screen.getByRole('button', { name: 'Open code graph' }));
 
     expect(onAnalyze).not.toHaveBeenCalled();
     expect(screen.getByRole('alert')).toHaveTextContent(
@@ -60,9 +58,7 @@ describe('GitHubRepositoryPicker', () => {
     fireEvent.change(screen.getByLabelText('Public GitHub repository URL'), {
       target: { value: 'https://github.com/howlil/codeflow' },
     });
-    fireEvent.submit(
-      screen.getByRole('button', { name: 'Analyze GitHub repository' }),
-    );
+    fireEvent.submit(screen.getByRole('button', { name: 'Open code graph' }));
 
     expect(onAnalyze).toHaveBeenCalledWith(
       'https://github.com/howlil/codeflow',

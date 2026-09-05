@@ -1,55 +1,58 @@
 # Current Iteration
 
-Status: COMPLETE
+Status: READY_FOR_MILESTONE
 
-Last Completed Milestone: M11 - Clear Entry Intent & Truthful Static Flow
+Last Completed Milestone: M12 - Graph-First CodeFlow
 
 ## Outcome
 
-CodeFlow now makes the user's task explicit before acquisition and presents function exploration with terminology that matches the static-analysis contract. Repository comprehension and pull-request review no longer compete as simultaneous setup surfaces, and function relationships are presented as a bounded static call neighborhood rather than implying runtime request execution.
+CodeFlow is now graph-first: repository analysis lands directly in one navigable semantic graph where a developer can start from an entry point or symbol, progressively follow supported calls, references, type relationships, dependencies, source evidence, and dependents, and visualize pull-request changes without switching among separate Explore, Flow, Impact, Architecture, Package, or Change workspaces.
 
-## Delivered
+The core product loop is now:
 
-### S1 - Intent-first acquisition
+```text
+OPEN REPOSITORY
+  -> DISCOVER OR SEARCH ENTRY POINT / SYMBOL
+  -> CENTER GRAPH ON THAT ENTITY
+  -> FOLLOW CALLS / TYPES / REFERENCES / DEPENDENCIES
+  -> EXPAND OR COLLAPSE NEIGHBORHOODS
+  -> INSPECT SOURCE + EVIDENCE
+  -> MOVE FOCUS
+  -> BUILD A MENTAL MODEL OF THE CODEBASE
+```
 
-- Initial setup asks `What do you need to understand?` before showing any repository or pull-request form.
-- User explicitly chooses `Understand repository` or `Review change`.
-- Only the form required for the selected task is rendered.
-- Local repository input remains a secondary option scoped to repository comprehension.
-- `Choose another task` returns to intent selection without introducing another navigation surface.
+## Completed Slices
 
-### S2 - Truthful static flow
-
-- Function exploration is named `Static call neighborhood` / `<entry> call neighborhood` instead of `request flow`.
-- The Flow surface explicitly states that relationships are projected static evidence and not runtime execution.
-- `Verified static`, `Inferred static`, and `No evidence` are visible in human-readable form.
-- Solid/dashed relationship semantics remain aligned with the existing evidence contract.
-- Focus recovery is described as `Back to entry neighborhood`.
-
-### S3 - Contract verification
-
-- App regression coverage verifies intent gating, task-specific acquisition, truthful flow terminology, and visible evidence trust states.
-- Existing repository exploration, inspector, source evidence, keyboard navigation, empty/partial analysis, and local repository failure behavior remain covered.
-- No backend, API, persistence, analysis-core, or canonical semantic relationship/evidence contracts changed.
+- S1 reset `PROJECT.md` and `DESIGN.md` around the graph-first product invariant.
+- S2 added one client semantic graph projection across code entities, repository structure, package topology, evidence, and pull-request change state.
+- S3 replaced the Explore / Flow / Impact primary navigation with one graph shell.
+- S4 made entry points and semantic search graph-navigation primitives.
+- S5 added bounded progressive incoming/outgoing expansion, both-direction expansion, collapse, focus, and Code / Structure / Packages semantic zoom.
+- S6 added All / Calls / References / Dependencies / Types relationship lenses over the same graph truth.
+- S7 moved downstream impact into `Show dependents`, rendering bounded dependent paths on the graph.
+- S8 moved pull-request analysis into a BASE/HEAD change overlay on the same graph, with selected-function behavior delta available contextually in the inspector.
+- S9 removed superseded primary-surface Architecture, Package Topology, Impact, and Change workspaces and replaced their top-level regressions with graph-first behavior coverage.
 
 ## Verification Evidence
 
-- PR #33 canonical GitHub Actions CI #225 (`33989081334`) passed on head `17ddee05d1615b767c14fa5e4753dd0c098c9989` before this iteration-state-only update.
+- PR #34 exact head `84af73824d3175fac080a14cf6ab2b692a690ef9` passed canonical GitHub Actions CI #245 (`33992668112`) before this completion-state update.
 - `pnpm format:check` passed.
 - `pnpm lint` passed.
-- `pnpm build` passed.
-- Web regression tests passed.
-- Deployment/Compose validation and smoke were correctly skipped because M11 does not modify deployment surfaces.
-- Temporary implementation/test helper workflows were removed before the canonical behavior gate.
+- `pnpm build` passed across analysis-core, web, and API.
+- web tests passed, including graph model projection, direct graph landing, progressive call expansion, semantic search, semantic zoom, graph-native dependents, pull-request change overlay, behavior-delta inspection, repository acquisition, and retained static-flow regressions.
+- Deployment/Compose validation and smoke were correctly skipped because M12 changes product/UI composition rather than deployment surfaces.
+- Temporary formatter/fix workflows were removed from the branch before the canonical gate.
 
 ## Boundaries Preserved
 
-- Evidence remains authoritative.
-- Static analysis does not imply observed runtime execution, branch outcome, safety, breakage, probability, or completeness.
-- `apps/web -> apps/api -> packages/analysis-core` ownership remains unchanged.
-- Existing Explore / Flow / Impact and pull-request Change Workspace capabilities remain intact.
-- No new product capability, backend contract, graph primitive, persistence model, or architecture boundary was introduced.
+- Existing API and analysis-core semantic contracts remain authoritative.
+- Static relationships remain static; CodeFlow does not claim observed runtime execution.
+- Evidence kinds remain distinguishable and missing evidence remains explicit.
+- Pull-request BASE/HEAD revision identity and existing semantic change contracts remain intact.
+- Impact remains a bounded derived traversal rather than a fabricated canonical relationship.
+- No AI, persistence, private auth, runtime execution, graph database, queue, or unrelated infrastructure was added.
+- Large repositories remain bounded and progressively disclosed instead of rendering a complete graph by default.
 
 ## Next State
 
-M11 is complete. Select the next milestone only from a material remaining gap in the core program-understanding journey.
+Select the next milestone only from a material gap in the graph-first core journey. Do not reintroduce separate analysis workspaces merely because their underlying semantic capabilities still exist.
