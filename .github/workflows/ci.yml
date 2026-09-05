@@ -197,6 +197,40 @@ jobs:
         if: steps.scope.outputs.deployment == 'true'
         run: docker compose config
 
+      - name: Verify stable Compose network identity
+        if: steps.scope.outputs.deployment == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          first_dir="$(mktemp -d)"
+          second_dir="$(mktemp -d)"
+          trap 'rm -rf "$first_dir" "$second_dir"' EXIT
+
+          cp compose.yaml "$first_dir/compose.yaml"
+          cp compose.yaml "$second_dir/compose.yaml"
+
+          network_name() {
+            (
+              cd "$1"
+              docker compose config --format json
+            ) | node -e '
+              let input = "";
+              process.stdin.on("data", (chunk) => (input += chunk));
+              process.stdin.on("end", () => {
+                const name = JSON.parse(input).networks?.default?.name;
+                if (!name) process.exit(2);
+                process.stdout.write(name);
+              });
+            '
+          }
+
+          first_name="$(network_name "$first_dir")"
+          second_name="$(network_name "$second_dir")"
+
+          test "$first_name" = "codeflow_default"
+          test "$second_name" = "$first_name"
+
       - name: Smoke test production Compose
         if: steps.scope.outputs.deployment == 'true'
         run: |
