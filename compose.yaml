@@ -1,3 +1,7 @@
+# Keep Compose's rendered default network stable when config is evaluated from
+# per-deployment workspaces before `docker compose up`.
+name: codeflow
+
 services:
   api:
     build:
