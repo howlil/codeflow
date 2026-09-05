@@ -1,14 +1,14 @@
 # Current Iteration
 
-Status: IN_PROGRESS
+Status: READY_FOR_MILESTONE
 
-Active Milestone: M13 - Evidence-First Graph UI
+Last Completed Milestone: M13 - Evidence-First Graph UI
 
-## Product Outcome
+## Product Outcome Delivered
 
-Make the M12 graph-first product immediately legible as a compact developer tool: the semantic graph dominates the workspace, navigation controls stay contextual to the graph, source/evidence inspection remains readable, and narrow layouts preserve the complete comprehension task instead of hiding the inspector.
+The M12 graph-first product now reads as a compact developer workbench rather than a multi-pane analysis dashboard. The semantic graph is the dominant plane, graph projection controls are contextual, source/evidence inspection remains readable, and narrow layouts preserve the complete comprehension task instead of hiding the inspector.
 
-The target interaction hierarchy is:
+The resulting interaction hierarchy is:
 
 ```text
 REPOSITORY + ENTRY + SEARCH
@@ -20,32 +20,39 @@ REPOSITORY + ENTRY + SEARCH
   -> REFOCUS OR ASSESS DEPENDENTS
 ```
 
-## Slices
+## Completed Slices
 
-- S1 remove persistent navigation chrome that competes with the graph and move semantic level/lens controls into the graph toolbar.
-- S2 strengthen repository, entry-point, focus, search, and projection hierarchy without creating new product modes.
-- S3 make the inspector task-oriented: primary trace actions first, secondary operations quieter, source and evidence readable, relationship evidence explicit.
-- S4 raise active-workspace typography to readable developer-tool density; remove 8–9px operational text where it carries meaning.
-- S5 flatten surfaces around alignment, 1px dividers, neutral panes, and restrained steel-blue focus; no decorative cards, gradients, glow, or ordinary shadows.
-- S6 preserve inspector/task completion on narrow layouts by moving it below the graph instead of hiding it.
-- S7 align durable `DESIGN.md`, update focused UI regressions where the interaction contract changed, run canonical gates, and merge.
+- S1 removed the persistent graph navigation rail and moved semantic level/lens controls into the graph toolbar.
+- S2 strengthened repository, entry-point, focus, search, and projection hierarchy without creating new product modes.
+- S3 made the inspector task-oriented: primary incoming/outgoing trace actions first, quieter secondary operations, readable source, relationship evidence, and node-level evidence.
+- S4 raised active-workspace typography to readable developer-tool density and removed 8–9px operational text from the graph work surface.
+- S5 flattened the graph workspace around alignment, 1px dividers, neutral panes, and restrained steel-blue focus; ordinary graph surfaces no longer depend on card/elevation treatment.
+- S6 preserved inspector/task completion on narrow layouts by placing the inspector below the graph instead of hiding it.
+- S7 aligned durable `DESIGN.md` with the evidence-first graph interaction model and verified the existing graph-first regression contract.
 
 ## Evidence / Reference Direction
 
-- GitHub code navigation: symbol search and definition/reference navigation are anchored to the code-reading task rather than exposed as separate dashboards.
+- GitHub code navigation: symbol search and definition/reference navigation stay anchored to the code-reading task rather than becoming separate dashboards.
 - Sourcegraph code navigation: selected symbols expose contextual navigation/reference evidence without forcing a context switch.
 - VS Code call hierarchy: incoming/outgoing relationships are progressive and anchored on a selected function rather than rendering an unrestricted repository graph.
 
-References are used for interaction evidence only; CodeFlow keeps its own neutral compact visual language and existing semantic truth model.
+References informed interaction behavior only; CodeFlow retains its own compact neutral visual language and semantic truth model.
 
-## Boundaries
+## Boundaries Preserved
 
-- Preserve graph-first M12 product behavior and all analysis/API semantic contracts.
-- Do not add product modes, analytics dashboards, AI, persistence, auth, runtime execution, graph database, or decorative visualization features.
-- Keep source/evidence truth explicit and static-analysis boundaries visible.
-- Do not make the canvas a free-form editor or auto-moving physics graph.
+- Existing graph-first M12 product behavior and analysis/API semantic contracts remain unchanged.
+- No new product modes, analytics dashboards, AI, persistence, auth, runtime execution, graph database, or decorative visualization features were added.
+- Source/evidence truth and static-analysis boundaries remain explicit.
+- The canvas remains a bounded semantic navigator, not a free-form editor or physics graph.
 - Existing dark/light neutral tokens and restrained steel-blue focus remain authoritative.
 
-## Done When
+## Verification
 
-The post-analysis workspace has no persistent left navigation rail; the graph is the dominant plane; Code/Structure/Packages and relationship lenses remain directly accessible from graph context; selected entities expose readable trace/source/evidence detail; node/edge state remains understandable without color alone; inspector content remains available on narrow layouts; canonical format/lint/build/test gates are green.
+Canonical CI #257 on exact runtime head `32c0e1a2e93c6adca6be33faf8c02a4a6c9ea5af` passed:
+
+- formatting;
+- lint;
+- production build;
+- 15/15 web behavior tests.
+
+Production Compose gates were correctly skipped because the milestone changes only the frontend interaction/design layer and agent knowledge.
