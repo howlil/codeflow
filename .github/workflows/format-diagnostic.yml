@@ -1,0 +1,28 @@
+name: Format Diagnostic
+
+on:
+  push:
+    branches:
+      - refactor/comprehension-first-workbench
+
+permissions:
+  contents: read
+
+jobs:
+  format-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Print Prettier diff
+        shell: bash
+        run: |
+          cp apps/web/src/App.tsx /tmp/App.before.tsx
+          pnpm exec prettier --write apps/web/src/App.tsx
+          diff -u /tmp/App.before.tsx apps/web/src/App.tsx || true
