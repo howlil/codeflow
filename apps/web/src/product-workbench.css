@@ -144,3 +144,117 @@
     width: 100%;
   }
 }
+
+/* M11: intent-first acquisition and truthful static-flow semantics. */
+.acquisition-intent {
+  width: min(100% - 32px, 760px);
+  margin: clamp(28px, 9vh, 88px) auto 0;
+  border-block: 1px solid var(--color-cs-border);
+  background: var(--color-cs-panel);
+}
+
+.acquisition-intent-copy {
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--color-cs-border);
+}
+
+.acquisition-intent-copy h2,
+.acquisition-intent-copy p {
+  margin: 0;
+}
+
+.acquisition-intent-copy h2 {
+  margin-top: 2px;
+  font-size: 13px;
+}
+
+.acquisition-intent-copy > p:last-child {
+  margin-top: 4px;
+  color: var(--color-cs-muted);
+  font-size: 11px;
+}
+
+.acquisition-intent-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.acquisition-intent-action {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+  border: 0;
+  border-right: 1px solid var(--color-cs-border);
+  background: transparent;
+  color: var(--color-cs-text);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 100ms ease;
+}
+
+.acquisition-intent-action:last-child {
+  border-right: 0;
+}
+
+.acquisition-intent-action:hover,
+.acquisition-intent-action:focus-visible {
+  background: var(--color-cs-hover);
+}
+
+.acquisition-intent-action:focus-visible {
+  outline: 1px solid var(--color-cs-focus);
+  outline-offset: -1px;
+}
+
+.acquisition-intent-action strong {
+  font-size: 11px;
+}
+
+.acquisition-intent-action span {
+  color: var(--color-cs-muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.acquisition-task {
+  display: flex;
+  flex-direction: column;
+}
+
+.acquisition-task-bar {
+  display: flex;
+  width: min(100% - 32px, 960px);
+  min-height: 32px;
+  margin: 12px auto 0;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-cs-border);
+  color: var(--color-cs-muted);
+  font-size: 10px;
+}
+
+.flow-truth-note {
+  max-width: 720px;
+  margin: 3px 0 0;
+  color: var(--color-cs-muted);
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+@media (max-width: 640px) {
+  .acquisition-intent-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .acquisition-intent-action {
+    border-right: 0;
+    border-bottom: 1px solid var(--color-cs-border);
+  }
+
+  .acquisition-intent-action:last-child {
+    border-bottom: 0;
+  }
+}
