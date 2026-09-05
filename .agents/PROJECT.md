@@ -1,165 +1,165 @@
 # CodeFlow Project
 
-`PROJECT.md` is the canonical source of truth for CodeFlow product intent, observable behavior, scope, constraints, non-goals, deferred product directions, and open product questions. Active execution state belongs only in `CURRENT_ITERATION.md`.
+`PROJECT.md` is the canonical source of truth for CodeFlow product intent, observable behavior, scope, constraints, non-goals, and open product questions. Active execution state belongs only in `CURRENT_ITERATION.md`.
 
-## Purpose
+## Product Definition
 
-CodeFlow is an interactive program-understanding system for developers working with unfamiliar software repositories.
+CodeFlow is an **interactive code graph explorer** that transforms a software repository into a navigable semantic map.
 
-It should help a developer move from repository-level orientation toward architecture, execution flow, data/state movement, dependencies, actual code changes, and the source evidence that supports those relationships without first reconstructing the system manually from files.
+A developer starts from an entry point, class, function, file, or package and visually follows calls, references, inheritance, imports, data relationships, and dependencies through the codebase.
 
-CodeFlow is not primarily a diagram editor, documentation generator, generic pull-request dashboard, or an LLM wrapper around repository chunks.
+The graph is the primary product surface. Repository architecture, call hierarchy, dependency analysis, impact exploration, source evidence, static data flow, and pull-request change visualization are **views or operations over the same semantic graph**, not separate products or top-level workspaces.
 
 ```text
-repository semantic model = product truth
-canvas = projection of that truth
-AI = optional explanation over grounded evidence
+source code
+  -> deterministic semantic analysis
+  -> repository semantic graph = product truth
+  -> interactive graph projection = primary UX
+  -> evidence/source inspection = verification
 ```
+
+CodeFlow's primary job is to answer four questions:
+
+```text
+WHERE DOES IT START?
+        ->
+WHERE CAN IT GO?
+        ->
+WHAT DOES IT DEPEND ON?
+        ->
+WHAT DEPENDS ON IT?
+```
+
+If a capability does not materially help one of those questions, it is not core CodeFlow by default.
 
 ## Intended User
 
-A developer who needs to understand an unfamiliar or complex codebase quickly and wants system-level orientation before reading implementation details file by file or reviewing a concrete change.
+A developer entering an unfamiliar or complex codebase who wants to build a mental model of code relationships faster than reconstructing the system manually file by file.
 
 ## Core Product Journey
 
 ```text
-public GitHub repository URL, public GitHub pull request URL, or explicit local repository selection
- -> bounded supported source + architecture metadata input
- -> configured workspace/package topology where repository evidence exists
- -> deterministic repository/module/file architecture projection
- -> package, symbol, and dependency exploration
- -> deterministic entry-point discovery
- -> deterministic semantic analysis
- -> evidence-backed semantic/data-flow projection
- -> semantic workspace
- -> search/focus/navigation
- -> inspect package dependencies + definitions + references + calls + data movement + source provenance
- -> define a hypothetical change scope and inspect bounded evidence-backed downstream impact where useful
- -> or freeze a public pull request base/head revision pair, map actual diff hunks to changed semantic entities, inspect supported static function behavior delta, downstream impact, and relationship deltas
- -> deterministic static step-through where supported
+OPEN REPOSITORY
+  -> DISCOVER OR SEARCH ENTRY POINT / SYMBOL
+  -> CENTER GRAPH ON THAT ENTITY
+  -> FOLLOW CALLS / TYPES / REFERENCES / DEPENDENCIES
+  -> EXPAND OR COLLAPSE NEIGHBORHOODS
+  -> INSPECT SOURCE + EVIDENCE
+  -> MOVE FOCUS
+  -> BUILD A MENTAL MODEL OF THE CODEBASE
 ```
 
-The product must remain useful without AI explanation and without executing arbitrary repository code.
+Repository acquisition is setup, not the product. After analysis succeeds, the graph owns the work surface.
 
-## Current Product Capability
+## Product Interaction Invariants
 
-The implemented TypeScript path currently supports:
+- The graph is the default post-analysis surface.
+- Entry points are first-class navigation anchors.
+- Search navigates the graph; it does not open a detached result page.
+- Large repositories are explored progressively. Do not render the entire repository graph by default.
+- Incoming, outgoing, both-direction expansion, focus, collapse, and dependent traversal are graph-native operations.
+- Architecture is semantic zoom over the graph, not a separate architecture dashboard.
+- Package topology is a zoomed-out graph projection, not a separate package dashboard.
+- Impact is inverse/transitive graph traversal, not a top-level workspace.
+- Pull-request analysis is a change overlay on the graph. Added, modified, and removed semantic entities/relationships remain grounded in frozen BASE/HEAD revisions.
+- Source/evidence inspection explains why a node or edge exists and remains secondary to graph navigation.
+- Static data flow and deterministic static steps are contextual lenses/inspection modes; they are not runtime execution.
 
-- bounded public GitHub repository acquisition with authoritative URL/tree/source validation;
-- bounded public GitHub pull-request acquisition with exact base/head SHA identity, changed-file metadata, patch limits, and change-aware source prioritization;
-- dual-revision request-scoped analysis for pull requests so added/current semantics can use HEAD while removed/previous semantics can use BASE;
-- actual Git diff hunk mapping to analyzed TypeScript/TSX file and symbol locations where evidence exists, with file-level fallback when precise semantic mapping is unavailable;
-- semantic change projection for added, modified, and removed entities without fabricating rename semantics from name similarity;
-- deterministic function-level BASE → HEAD static behavior deltas over supported declared parameters/types, explicit return expressions, static steps, and static data-flow relationships;
-- behavior-delta comparison as semantic multisets so line-number movement or stable-ID churn alone does not create false behavior changes;
-- revision-specific evidence and source locations for added/removed behavior facts, including truthful one-sided handling for added or removed functions;
-- an explicit zero-delta state that means no supported static behavior delta was found, not runtime equivalence or safety;
-- automatic reuse of the M8 impact engine for bounded changed-entity scopes, keeping impact derived from canonical semantic facts rather than inventing a second impact model;
-- explicit base/head relationship deltas for supported `CALLS`, `REFERENCES`, `IMPORTS`, `DEPENDS_ON`, `EXTENDS`, and `IMPLEMENTS` relationships;
-- a compact change workspace connecting changed semantic code, actual patch text, static behavior delta, package/directory grouping, downstream impact, evidence paths, relationship deltas, and existing function-flow drill-down;
-- truthful pull-request partial coverage when GitHub omits a patch, a changed file is unsupported, repository/tree/source limits truncate semantic coverage, or automatic impact scope is bounded;
-- explicit browser-selected local repository input as a secondary repository-analysis path;
-- separately bounded acquisition of `package.json`, `pnpm-workspace.yaml`, and `tsconfig*.json` architecture metadata without consuming the TypeScript source budget;
-- configured Workspace and Package entities with package identity and workspace membership derived from repository metadata rather than directory naming alone;
-- deterministic source-file ownership by the deepest configured package boundary;
-- internal package `DEPENDS_ON` relationships from manifests, with supported source imports adding verified-static evidence to the same relationship;
-- declared external package dependencies as secondary package context without expanding external dependencies into the primary internal topology graph;
-- bounded TypeScript `baseUrl`/`paths` alias resolution for supported cross-package static dependency evidence;
-- system topology exploration with incoming/outgoing package dependencies and package -> file -> symbol -> function-flow drill-down in the existing semantic workspace;
-- topology orientation to the package that owns the active entry point where ownership evidence is available;
-- explicit partial topology behavior when metadata is invalid, unsupported, unresolved, or outside metadata limits while valid source analysis remains usable;
-- deterministic repository/module/file hierarchy from analyzed repository-relative source paths;
-- source-backed file imports and derived cross-module dependencies;
-- bounded TypeScript symbol projection for functions, methods, classes, interfaces, type aliases, enums, and variables;
-- source-backed `CONTAINS`, `DEFINES`, `IMPORTS`, `DEPENDS_ON`, `EXPORTS`, `REFERENCES`, `EXTENDS`, and `IMPLEMENTS` repository/symbol relationships where supported;
-- repository architecture search, hierarchy expand/collapse, relationship inspection, focused direct-neighborhood exploration, and supported architecture-to-function-flow drill-down;
-- explicit hypothetical impact-scope selection across package, module, file, symbol, and function entities, bounded to a small number of change targets;
-- deterministic direct and bounded transitive downstream impact derived from existing semantic relationships rather than stored as a fabricated canonical `IMPACTS` relationship;
-- cycle-safe multi-seed impact traversal with evidence paths, affected file/module/package aggregation, filtering/focus, and truthful partial coverage including zero-result cases;
-- deterministic exported-function entry-point discovery with confidence labels;
-- request-scoped/in-memory multi-file TypeScript analysis;
-- evidence-backed functions and supported cross-file call relationships;
-- repository-relative source/evidence provenance;
-- search, neighborhood focus, selection, keyboard navigation, source inspection, relationship inspection, and responsive layout;
-- explicit loading, empty, partial, unsupported, invalid, and error behavior where applicable;
-- declared function parameters and explicit return paths;
-- supported caller argument to callee parameter mapping;
-- source-backed declarations, aliases, lexical reads/writes, transforms, mutations, and value dependencies;
-- `CALLS`, `READS`, `WRITES`, `MUTATES`, `PASSES_ARGUMENT`, `FLOWS_TO`, and `RETURNS_TO` semantic/static-flow relationships where supported by evidence;
-- relationship lenses derived only from semantic kinds actually present;
-- deterministic static step-through with branch/failure possibilities represented as possibilities rather than observed execution;
-- production Docker Compose packaging with a public `web` container on exposed port `8080`, internal `api:3001`, and platform-managed external routing suitable for MyPaaS.
+## Canonical Semantic Surfaces
 
-The deterministic sample API remains a fixture/demo compatibility path rather than the primary product journey.
+### Semantic zoom
+
+The same repository truth may be projected at different abstraction levels:
+
+```text
+Packages / workspace
+  -> files / modules
+  -> classes / interfaces / types
+  -> functions / methods
+```
+
+Zooming or changing level changes the projection, not canonical repository truth.
+
+### Relationship lenses
+
+Supported relationships may be filtered by task:
+
+```text
+Calls        -> CALLS
+References   -> REFERENCES
+Dependencies -> IMPORTS / DEPENDS_ON
+Types        -> EXTENDS / IMPLEMENTS
+Data         -> supported source-backed data-flow relationships
+```
+
+A lens filters what is visible; it must never fabricate missing relationships.
+
+### Change overlay
+
+A pull request overlays semantic change state on the same graph:
+
+```text
+added / modified / removed / unchanged
+```
+
+A change observation is not itself relationship evidence. Existing static evidence rules remain authoritative.
+
+## Current Analysis Capability
+
+The implemented TypeScript path already provides the semantic material required by the graph-first product:
+
+- bounded public GitHub repository analysis and explicit browser-selected local repository input;
+- deterministic entry-point discovery with detected/likely/manual confidence;
+- request-scoped multi-file TypeScript analysis without executing arbitrary repository code;
+- functions and supported cross-file CALLS relationships;
+- repository/module/file architecture with functions, methods, classes, interfaces, types, enums, variables, definitions, imports, references, inheritance, and implementation relationships where supported;
+- configured workspace/package topology and internal dependency relationships;
+- source/evidence provenance for projected semantic relationships;
+- parameters, return paths, argument mapping, reads, writes, mutations, transforms, value flow, and deterministic static steps where supported;
+- bounded downstream impact derived from canonical relationships;
+- public GitHub pull-request BASE/HEAD analysis, diff mapping, semantic entity changes, behavior deltas, relationship deltas, and bounded impact;
+- explicit complete/partial/unsupported/error states.
+
+These capabilities support the graph. They do not each require a separate top-level UI.
 
 ## Product Constraints
 
 - Evidence precedes explanation.
 - Verified, inferred, configured, observed-runtime, and user-asserted evidence remain distinguishable.
-- A Git diff/change observation is not itself a semantic relationship evidence kind; pull-request change state remains a separate derived projection over frozen repository revisions.
-- Pull-request analysis must preserve exact base/head revision identity for the analyzed session rather than silently following moving branch refs.
-- Static behavior delta compares only supported semantic/static facts from the frozen revisions; unchanged projected facts do not prove runtime equivalence, correctness, or safety.
-- Source-location movement by itself must not be reported as a behavior change.
-- Workspace/package metadata describes configured software boundaries and dependencies; it must not be relabeled as observed runtime service topology.
-- Impact is a bounded derived query over canonical semantic facts; it must not become an unsupported canonical relationship or a prediction of runtime failure.
-- Missing impact results do not prove safety; incomplete source, unsupported semantics, missing patches, or bounded traversal remain explicit partial coverage.
 - Missing evidence remains missing/partial; visual completeness must not fabricate semantics.
-- The canvas and change workspace are semantic exploration surfaces, not canonical repository state.
-- Parser/framework-specific objects do not become cross-system contracts.
-- Large repositories and large changes use bounded projections, focus, and abstraction rather than rendering every symbol by default.
-- Static simulation and observed runtime traces remain distinct evidence domains.
-- Static analysis must not invent concrete runtime values, branch outcomes, timing, frequency, latency, risk, breakage, safety, or probability.
-- Ordinary static analysis does not execute arbitrary repository code.
-
-## Security and Privacy Expectations
-
-Repository input is untrusted and may be confidential.
-
-- Browser filtering may minimize source sent, but API validation remains authoritative.
-- Public GitHub pull-request acquisition is read-only and bounded; private Git-host authentication is not part of current scope.
-- Repository-relative path handling must reject traversal and unsafe paths.
-- File count, per-file size, total source size, metadata count/size, pull-request changed-file count, patch size, request size, and expensive work remain bounded.
-- Source, architecture-metadata, and pull-request diff budgets remain explicit so change acquisition cannot silently create unbounded repository ingestion.
-- Dependency/vendor/build/VCS/generated directories should be excluded where appropriate.
+- Static analysis must not claim observed runtime execution, chosen branch outcome, concrete runtime value, timing, frequency, latency, risk, breakage, safety, or probability.
+- Ordinary analysis does not execute arbitrary repository code.
+- Pull-request analysis preserves exact BASE/HEAD revision identity.
+- Impact is a bounded derived traversal over canonical semantic facts; empty impact results do not prove safety.
+- Source-location movement alone is not a semantic behavior change.
 - Repository source, metadata, pull-request revisions, diffs, and analysis remain request-scoped/in-memory unless persistence is explicitly authorized.
-- Logs, errors, analytics, and future AI context must not expose arbitrary private source without explicit need.
-- Runtime repository execution requires a separately approved sandbox design covering resource, filesystem, process, network, timeout, and secret isolation.
+- Large repositories use bounded projections, semantic zoom, progressive expansion, search, and focus rather than graph completeness by default.
 
 ## Non-Goals Unless Explicitly Authorized
 
-Do not infer current scope from historical ideas or generic best practices. In particular, the following are not automatically authorized:
-
-- universal language/framework coverage;
-- production runtime tracing or repository execution;
-- private Git-host authentication/import;
-- pull-request comments, approvals, reviewer assignment, or CODEOWNERS workflow;
-- AI pull-request summaries, AI code review, risk scores, or automated refactor recommendations;
-- saved analyses or product persistence;
-- collaborative diagram or review editing;
-- graph database, Redis, queue, distributed workers, or Kubernetes architecture;
+- generic diagram editing;
+- documentation generation as a primary product;
+- generic pull-request dashboard/reviewer workflow;
+- AI code review, risk scores, or automated refactor recommendations;
 - repository-wide LLM ingestion;
-- billing, subscriptions, organization/team permissions, or collaborative cursors.
+- runtime repository execution without a separately approved sandbox;
+- universal language/framework coverage;
+- private Git-host authentication/import;
+- saved analyses or durable persistence;
+- collaboration, billing, organization permissions, graph databases, queues, or distributed infrastructure.
 
 ## Deferred Product Directions — Not a Roadmap
 
-These are possible future directions, not ordered milestones, commitments, or default next work:
-
-- prove the shared semantic model with another language adapter such as Go;
-- understand multi-application/service repositories and cross-application relationships beyond configured package topology;
-- add infrastructure/configuration semantics where target repositories justify them;
-- add grounded AI explanation over selected semantic/evidence/change context;
-- validate runtime observations and how `observed-runtime` evidence maps to stable semantic identity;
-- add private Git-host import/auth or durable saved analyses if a future product requirement requires them.
-
-Do not auto-activate a deferred direction because it appeared in an older milestone sequence. Future milestone shaping starts from current user intent and the highest-value core journey gap.
+- another language adapter such as Go after the graph interaction proves useful;
+- grounded AI explanation over selected graph/evidence context;
+- observed-runtime traces as a distinct evidence layer over stable semantic identities;
+- cross-application/service relationships when real repositories justify them;
+- private Git-host acquisition or saved analyses if an explicit product requirement appears.
 
 ## Material Open Questions
 
-The following remain undecided until an authorized requirement makes them necessary:
-
-- private Git-host authentication and acquisition;
-- saved analyses, persistence model, and data retention;
-- runtime repository execution and sandboxing;
+- private repository authentication and retention;
+- runtime trace acquisition and sandboxing;
 - AI/private-source handling;
-- multi-user isolation and collaboration;
-- ownership of framework-specific persistence/event semantics.
+- multi-user isolation/collaboration;
+- framework-specific runtime/persistence/event semantics.
