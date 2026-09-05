@@ -251,6 +251,9 @@ async function openRepository(flow: FlowProjection = sampleFlow) {
   const fetchMock = stubFlowRequest(flow);
   render(<App />);
 
+  fireEvent.click(
+    screen.getByRole('button', { name: 'Understand repository' }),
+  );
   fireEvent.change(screen.getByLabelText('Repository directory'), {
     target: { files: repositoryFiles },
   });
@@ -264,7 +267,7 @@ async function openRepository(flow: FlowProjection = sampleFlow) {
   await screen.findByText(
     flow.nodes.length === 0
       ? 'No functions projected'
-      : 'handleGreeting request flow',
+      : 'handleGreeting call neighborhood',
   );
   return fetchMock;
 }
@@ -277,18 +280,64 @@ describe('App', () => {
     delete document.documentElement.dataset.theme;
   });
 
-  it('starts from repository comprehension without analyzing a fixture', () => {
+  it('asks for intent before exposing repository or pull-request input', () => {
     const fetchMock = stubFlowRequest();
 
     render(<App />);
 
+    expect(
+      screen.getByRole('heading', { name: 'What do you need to understand?' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Understand repository/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Review change/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByLabelText('Public GitHub repository URL'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText('Public GitHub pull request URL'),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /Understand repository/ }),
+    );
     expect(
       screen.getByRole('heading', {
         name: 'Understand an unfamiliar codebase',
       }),
     ).toBeInTheDocument();
     expect(screen.getByText(/Analyze a local repository/)).toBeInTheDocument();
+    expect(
+      screen.queryByLabelText('Public GitHub pull request URL'),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Choose another task' }),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Review change/ }));
+    expect(
+      screen.getByRole('heading', { name: 'Trace an actual pull request' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByLabelText('Public GitHub repository URL'),
+    ).not.toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('labels function exploration as a bounded static call neighborhood', async () => {
+    await openRepository();
+
+    expect(
+      screen.getByRole('heading', { name: 'handleGreeting call neighborhood' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Projected relationships only.*not runtime execution/i),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText('Inferred static').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Verified static').length).toBeGreaterThan(0);
   });
 
   it('collapses setup into repository context and inspects cross-file source', async () => {
@@ -347,7 +396,9 @@ describe('App', () => {
     ).toBeInTheDocument();
     expect(screen.queryByText('normalizeName')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Back to entry flow' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Back to entry neighborhood' }),
+    );
 
     expect(screen.getByText('normalizeName')).toBeInTheDocument();
   });
@@ -465,7 +516,7 @@ describe('App', () => {
       screen.getByRole('button', { name: 'Restore inspector' }),
     ).toHaveAttribute('aria-pressed', 'true');
     expect(
-      screen.getByRole('region', { name: 'Semantic flow canvas' }),
+      screen.getByRole('region', { name: 'Static call neighborhood' }),
     ).toBeInTheDocument();
     expect(
       screen.getByLabelText('Source evidence inspector'),
@@ -481,7 +532,7 @@ describe('App', () => {
 
     expect(screen.getByText('No functions projected')).toBeInTheDocument();
     expect(
-      screen.queryByRole('region', { name: 'Semantic flow canvas' }),
+      screen.queryByRole('region', { name: 'Static call neighborhood' }),
     ).not.toBeInTheDocument();
   });
 

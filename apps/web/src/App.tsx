@@ -53,6 +53,7 @@ type ProjectionStatus =
   | { kind: 'partial'; reasons: string[] };
 type InspectorTab = 'overview' | 'data' | 'evidence' | 'steps';
 type WorkbenchView = 'explore' | 'flow' | 'impact';
+type AcquisitionIntent = 'repository' | 'change' | null;
 type Theme = 'dark' | 'light';
 
 const THEME_STORAGE_KEY = 'codeflow-theme';
@@ -72,6 +73,8 @@ export function App() {
   const [relationshipLens, setRelationshipLens] =
     useState<RelationshipLens>('ALL');
   const [workbenchView, setWorkbenchView] = useState<WorkbenchView>('explore');
+  const [acquisitionIntent, setAcquisitionIntent] =
+    useState<AcquisitionIntent>(null);
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
   const [error, setError] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -295,6 +298,7 @@ export function App() {
     setInspectorOpen(false);
     setRelationshipLens('ALL');
     setWorkbenchView('explore');
+    setAcquisitionIntent(null);
     setQuery('');
     setError(null);
     setGithubRepositoryUrl(null);
@@ -409,21 +413,14 @@ export function App() {
       </header>
 
       {flow === null && changeAnalysis === null && !analyzing ? (
-        <>
-          <GitHubRepositoryPicker
-            busy={analyzing}
-            error={null}
-            onAnalyze={analyzeGitHub}
-          />
-          <GitHubPullRequestPicker
-            busy={analyzing}
-            onAnalyze={analyzePullRequest}
-          />
-          <details className="local-analysis-option">
-            <summary>Analyze a local repository instead</summary>
-            <RepositoryPicker busy={analyzing} onAnalyze={analyzeRepository} />
-          </details>
-        </>
+        <AcquisitionWorkspace
+          intent={acquisitionIntent}
+          busy={analyzing}
+          onSelectIntent={setAcquisitionIntent}
+          onAnalyzeGitHub={analyzeGitHub}
+          onAnalyzePullRequest={analyzePullRequest}
+          onAnalyzeLocal={analyzeRepository}
+        />
       ) : null}
 
       {analyzing ? (
@@ -443,7 +440,11 @@ export function App() {
         />
       ) : error !== null ? (
         <section className="state-panel state-panel--error" role="alert">
-          <strong>Repository analysis unavailable</strong>
+          <strong>
+            {acquisitionIntent === 'change'
+              ? 'Pull request analysis unavailable'
+              : 'Repository analysis unavailable'}
+          </strong>
           <span>{error}</span>
         </section>
       ) : flow === null || projectionStatus === null ? (
@@ -516,15 +517,21 @@ export function App() {
                 >
                   <section
                     className="canvas-panel"
-                    aria-label="Semantic flow canvas"
+                    aria-label="Static call neighborhood"
                   >
                     <AnalysisNotice status={projectionStatus} />
                     <div className="canvas-toolbar">
                       <div>
-                        <p className="panel-kicker">Call flow</p>
+                        <p className="panel-kicker">Static call neighborhood</p>
                         <h2>
-                          {entryPoint?.label ?? 'Selected entry'} request flow
+                          {entryPoint?.label ?? 'Selected entry'} call
+                          neighborhood
                         </h2>
+                        <p className="flow-truth-note">
+                          Projected relationships only. Solid lines have
+                          verified static evidence; dashed lines are inferred
+                          static relationships. This is not runtime execution.
+                        </p>
                       </div>
                       <span>{flow.nodes.length} functions</span>
                     </div>
@@ -582,7 +589,9 @@ export function App() {
                           disabled={selectedNode === null}
                           onClick={toggleFocusMode}
                         >
-                          {focusMode ? 'Back to entry flow' : 'Focus selected'}
+                          {focusMode
+                            ? 'Back to entry neighborhood'
+                            : 'Focus selected'}
                         </Button>
                         <Button
                           className="inspector-open-button"
@@ -675,6 +684,95 @@ export function App() {
         </>
       )}
     </main>
+  );
+}
+
+function AcquisitionWorkspace({
+  intent,
+  busy,
+  onSelectIntent,
+  onAnalyzeGitHub,
+  onAnalyzePullRequest,
+  onAnalyzeLocal,
+}: {
+  intent: AcquisitionIntent;
+  busy: boolean;
+  onSelectIntent: (intent: AcquisitionIntent) => void;
+  onAnalyzeGitHub: (repositoryUrl: string) => Promise<void>;
+  onAnalyzePullRequest: (pullRequestUrl: string) => Promise<void>;
+  onAnalyzeLocal: (
+    request: RepositoryAnalysisRequest,
+    summary: RepositorySelectionSummary,
+  ) => Promise<void>;
+}) {
+  if (intent === null) {
+    return (
+      <section
+        className="acquisition-intent"
+        aria-labelledby="acquisition-intent-title"
+      >
+        <div className="acquisition-intent-copy">
+          <p className="panel-kicker">Start</p>
+          <h2 id="acquisition-intent-title">What do you need to understand?</h2>
+          <p>
+            Choose the task first. CodeFlow will show only the input needed for
+            it.
+          </p>
+        </div>
+        <div className="acquisition-intent-actions">
+          <button
+            type="button"
+            className="acquisition-intent-action"
+            onClick={() => onSelectIntent('repository')}
+          >
+            <strong>Understand repository</strong>
+            <span>Orient in structure, then trace functions and impact.</span>
+          </button>
+          <button
+            type="button"
+            className="acquisition-intent-action"
+            onClick={() => onSelectIntent('change')}
+          >
+            <strong>Review change</strong>
+            <span>
+              Inspect an actual pull request across frozen BASE and HEAD
+              revisions.
+            </span>
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <div className="acquisition-task">
+      <div className="acquisition-task-bar">
+        <Button variant="ghost" onClick={() => onSelectIntent(null)}>
+          Choose another task
+        </Button>
+        <span>
+          {intent === 'repository'
+            ? 'Repository comprehension'
+            : 'Change review'}
+        </span>
+      </div>
+
+      {intent === 'repository' ? (
+        <>
+          <GitHubRepositoryPicker
+            busy={busy}
+            error={null}
+            onAnalyze={onAnalyzeGitHub}
+          />
+          <details className="local-analysis-option">
+            <summary>Analyze a local repository instead</summary>
+            <RepositoryPicker busy={busy} onAnalyze={onAnalyzeLocal} />
+          </details>
+        </>
+      ) : (
+        <GitHubPullRequestPicker busy={busy} onAnalyze={onAnalyzePullRequest} />
+      )}
+    </div>
   );
 }
 
@@ -934,7 +1032,7 @@ function FlowCanvas({
                 <span className="edge-arrow" aria-hidden="true">
                   {outgoing ? '↓' : '↑'}
                 </span>
-                <span>{evidenceKind}</span>
+                <span>{evidenceTrustLabel(evidenceKind)}</span>
               </button>
               <NodeButton
                 node={neighbor}
@@ -1174,13 +1272,13 @@ function EvidenceLegend() {
       <summary>Evidence</summary>
       <div>
         <span>
-          <i className="legend-line" /> verified-static
+          <i className="legend-line" /> Verified static
         </span>
         <span>
-          <i className="legend-line legend-line--inferred" /> inferred-static
+          <i className="legend-line legend-line--inferred" /> Inferred static
         </span>
         <span>
-          <i className="legend-line legend-line--unavailable" /> unavailable
+          <i className="legend-line legend-line--unavailable" /> No evidence
         </span>
       </div>
     </details>
@@ -1255,7 +1353,7 @@ function workbenchHint(view: WorkbenchView): string {
     case 'explore':
       return 'Map the codebase first; open a function when you need execution detail.';
     case 'flow':
-      return 'Follow callers and callees, then inspect source-backed data and evidence.';
+      return 'Inspect a bounded static call neighborhood; inferred relationships stay explicitly marked.';
     case 'impact':
       return 'Choose a hypothetical change scope and trace known downstream dependents.';
   }
@@ -1304,6 +1402,17 @@ function relationshipLabel(lens: RelationshipLens): string {
         .split('_')
         .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
         .join(' ');
+}
+
+function evidenceTrustLabel(kind: string): string {
+  switch (kind) {
+    case 'verified-static':
+      return 'Verified static';
+    case 'inferred-static':
+      return 'Inferred static';
+    default:
+      return 'No evidence';
+  }
 }
 
 function getInitialTheme(): Theme {
