@@ -29,12 +29,11 @@ export function GitHubPullRequestPicker({
       aria-labelledby="github-pr-acquisition-title"
     >
       <div>
-        <p className="panel-kicker">Understand a change</p>
-        <h2 id="github-pr-acquisition-title">Trace an actual pull request</h2>
+        <p className="panel-kicker">Change overlay</p>
+        <h2 id="github-pr-acquisition-title">Visualize a pull request on the code graph</h2>
         <p>
-          Paste a public GitHub PR. CodeFlow freezes its base/head revisions,
-          maps changed TypeScript entities, then traces evidence-backed
-          downstream dependencies.
+          CodeFlow freezes BASE and HEAD, maps semantic changes, then overlays
+          changed entities and relationships on the same navigable graph.
         </p>
       </div>
       <form onSubmit={handleSubmit}>
@@ -52,11 +51,11 @@ export function GitHubPullRequestPicker({
             onChange={(event) => setPullRequestUrl(event.target.value)}
           />
           <button className="primary-action" type="submit" disabled={busy}>
-            {busy ? 'Analyzing…' : 'Analyze pull request'}
+            {busy ? 'Analyzing…' : 'Open change graph'}
           </button>
         </div>
         <p className="github-note">
-          Public PRs · immutable base/head SHAs · bounded TypeScript analysis ·
+          Public PRs · immutable BASE/HEAD SHAs · bounded TypeScript analysis ·
           no repository execution
         </p>
       </form>

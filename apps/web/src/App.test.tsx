@@ -1,278 +1,448 @@
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  within,
-} from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { App } from './App';
-import type { FlowProjection } from './flow-client';
+import type { PullRequestAnalysis } from './change-client';
+import type { FlowProjection, ImpactProjection } from './flow-client';
 
-const handlerSource = `import { formatGreeting } from './format';\nimport { normalizeName } from './name';\n\nexport function handleGreeting(name: string): string {\n  const formatter = formatGreeting;\n  return formatter(normalizeName(name));\n}\n`;
-const nameSource = `export function normalizeName(name: string): string {\n  return name.trim().toLowerCase();\n}\n`;
-const formatSource = `export function formatGreeting(name: string): string {\n  return \`Hello, \${name}!\`;\n}\n`;
+const ordersSource = `export function createOrder() {\n  return saveOrder();\n}\n\nexport function saveOrder() {\n  return persistOrder();\n}\n\nexport function persistOrder() {\n  return true;\n}\n\nexport class OrderService {}\n`;
+const dbSource = `export function query() {\n  return true;\n}\n`;
 
-const sampleFlow: FlowProjection = {
-  id: 'flow:function:demo/src/handler.ts:handleGreeting',
-  entryPointId: 'function:demo/src/handler.ts:handleGreeting',
+const createLocation = {
+  filePath: 'src/orders.ts',
+  startLine: 1,
+  startColumn: 1,
+  endLine: 3,
+  endColumn: 2,
+};
+const saveLocation = {
+  filePath: 'src/orders.ts',
+  startLine: 5,
+  startColumn: 1,
+  endLine: 7,
+  endColumn: 2,
+};
+const persistLocation = {
+  filePath: 'src/orders.ts',
+  startLine: 9,
+  startColumn: 1,
+  endLine: 11,
+  endColumn: 2,
+};
+
+const graphFlow: FlowProjection = {
+  id: 'flow:orders',
+  entryPointId: 'function:createOrder',
   nodes: [
     {
-      id: 'function:demo/src/handler.ts:handleGreeting',
+      id: 'function:createOrder',
       kind: 'Function',
-      label: 'handleGreeting',
+      label: 'createOrder',
+      location: createLocation,
       entryPoint: true,
-      location: {
-        filePath: 'demo/src/handler.ts',
-        startLine: 4,
-        startColumn: 1,
-        endLine: 7,
-        endColumn: 2,
-      },
     },
     {
-      id: 'function:demo/src/name.ts:normalizeName',
+      id: 'function:saveOrder',
       kind: 'Function',
-      label: 'normalizeName',
+      label: 'saveOrder',
+      location: saveLocation,
       entryPoint: false,
-      location: {
-        filePath: 'demo/src/name.ts',
-        startLine: 1,
-        startColumn: 1,
-        endLine: 3,
-        endColumn: 2,
-      },
     },
     {
-      id: 'function:demo/src/format.ts:formatGreeting',
+      id: 'function:persistOrder',
       kind: 'Function',
-      label: 'formatGreeting',
+      label: 'persistOrder',
+      location: persistLocation,
       entryPoint: false,
-      location: {
-        filePath: 'demo/src/format.ts',
-        startLine: 1,
-        startColumn: 1,
-        endLine: 3,
-        endColumn: 2,
-      },
     },
   ],
   edges: [
     {
-      id: 'verified-edge',
+      id: 'call:create-save',
       kind: 'CALLS',
-      sourceId: 'function:demo/src/handler.ts:handleGreeting',
-      targetId: 'function:demo/src/name.ts:normalizeName',
+      sourceId: 'function:createOrder',
+      targetId: 'function:saveOrder',
       evidence: [
         {
           kind: 'verified-static',
           source: 'typescript-compiler-api',
           reason: 'Direct symbol resolution.',
-          location: {
-            filePath: 'demo/src/handler.ts',
-            startLine: 6,
-            startColumn: 20,
-            endLine: 6,
-            endColumn: 39,
-          },
+          location: { ...createLocation, startLine: 2, endLine: 2 },
         },
       ],
     },
     {
-      id: 'inferred-edge',
+      id: 'call:save-persist',
       kind: 'CALLS',
-      sourceId: 'function:demo/src/handler.ts:handleGreeting',
-      targetId: 'function:demo/src/format.ts:formatGreeting',
+      sourceId: 'function:saveOrder',
+      targetId: 'function:persistOrder',
       evidence: [
         {
-          kind: 'inferred-static',
+          kind: 'verified-static',
           source: 'typescript-compiler-api',
-          reason: 'Local alias inference.',
-          location: {
-            filePath: 'demo/src/handler.ts',
-            startLine: 6,
-            startColumn: 10,
-            endLine: 6,
-            endColumn: 40,
-          },
+          reason: 'Direct symbol resolution.',
+          location: { ...saveLocation, startLine: 6, endLine: 6 },
         },
       ],
     },
   ],
-  source: {
-    filePath: 'demo/src/handler.ts',
-    text: handlerSource,
-  },
+  source: { filePath: 'src/orders.ts', text: ordersSource },
   sources: [
-    { filePath: 'demo/src/format.ts', text: formatSource },
-    { filePath: 'demo/src/handler.ts', text: handlerSource },
-    { filePath: 'demo/src/name.ts', text: nameSource },
+    { filePath: 'src/orders.ts', text: ordersSource },
+    { filePath: 'src/db.ts', text: dbSource },
   ],
   analysis: {
     status: 'complete',
-    analyzedFileCount: 3,
+    analyzedFileCount: 2,
     ignoredFileCount: 0,
     issues: [],
   },
-  functionData: [
+  repository: {
+    name: 'demo',
+    url: 'https://github.com/owner/demo',
+    branch: 'main',
+    revision: 'head123',
+  },
+  entryPoints: [
     {
-      functionId: 'function:demo/src/handler.ts:handleGreeting',
-      parameters: [
-        {
-          id: 'parameter:name',
-          name: 'name',
-          typeText: 'string',
-          location: {
-            filePath: 'demo/src/handler.ts',
-            startLine: 4,
-            startColumn: 32,
-            endLine: 4,
-            endColumn: 44,
-          },
-          evidence: [],
-        },
-      ],
-      returns: [
-        {
-          id: 'return:greeting',
-          expressionText: 'formatter(normalizeName(name))',
-          location: {
-            filePath: 'demo/src/handler.ts',
-            startLine: 6,
-            startColumn: 3,
-            endLine: 6,
-            endColumn: 43,
-          },
-          evidence: [],
-        },
-      ],
-      callArguments: [],
+      id: 'function:createOrder',
+      name: 'createOrder',
+      filePath: 'src/orders.ts',
+      confidence: 'detected',
+      reason: 'Exported function.',
+    },
+    {
+      id: 'function:persistOrder',
+      name: 'persistOrder',
+      filePath: 'src/orders.ts',
+      confidence: 'likely',
+      reason: 'Exported function.',
     },
   ],
-  staticFlow: {
-    steps: [
+  architecture: {
+    rootId: 'repository:demo',
+    entities: [
       {
-        id: 'step:parameter',
-        functionId: 'function:demo/src/handler.ts:handleGreeting',
-        kind: 'parameter',
-        label: 'name parameter',
-        valueText: 'name',
-        location: {
-          filePath: 'demo/src/handler.ts',
-          startLine: 4,
-          startColumn: 32,
-          endLine: 4,
-          endColumn: 44,
-        },
+        id: 'repository:demo',
+        kind: 'Repository',
+        name: 'demo',
+        path: '.',
+        location: null,
+        exported: false,
         evidence: [],
       },
       {
-        id: 'step:normalize',
-        functionId: 'function:demo/src/name.ts:normalizeName',
-        kind: 'transform',
-        label: 'normalize name',
-        valueText: 'name.trim().toLowerCase()',
-        location: {
-          filePath: 'demo/src/name.ts',
-          startLine: 2,
-          startColumn: 10,
-          endLine: 2,
-          endColumn: 35,
-        },
+        id: 'file:orders',
+        kind: 'File',
+        name: 'orders.ts',
+        path: 'src/orders.ts',
+        location: createLocation,
+        exported: false,
+        evidence: [],
+      },
+      {
+        id: 'file:db',
+        kind: 'File',
+        name: 'db.ts',
+        path: 'src/db.ts',
+        location: { ...createLocation, filePath: 'src/db.ts' },
+        exported: false,
+        evidence: [],
+      },
+      {
+        id: 'function:createOrder',
+        kind: 'Function',
+        name: 'createOrder',
+        path: 'src/orders.ts',
+        location: createLocation,
+        exported: true,
+        evidence: [],
+      },
+      {
+        id: 'function:saveOrder',
+        kind: 'Function',
+        name: 'saveOrder',
+        path: 'src/orders.ts',
+        location: saveLocation,
+        exported: true,
+        evidence: [],
+      },
+      {
+        id: 'function:persistOrder',
+        kind: 'Function',
+        name: 'persistOrder',
+        path: 'src/orders.ts',
+        location: persistLocation,
+        exported: true,
+        evidence: [],
+      },
+      {
+        id: 'class:OrderService',
+        kind: 'Class',
+        name: 'OrderService',
+        path: 'src/orders.ts',
+        location: { ...persistLocation, startLine: 13, endLine: 13 },
+        exported: true,
         evidence: [],
       },
     ],
     relationships: [
       {
-        id: 'flow:name-normalized',
-        kind: 'FLOWS_TO',
-        functionId: 'function:demo/src/handler.ts:handleGreeting',
-        sourceStepId: 'step:parameter',
-        targetStepId: 'step:normalize',
-        label: 'name → normalized name',
+        id: 'contains:repo-orders',
+        kind: 'CONTAINS',
+        sourceId: 'repository:demo',
+        targetId: 'file:orders',
+        evidence: [],
+      },
+      {
+        id: 'contains:repo-db',
+        kind: 'CONTAINS',
+        sourceId: 'repository:demo',
+        targetId: 'file:db',
+        evidence: [],
+      },
+      {
+        id: 'defines:orders-create',
+        kind: 'DEFINES',
+        sourceId: 'file:orders',
+        targetId: 'function:createOrder',
+        evidence: [],
+      },
+      {
+        id: 'imports:orders-db',
+        kind: 'IMPORTS',
+        sourceId: 'file:orders',
+        targetId: 'file:db',
+        evidence: [],
+      },
+      {
+        id: 'references:create-service',
+        kind: 'REFERENCES',
+        sourceId: 'function:createOrder',
+        targetId: 'class:OrderService',
         evidence: [],
       },
     ],
   },
+  topology: {
+    rootId: 'workspace:demo',
+    entities: [
+      {
+        id: 'workspace:demo',
+        kind: 'Workspace',
+        name: 'demo',
+        path: '.',
+        location: null,
+        evidence: [],
+      },
+      {
+        id: 'package:api',
+        kind: 'Package',
+        name: 'api',
+        path: 'apps/api',
+        location: null,
+        evidence: [],
+      },
+      {
+        id: 'package:data',
+        kind: 'Package',
+        name: 'data',
+        path: 'packages/data',
+        location: null,
+        evidence: [],
+      },
+    ],
+    relationships: [
+      {
+        id: 'contains:workspace-api',
+        kind: 'CONTAINS',
+        sourceId: 'workspace:demo',
+        targetId: 'package:api',
+        evidence: [],
+      },
+      {
+        id: 'contains:workspace-data',
+        kind: 'CONTAINS',
+        sourceId: 'workspace:demo',
+        targetId: 'package:data',
+        evidence: [],
+      },
+      {
+        id: 'depends:api-data',
+        kind: 'DEPENDS_ON',
+        sourceId: 'package:api',
+        targetId: 'package:data',
+        evidence: [],
+      },
+    ],
+    externalDependencies: [],
+    fileOwners: {
+      'src/orders.ts': 'package:api',
+      'src/db.ts': 'package:data',
+    },
+    status: 'complete',
+    issues: [],
+  },
 };
 
-function repositoryFile(filePath: string, text: string): File {
-  const file = new File([text], filePath.split('/').at(-1) ?? filePath, {
-    type: 'text/typescript',
-  });
-  Object.defineProperty(file, 'webkitRelativePath', { value: filePath });
-  Object.defineProperty(file, 'text', {
-    value: async () => text,
-  });
-  return file;
-}
+const impactProjection: ImpactProjection = {
+  seeds: [
+    {
+      entityId: 'function:saveOrder',
+      entityKind: 'Function',
+      name: 'saveOrder',
+      path: 'src/orders.ts',
+    },
+  ],
+  results: [
+    {
+      entityId: 'function:createOrder',
+      entityKind: 'Function',
+      name: 'createOrder',
+      path: 'src/orders.ts',
+      distance: 1,
+      seedIds: ['function:saveOrder'],
+      paths: [
+        {
+          seedId: 'function:saveOrder',
+          steps: [
+            {
+              sourceId: 'function:createOrder',
+              targetId: 'function:saveOrder',
+              kind: 'CALLS',
+              evidence: [],
+            },
+          ],
+        },
+      ],
+      evidence: [],
+    },
+  ],
+  summary: {
+    directCount: 1,
+    transitiveCount: 0,
+    byKind: { Function: 1 },
+    affectedPackageIds: [],
+    affectedModuleIds: [],
+    affectedFileIds: [],
+  },
+  maxDepth: 3,
+  status: 'complete',
+  issues: [],
+};
 
-const repositoryFiles = [
-  repositoryFile('demo/src/handler.ts', handlerSource),
-  repositoryFile('demo/src/name.ts', nameSource),
-  repositoryFile('demo/src/format.ts', formatSource),
-  repositoryFile('demo/README.md', '# Demo'),
-];
+const pullRequestAnalysis: PullRequestAnalysis = {
+  base: graphFlow,
+  head: graphFlow,
+  change: {
+    source: {
+      provider: 'github',
+      repository: 'owner/demo',
+      pullRequestNumber: 12,
+      title: 'Change order flow',
+      url: 'https://github.com/owner/demo/pull/12',
+      baseRevision: 'base123456',
+      headRevision: 'head123456',
+    },
+    files: [],
+    entities: [
+      {
+        id: 'change:create',
+        changeKind: 'modified',
+        entityKind: 'Function',
+        name: 'createOrder',
+        path: 'src/orders.ts',
+        baseEntityId: 'function:createOrder',
+        headEntityId: 'function:createOrder',
+        baseLocation: createLocation,
+        headLocation: createLocation,
+      },
+      {
+        id: 'change:persist',
+        changeKind: 'added',
+        entityKind: 'Function',
+        name: 'persistOrder',
+        path: 'src/orders.ts',
+        baseEntityId: null,
+        headEntityId: 'function:persistOrder',
+        baseLocation: null,
+        headLocation: persistLocation,
+      },
+    ],
+    behaviorDeltas: [
+      {
+        changeEntityId: 'change:create',
+        functionName: 'createOrder',
+        path: 'src/orders.ts',
+        baseFunctionId: 'function:createOrder',
+        headFunctionId: 'function:createOrder',
+        items: [
+          {
+            id: 'behavior:return',
+            changeKind: 'added',
+            category: 'return',
+            kind: 'return',
+            label: 'return saveOrder()',
+            detail: 'saveOrder()',
+            snapshot: 'head',
+            location: createLocation,
+            evidence: [],
+          },
+        ],
+        summary: {
+          addedCount: 1,
+          removedCount: 0,
+          parameterCount: 0,
+          returnCount: 1,
+          stepCount: 0,
+          relationshipCount: 0,
+        },
+      },
+    ],
+    relationshipDeltas: [],
+    impact: { base: null, head: null },
+    coverage: { status: 'complete', issues: [] },
+  },
+};
 
-function stubFlowRequest(flow: FlowProjection = sampleFlow) {
-  const fetchMock = vi.fn().mockResolvedValue({
+function apiResponse(payload: unknown) {
+  return {
     ok: true,
     status: 200,
-    json: async () => flow,
+    json: async () => payload,
+  };
+}
+
+function stubApi() {
+  const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url.endsWith('/api/analyses')) {
+      return apiResponse(graphFlow);
+    }
+    if (url.endsWith('/api/flows/impact')) {
+      return apiResponse(impactProjection);
+    }
+    if (url.endsWith('/api/changes/github')) {
+      return apiResponse(pullRequestAnalysis);
+    }
+    throw new Error(`Unexpected request: ${url}`);
   });
   vi.stubGlobal('fetch', fetchMock);
   return fetchMock;
 }
 
-function stubFlowFailure(message: string) {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn().mockResolvedValue({
-      ok: false,
-      status: 422,
-      json: async () => ({ error: message }),
-    }),
-  );
-}
-
-function selectEntrySource(filePath: string) {
-  const trigger = screen.getByRole('combobox', { name: 'Entry source file' });
-  fireEvent.pointerDown(trigger, {
-    button: 0,
-    ctrlKey: false,
-    pointerId: 1,
-    pointerType: 'mouse',
-  });
-  fireEvent.click(screen.getByRole('option', { name: filePath }));
-}
-
-async function openRepository(flow: FlowProjection = sampleFlow) {
-  const fetchMock = stubFlowRequest(flow);
+async function openRepository() {
+  const fetchMock = stubApi();
   render(<App />);
-
-  fireEvent.click(
-    screen.getByRole('button', { name: /^Understand repository/ }),
-  );
-  fireEvent.change(screen.getByLabelText('Repository directory'), {
-    target: { files: repositoryFiles },
+  fireEvent.change(screen.getByLabelText('Public GitHub repository URL'), {
+    target: { value: 'https://github.com/owner/demo' },
   });
-  selectEntrySource('demo/src/handler.ts');
-  fireEvent.change(
-    screen.getByRole('textbox', { name: 'Exported entry function' }),
-    { target: { value: 'handleGreeting' } },
-  );
-  fireEvent.click(screen.getByRole('button', { name: 'Analyze repository' }));
-
-  await screen.findByText(
-    flow.nodes.length === 0
-      ? 'No functions projected'
-      : 'handleGreeting call neighborhood',
-  );
+  fireEvent.click(screen.getByRole('button', { name: 'Open code graph' }));
+  await screen.findByRole('region', { name: 'Semantic code graph' });
   return fetchMock;
 }
 
-describe('App', () => {
+describe('App graph-first product', () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllGlobals();
@@ -280,346 +450,116 @@ describe('App', () => {
     delete document.documentElement.dataset.theme;
   });
 
-  it('asks for intent before exposing repository or pull-request input', () => {
-    const fetchMock = stubFlowRequest();
-
+  it('starts from repository visualization instead of product-mode selection', () => {
+    const fetchMock = stubApi();
     render(<App />);
 
     expect(
-      screen.getByRole('heading', { name: 'What do you need to understand?' }),
+      screen.getByRole('heading', { name: 'Visualize how a codebase connects' }),
     ).toBeInTheDocument();
+    expect(screen.getByLabelText('Public GitHub repository URL')).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /Understand repository/ }),
+      screen.getByText('Visualize pull request changes on the graph'),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /Review change/ }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByLabelText('Public GitHub repository URL'),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByLabelText('Public GitHub pull request URL'),
-    ).not.toBeInTheDocument();
-
-    fireEvent.click(
-      screen.getByRole('button', { name: /Understand repository/ }),
-    );
-    expect(
-      screen.getByRole('heading', {
-        name: 'Understand an unfamiliar codebase',
-      }),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/Analyze a local repository/)).toBeInTheDocument();
-    expect(
-      screen.queryByLabelText('Public GitHub pull request URL'),
-    ).not.toBeInTheDocument();
-
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Choose another task' }),
-    );
-    fireEvent.click(screen.getByRole('button', { name: /Review change/ }));
-    expect(
-      screen.getByRole('heading', { name: 'Trace an actual pull request' }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByLabelText('Public GitHub repository URL'),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText('What do you need to understand?')).not.toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('labels function exploration as a bounded static call neighborhood', async () => {
+  it('lands directly in one graph and progressively expands call paths', async () => {
     await openRepository();
 
     expect(
-      screen.getByRole('heading', { name: 'handleGreeting call neighborhood' }),
+      screen.getByRole('region', { name: 'Code graph explorer' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Explore' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Flow' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: 'Impact' })).not.toBeInTheDocument();
+
+    expect(
+      screen.getByRole('button', { name: /Function createOrder/ }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Projected relationships only.*not runtime execution/i),
+      screen.getByRole('button', { name: /Function saveOrder/ }),
     ).toBeInTheDocument();
-    expect(screen.getAllByText('Inferred static').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Verified static').length).toBeGreaterThan(0);
+    expect(
+      screen.queryByRole('button', { name: /Function persistOrder/ }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Function saveOrder/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Expand outgoing' }));
+
+    expect(
+      screen.getByRole('button', { name: /Function persistOrder/ }),
+    ).toBeInTheDocument();
   });
 
-  it('collapses setup into repository context and inspects cross-file source', async () => {
+  it('uses semantic search and graph levels as navigation rather than separate workspaces', async () => {
+    await openRepository();
+
+    const search = screen.getByRole('searchbox', { name: 'Search code graph' });
+    fireEvent.change(search, { target: { value: 'OrderService' } });
+    fireEvent.click(screen.getByRole('option', { name: /OrderService/ }));
+
+    expect(
+      screen.getByRole('button', { name: /Class OrderService/ }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Structure/ }));
+    expect(
+      screen.getByRole('button', { name: /File orders\.ts/ }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Packages/ }));
+    expect(
+      screen.getByRole('button', { name: /Package api/ }),
+    ).toBeInTheDocument();
+  });
+
+  it('turns downstream impact into a graph operation on the selected entity', async () => {
     const fetchMock = await openRepository();
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const request = fetchMock.mock.calls[0]?.[1] as RequestInit;
-    const body = JSON.parse(String(request.body)) as {
-      files: Array<{ filePath: string }>;
-      entryPoint: { filePath: string; name: string };
-    };
-    expect(body.entryPoint).toEqual({
-      filePath: 'demo/src/handler.ts',
-      name: 'handleGreeting',
+    fireEvent.click(screen.getByRole('button', { name: /Function saveOrder/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Show dependents' }));
+
+    expect(await screen.findByText(/Dependents: 1 direct/)).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Clear dependents' }),
+    ).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('renders pull-request analysis as change state over the same graph', async () => {
+    stubApi();
+    render(<App />);
+
+    fireEvent.click(
+      screen.getByText('Visualize pull request changes on the graph'),
+    );
+    fireEvent.change(screen.getByLabelText('Public GitHub pull request URL'), {
+      target: { value: 'https://github.com/owner/demo/pull/12' },
     });
-    expect(body.files.map((file) => file.filePath)).toEqual([
-      'demo/src/format.ts',
-      'demo/src/handler.ts',
-      'demo/src/name.ts',
-    ]);
+    fireEvent.click(screen.getByRole('button', { name: 'Analyze pull request' }));
+
+    await screen.findByRole('region', { name: 'Semantic code graph' });
+    expect(screen.getByText('Change overlay')).toBeInTheDocument();
+    expect(screen.getByText(/PR #12 · Change order flow/)).toBeInTheDocument();
     expect(
-      screen.queryByLabelText('Repository directory'),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Change repository' }),
+      screen.getByRole('button', { name: /Function createOrder modified/ }),
     ).toBeInTheDocument();
 
     fireEvent.click(
-      screen.getByRole('button', { name: /^FunctionnormalizeName/i }),
+      screen.getByRole('button', { name: /Function createOrder modified/ }),
     );
-
-    expect(
-      screen.getByRole('heading', { name: 'normalizeName' }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/name\.trim\(\)\.toLowerCase\(\)/),
-    ).toBeInTheDocument();
-    const inspector = screen.getByLabelText('Source evidence inspector');
-    expect(
-      within(inspector).getByText(/demo\/src\/name\.ts:L1/),
-    ).toBeInTheDocument();
-  });
-
-  it('navigates search from the keyboard and returns to the entry flow truthfully', async () => {
-    await openRepository();
-
-    const search = screen.getByRole('searchbox', { name: 'Search functions' });
-    fireEvent.change(search, { target: { value: 'format' } });
-    fireEvent.keyDown(search, { key: 'Enter' });
-
-    expect(
-      screen.getByText('Neighborhood focus · formatGreeting'),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { name: 'formatGreeting' }),
-    ).toBeInTheDocument();
-    expect(screen.queryByText('normalizeName')).not.toBeInTheDocument();
-
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Back to entry neighborhood' }),
-    );
-
-    expect(screen.getByText('normalizeName')).toBeInTheDocument();
-  });
-
-  it('moves between caller and callee with arrow keys while keeping inspection synchronized', async () => {
-    vi.stubGlobal(
-      'requestAnimationFrame',
-      (callback: FrameRequestCallback): number => {
-        callback(0);
-        return 0;
-      },
-    );
-    await openRepository();
-
-    const entryNode = screen.getByRole('button', {
-      name: /^Entry functionhandleGreeting/i,
-    });
-    entryNode.focus();
-
-    fireEvent.keyDown(entryNode, { key: 'ArrowRight' });
-
-    const calleeNode = screen.getByRole('button', {
-      name: /^FunctionformatGreeting/i,
-    });
-    expect(calleeNode).toHaveFocus();
-    expect(
-      screen.getByRole('heading', { name: 'formatGreeting' }),
-    ).toBeInTheDocument();
-
-    fireEvent.keyDown(calleeNode, { key: 'ArrowLeft' });
-
-    expect(entryNode).toHaveFocus();
-    expect(
-      screen.getByRole('heading', { name: 'handleGreeting' }),
-    ).toBeInTheDocument();
-  });
-
-  it('opens selected relationship evidence with source provenance', async () => {
-    await openRepository();
-
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: 'Inspect CALLS relationship from handleGreeting to normalizeName',
-      }),
-    );
-
-    expect(
-      screen.getByRole('heading', { name: 'handleGreeting → normalizeName' }),
-    ).toBeInTheDocument();
-    expect(screen.getByText('Direct symbol resolution.')).toBeInTheDocument();
-    expect(screen.getByText(/typescript-compiler-api/)).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Evidence' })).toHaveAttribute(
-      'data-state',
-      'active',
-    );
-  });
-
-  it('separates data, evidence, and static steps into task-oriented inspector tabs', async () => {
-    await openRepository();
-
-    const dataTab = screen.getByRole('tab', { name: 'Data' });
-    fireEvent.mouseDown(dataTab, { button: 0 });
-    fireEvent.pointerDown(dataTab, {
-      button: 0,
-      pointerId: 1,
-      pointerType: 'mouse',
-    });
-    fireEvent.click(dataTab);
-    expect(screen.getByText('string')).toBeInTheDocument();
-    expect(
-      screen.getByText('formatter(normalizeName(name))'),
-    ).toBeInTheDocument();
-
-    const evidenceTab = screen.getByRole('tab', { name: 'Evidence' });
-    fireEvent.mouseDown(evidenceTab, { button: 0 });
-    fireEvent.pointerDown(evidenceTab, {
-      button: 0,
-      pointerId: 1,
-      pointerType: 'mouse',
-    });
-    fireEvent.click(evidenceTab);
-    expect(screen.getAllByText('CALLS').length).toBeGreaterThan(0);
-
-    const stepsTab = screen.getByRole('tab', { name: 'Steps' });
-    fireEvent.mouseDown(stepsTab, { button: 0 });
-    fireEvent.pointerDown(stepsTab, {
-      button: 0,
-      pointerId: 1,
-      pointerType: 'mouse',
-    });
-    fireEvent.click(stepsTab);
-    expect(screen.getByText(/Step 1\/2/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Next step' }));
-    expect(screen.getByText(/Step 2\/2/)).toBeInTheDocument();
-    expect(screen.getByText('normalize name')).toBeInTheDocument();
+    expect(screen.getByText('Behavior delta')).toBeInTheDocument();
+    expect(screen.getByText('return saveOrder()')).toBeInTheDocument();
   });
 
   it('persists explicit theme selection', () => {
     render(<App />);
-
     fireEvent.click(
       screen.getByRole('button', { name: 'Switch to light theme' }),
     );
-
     expect(document.documentElement.dataset.theme).toBe('light');
     expect(window.localStorage.getItem('codeflow-theme')).toBe('light');
-  });
-
-  it('expands source inspection without leaving the semantic canvas', async () => {
-    await openRepository();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Expand source' }));
-
-    expect(
-      screen.getByRole('button', { name: 'Restore inspector' }),
-    ).toHaveAttribute('aria-pressed', 'true');
-    expect(
-      screen.getByRole('region', { name: 'Static call neighborhood' }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByLabelText('Source evidence inspector'),
-    ).toHaveTextContent('export function handleGreeting');
-  });
-
-  it('shows an explicit empty state when analysis projects no functions', async () => {
-    await openRepository({
-      ...sampleFlow,
-      nodes: [],
-      edges: [],
-    });
-
-    expect(screen.getByText('No functions projected')).toBeInTheDocument();
-    expect(
-      screen.queryByRole('region', { name: 'Static call neighborhood' }),
-    ).not.toBeInTheDocument();
-  });
-
-  it('keeps a partial repository projection navigable and surfaces analysis issues', async () => {
-    const partialFlow: FlowProjection = {
-      ...sampleFlow,
-      analysis: {
-        status: 'partial',
-        analyzedFileCount: 3,
-        ignoredFileCount: 1,
-        issues: [
-          {
-            kind: 'unsupported',
-            filePath: 'demo/src/missing.ts',
-            message:
-              'Relative import ./missing could not be resolved from the selected repository files.',
-          },
-        ],
-      },
-      edges: sampleFlow.edges.map((edge) =>
-        edge.id === 'verified-edge' ? { ...edge, evidence: [] } : edge,
-      ),
-    };
-
-    await openRepository(partialFlow);
-
-    expect(screen.getByText('Partial projection')).toBeInTheDocument();
-    expect(
-      screen.getByText(/demo\/src\/missing\.ts: Relative import/),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/1 relationship has no supporting evidence/i),
-    ).toBeInTheDocument();
-
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: 'Inspect CALLS relationship from handleGreeting to normalizeName',
-      }),
-    );
-    expect(screen.getAllByText('evidence-unavailable').length).toBeGreaterThan(
-      0,
-    );
-  });
-
-  it('rejects oversized local source before upload', () => {
-    const fetchMock = stubFlowRequest();
-    const oversized = repositoryFile(
-      'demo/src/large.ts',
-      'x'.repeat(129 * 1024),
-    );
-
-    render(<App />);
-    fireEvent.click(
-      screen.getByRole('button', { name: /^Understand repository/ }),
-    );
-    fireEvent.change(screen.getByLabelText('Repository directory'), {
-      target: { files: [oversized] },
-    });
-
-    expect(screen.getByRole('alert')).toHaveTextContent(
-      'exceeds the 131072-byte per-file analysis limit',
-    );
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
-  it('shows an API failure state without fabricating a flow', async () => {
-    stubFlowFailure('Exported entry point handleGreeting was not found.');
-    render(<App />);
-
-    fireEvent.click(
-      screen.getByRole('button', { name: /^Understand repository/ }),
-    );
-    fireEvent.change(screen.getByLabelText('Repository directory'), {
-      target: { files: repositoryFiles },
-    });
-    selectEntrySource('demo/src/handler.ts');
-    fireEvent.change(
-      screen.getByRole('textbox', { name: 'Exported entry function' }),
-      { target: { value: 'handleGreeting' } },
-    );
-    fireEvent.click(screen.getByRole('button', { name: 'Analyze repository' }));
-
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Repository analysis unavailable',
-    );
-    expect(screen.getByRole('alert')).toHaveTextContent(
-      'Exported entry point handleGreeting was not found.',
-    );
   });
 });
