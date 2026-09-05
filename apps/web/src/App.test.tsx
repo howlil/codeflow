@@ -486,6 +486,19 @@ describe('App graph-first product', () => {
     ).not.toBeInTheDocument();
 
     expect(
+      screen.getByRole('button', { name: 'Zoom out' }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Zoom in' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Fit graph' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Center focus' }),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Zoom in' }));
+    expect(screen.getByText('110%')).toBeInTheDocument();
+
+    expect(
       screen.getByRole('button', { name: /Function createOrder/ }),
     ).toBeInTheDocument();
     expect(
