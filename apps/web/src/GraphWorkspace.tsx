@@ -618,7 +618,11 @@ function GraphProjectionControls({
 
   return (
     <div className="graph-projection-controls">
-      <div className="graph-level-switcher" role="group" aria-label="Graph level">
+      <div
+        className="graph-level-switcher"
+        role="group"
+        aria-label="Graph level"
+      >
         {levels.map((candidate) => {
           const count = graph.nodes.filter((node) =>
             graphNodeBelongsToLevel(node, candidate),
@@ -927,7 +931,10 @@ function GraphInspector({
         </div>
       ) : null}
 
-      <div className="graph-relationship-summary" aria-label="Relationship summary">
+      <div
+        className="graph-relationship-summary"
+        aria-label="Relationship summary"
+      >
         <span>
           <strong>{incoming.length}</strong> incoming
         </span>
@@ -1063,7 +1070,9 @@ function GraphInspector({
         )}
       </section>
 
-      {node.evidence.length > 0 ? <EvidenceList evidence={node.evidence} /> : null}
+      {node.evidence.length > 0 ? (
+        <EvidenceList evidence={node.evidence} />
+      ) : null}
     </aside>
   );
 }
