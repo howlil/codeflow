@@ -71,8 +71,7 @@ export function App() {
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [relationshipLens, setRelationshipLens] =
     useState<RelationshipLens>('ALL');
-  const [workbenchView, setWorkbenchView] =
-    useState<WorkbenchView>('explore');
+  const [workbenchView, setWorkbenchView] = useState<WorkbenchView>('explore');
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
   const [error, setError] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -467,9 +466,7 @@ export function App() {
           <Tabs
             className="repository-workbench"
             value={workbenchView}
-            onValueChange={(value) =>
-              setWorkbenchView(value as WorkbenchView)
-            }
+            onValueChange={(value) => setWorkbenchView(value as WorkbenchView)}
           >
             <div className="workbench-mode-bar">
               <TabsList aria-label="Repository workbench">
@@ -585,9 +582,7 @@ export function App() {
                           disabled={selectedNode === null}
                           onClick={toggleFocusMode}
                         >
-                          {focusMode
-                            ? 'Back to entry flow'
-                            : 'Focus selected'}
+                          {focusMode ? 'Back to entry flow' : 'Focus selected'}
                         </Button>
                         <Button
                           className="inspector-open-button"
