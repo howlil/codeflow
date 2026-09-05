@@ -410,8 +410,8 @@ export function GraphWorkspace({
             {impact !== null ? (
               <div className="graph-impact-status" role="status">
                 <span>
-                  {impact.summary.directCount} direct ·{' '}
-                  {impact.summary.transitiveCount} transitive dependents
+                  Dependents: {impact.summary.directCount} direct ·{' '}
+                  {impact.summary.transitiveCount} transitive
                 </span>
                 <Button variant="ghost" onClick={() => setImpact(null)}>
                   Clear dependents
