@@ -702,10 +702,7 @@ function ExploreWorkspace({
 
       <TabsContent value="structure">
         {flow.architecture === undefined ? (
-          <section
-            className="state-panel repository-mode-state"
-            role="status"
-          >
+          <section className="state-panel repository-mode-state" role="status">
             <strong>Repository structure unavailable</strong>
             <span>
               This analysis has function flow data but no repository-level
