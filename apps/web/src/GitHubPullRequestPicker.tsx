@@ -30,7 +30,9 @@ export function GitHubPullRequestPicker({
     >
       <div>
         <p className="panel-kicker">Change overlay</p>
-        <h2 id="github-pr-acquisition-title">Visualize a pull request on the code graph</h2>
+        <h2 id="github-pr-acquisition-title">
+          Visualize a pull request on the code graph
+        </h2>
         <p>
           CodeFlow freezes BASE and HEAD, maps semantic changes, then overlays
           changed entities and relationships on the same navigable graph.

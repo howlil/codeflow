@@ -455,13 +455,19 @@ describe('App graph-first product', () => {
     render(<App />);
 
     expect(
-      screen.getByRole('heading', { name: 'Visualize how a codebase connects' }),
+      screen.getByRole('heading', {
+        name: 'Visualize how a codebase connects',
+      }),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText('Public GitHub repository URL')).toBeInTheDocument();
+    expect(
+      screen.getByLabelText('Public GitHub repository URL'),
+    ).toBeInTheDocument();
     expect(
       screen.getByText('Visualize pull request changes on the graph'),
     ).toBeInTheDocument();
-    expect(screen.queryByText('What do you need to understand?')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('What do you need to understand?'),
+    ).not.toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -471,9 +477,13 @@ describe('App graph-first product', () => {
     expect(
       screen.getByRole('region', { name: 'Code graph explorer' }),
     ).toBeInTheDocument();
-    expect(screen.queryByRole('tab', { name: 'Explore' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('tab', { name: 'Explore' }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Flow' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('tab', { name: 'Impact' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('tab', { name: 'Impact' }),
+    ).not.toBeInTheDocument();
 
     expect(
       screen.getByRole('button', { name: /Function createOrder/ }),
@@ -538,7 +548,7 @@ describe('App graph-first product', () => {
     fireEvent.change(screen.getByLabelText('Public GitHub pull request URL'), {
       target: { value: 'https://github.com/owner/demo/pull/12' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Analyze pull request' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open change graph' }));
 
     await screen.findByRole('region', { name: 'Semantic code graph' });
     expect(screen.getByText('Change overlay')).toBeInTheDocument();
