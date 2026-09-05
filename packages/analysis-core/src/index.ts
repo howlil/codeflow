@@ -47,6 +47,15 @@ export type {
 } from './impact-analysis.js';
 export { buildImpactProjection } from './impact-analysis.js';
 export type {
+  BehaviorDeltaCategory,
+  BehaviorDeltaChangeKind,
+  BehaviorDeltaSnapshot,
+  FunctionBehaviorDelta,
+  FunctionBehaviorDeltaItem,
+  FunctionBehaviorDeltaSummary,
+} from './behavior-delta.js';
+export { buildFunctionBehaviorDeltas } from './behavior-delta.js';
+export type {
   ChangeHunk,
   RelationshipDelta,
   RelationshipDeltaEndpoint,

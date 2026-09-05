@@ -6,6 +6,10 @@ import type {
   SourceLocation,
 } from './model.js';
 import {
+  buildFunctionBehaviorDeltas,
+  type FunctionBehaviorDelta,
+} from './behavior-delta.js';
+import {
   buildImpactProjection,
   type ImpactProjection,
   type ImpactRelationshipKind,
@@ -91,6 +95,7 @@ export interface RepositoryChangeProjection {
   source: RepositoryChangeSource;
   files: RepositoryChangedFile[];
   entities: SemanticChangeEntity[];
+  behaviorDeltas: FunctionBehaviorDelta[];
   relationshipDeltas: RelationshipDelta[];
   impact: {
     base: ImpactProjection | null;
@@ -195,6 +200,11 @@ export function buildRepositoryChangeProjection(input: {
     source: input.source,
     files,
     entities,
+    behaviorDeltas: buildFunctionBehaviorDeltas(
+      input.base,
+      input.head,
+      entities,
+    ),
     relationshipDeltas: buildRelationshipDeltas(input.base, input.head),
     impact: {
       base: baseImpact,

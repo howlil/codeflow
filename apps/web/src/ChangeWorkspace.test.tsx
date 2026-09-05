@@ -113,6 +113,47 @@ function fixture(): PullRequestAnalysis {
           headLocation: location,
         },
       ],
+      behaviorDeltas: [
+        {
+          changeEntityId: 'change:modified:Function:core.ts:processPayment',
+          functionName: 'processPayment',
+          path: 'core.ts',
+          baseFunctionId: 'function:core:process',
+          headFunctionId: 'function:core:process',
+          items: [
+            {
+              id: 'behavior:removed:return',
+              changeKind: 'removed',
+              category: 'return',
+              kind: 'return',
+              label: 'Return expression',
+              detail: '1',
+              snapshot: 'base',
+              location,
+              evidence,
+            },
+            {
+              id: 'behavior:added:return',
+              changeKind: 'added',
+              category: 'return',
+              kind: 'return',
+              label: 'Return expression',
+              detail: '2',
+              snapshot: 'head',
+              location,
+              evidence,
+            },
+          ],
+          summary: {
+            addedCount: 1,
+            removedCount: 1,
+            parameterCount: 0,
+            returnCount: 2,
+            stepCount: 0,
+            relationshipCount: 0,
+          },
+        },
+      ],
       relationshipDeltas: [
         {
           id: 'delta:1',
@@ -179,8 +220,8 @@ function fixture(): PullRequestAnalysis {
   };
 }
 
-describe('M9 change workspace', () => {
-  it('connects actual diff, changed entity, downstream evidence, and function flow', () => {
+describe('M10 change workspace', () => {
+  it('connects actual diff, static behavior delta, downstream evidence, and function flow', () => {
     const onOpenFunction = vi.fn();
     render(
       <ChangeWorkspace
@@ -193,9 +234,15 @@ describe('M9 change workspace', () => {
     expect(screen.getByText('Change payment flow')).toBeTruthy();
     expect(screen.getAllByText('processPayment').length).toBeGreaterThan(0);
     expect(screen.getByText(/return 2;/)).toBeTruthy();
+    expect(screen.getByText('Static behavior delta')).toBeTruthy();
+    expect(screen.getByText(/BASE → HEAD/)).toBeTruthy();
+    expect(screen.getAllByText('1').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('2').length).toBeGreaterThan(0);
     expect(screen.getByText('handle')).toBeTruthy();
     expect(screen.getAllByText('CALLS').length).toBeGreaterThan(0);
-    expect(screen.getByText(/Static call evidence/)).toBeTruthy();
+    expect(screen.getAllByText(/Static call evidence/).length).toBeGreaterThan(
+      0,
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Open function flow' }));
     expect(onOpenFunction).toHaveBeenCalledWith(

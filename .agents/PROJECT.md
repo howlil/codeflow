@@ -35,7 +35,7 @@ public GitHub repository URL, public GitHub pull request URL, or explicit local 
  -> search/focus/navigation
  -> inspect package dependencies + definitions + references + calls + data movement + source provenance
  -> define a hypothetical change scope and inspect bounded evidence-backed downstream impact where useful
- -> or freeze a public pull request base/head revision pair, map actual diff hunks to changed semantic entities, and inspect downstream impact plus relationship deltas
+ -> or freeze a public pull request base/head revision pair, map actual diff hunks to changed semantic entities, inspect supported static function behavior delta, downstream impact, and relationship deltas
  -> deterministic static step-through where supported
 ```
 
@@ -50,9 +50,13 @@ The implemented TypeScript path currently supports:
 - dual-revision request-scoped analysis for pull requests so added/current semantics can use HEAD while removed/previous semantics can use BASE;
 - actual Git diff hunk mapping to analyzed TypeScript/TSX file and symbol locations where evidence exists, with file-level fallback when precise semantic mapping is unavailable;
 - semantic change projection for added, modified, and removed entities without fabricating rename semantics from name similarity;
+- deterministic function-level BASE → HEAD static behavior deltas over supported declared parameters/types, explicit return expressions, static steps, and static data-flow relationships;
+- behavior-delta comparison as semantic multisets so line-number movement or stable-ID churn alone does not create false behavior changes;
+- revision-specific evidence and source locations for added/removed behavior facts, including truthful one-sided handling for added or removed functions;
+- an explicit zero-delta state that means no supported static behavior delta was found, not runtime equivalence or safety;
 - automatic reuse of the M8 impact engine for bounded changed-entity scopes, keeping impact derived from canonical semantic facts rather than inventing a second impact model;
 - explicit base/head relationship deltas for supported `CALLS`, `REFERENCES`, `IMPORTS`, `DEPENDS_ON`, `EXTENDS`, and `IMPLEMENTS` relationships;
-- a compact change workspace connecting changed semantic code, actual patch text, package/directory grouping, downstream impact, evidence paths, relationship deltas, and existing function-flow drill-down;
+- a compact change workspace connecting changed semantic code, actual patch text, static behavior delta, package/directory grouping, downstream impact, evidence paths, relationship deltas, and existing function-flow drill-down;
 - truthful pull-request partial coverage when GitHub omits a patch, a changed file is unsupported, repository/tree/source limits truncate semantic coverage, or automatic impact scope is bounded;
 - explicit browser-selected local repository input as a secondary repository-analysis path;
 - separately bounded acquisition of `package.json`, `pnpm-workspace.yaml`, and `tsconfig*.json` architecture metadata without consuming the TypeScript source budget;
@@ -94,6 +98,8 @@ The deterministic sample API remains a fixture/demo compatibility path rather th
 - Verified, inferred, configured, observed-runtime, and user-asserted evidence remain distinguishable.
 - A Git diff/change observation is not itself a semantic relationship evidence kind; pull-request change state remains a separate derived projection over frozen repository revisions.
 - Pull-request analysis must preserve exact base/head revision identity for the analyzed session rather than silently following moving branch refs.
+- Static behavior delta compares only supported semantic/static facts from the frozen revisions; unchanged projected facts do not prove runtime equivalence, correctness, or safety.
+- Source-location movement by itself must not be reported as a behavior change.
 - Workspace/package metadata describes configured software boundaries and dependencies; it must not be relabeled as observed runtime service topology.
 - Impact is a bounded derived query over canonical semantic facts; it must not become an unsupported canonical relationship or a prediction of runtime failure.
 - Missing impact results do not prove safety; incomplete source, unsupported semantics, missing patches, or bounded traversal remain explicit partial coverage.
