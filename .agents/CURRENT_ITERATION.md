@@ -1,48 +1,55 @@
 # Current Iteration
 
-Status: READY_FOR_MILESTONE
+Status: COMPLETE
 
-Last Completed Milestone: M10 - Static Behavior Delta Explorer
+Last Completed Milestone: M11 - Clear Entry Intent & Truthful Static Flow
 
 ## Outcome
 
-CodeFlow can now explain how supported static function behavior changes between a frozen pull-request BASE and HEAD revision, connecting actual diff hunks to function contract, static execution/data-flow deltas, downstream impact, and source evidence without claiming runtime equivalence, breakage, safety, or probability.
+CodeFlow now makes the user's task explicit before acquisition and presents function exploration with terminology that matches the static-analysis contract. Repository comprehension and pull-request review no longer compete as simultaneous setup surfaces, and function relationships are presented as a bounded static call neighborhood rather than implying runtime request execution.
 
-M10 is integrated on `master`:
+## Delivered
 
-- S1 behavior-delta contract: `packages/analysis-core` owns a derived `FunctionBehaviorDelta` projection; no new canonical semantic relationship or evidence kind was introduced.
-- S2 function contract delta: declared parameters/types and explicit return expressions are compared across BASE and HEAD.
-- S3 static-step delta: supported branch, failure, declaration, alias, read/write, transform, mutation, call, argument, and related static steps are compared as semantic facts.
-- S4 data-flow delta: supported static relationships including `READS`, `WRITES`, `MUTATES`, `PASSES_ARGUMENT`, `FLOWS_TO`, and `RETURNS_TO` are compared with their source evidence.
-- S5 stable semantic comparison: source-line movement and stable-ID churn do not by themselves create behavior deltas; facts are compared as deterministic semantic multisets.
-- S6 added/removed functions: one-sided functions expose only facts from the revision where they exist rather than fabricating a counterpart.
-- S7 change workspace: the existing pull-request workspace shows the selected function's BASE → HEAD behavior delta before downstream impact, including evidence and revision-specific source location.
-- S8 truthful zero state: no supported static delta is explicitly distinguished from runtime equivalence; unsupported/missing analysis remains governed by existing partial coverage.
+### S1 - Intent-first acquisition
+
+- Initial setup asks `What do you need to understand?` before showing any repository or pull-request form.
+- User explicitly chooses `Understand repository` or `Review change`.
+- Only the form required for the selected task is rendered.
+- Local repository input remains a secondary option scoped to repository comprehension.
+- `Choose another task` returns to intent selection without introducing another navigation surface.
+
+### S2 - Truthful static flow
+
+- Function exploration is named `Static call neighborhood` / `<entry> call neighborhood` instead of `request flow`.
+- The Flow surface explicitly states that relationships are projected static evidence and not runtime execution.
+- `Verified static`, `Inferred static`, and `No evidence` are visible in human-readable form.
+- Solid/dashed relationship semantics remain aligned with the existing evidence contract.
+- Focus recovery is described as `Back to entry neighborhood`.
+
+### S3 - Contract verification
+
+- App regression coverage verifies intent gating, task-specific acquisition, truthful flow terminology, and visible evidence trust states.
+- Existing repository exploration, inspector, source evidence, keyboard navigation, empty/partial analysis, and local repository failure behavior remain covered.
+- No backend, API, persistence, analysis-core, or canonical semantic relationship/evidence contracts changed.
 
 ## Verification Evidence
 
-- PR #30 exact head `7ade6b76155bf5a42cef70794d5eb412ca089bd9` passed canonical GitHub Actions CI #202 (`33942236475`).
-- PR #30 was squash-merged to `master` as `46c37bf0ffe5f6946c7ea3678f14d1139cae88a2`.
-- Post-merge canonical GitHub Actions CI #203 (`33942307104`) passed on the exact merge SHA.
+- PR #33 canonical GitHub Actions CI #225 (`33989081334`) passed on head `17ddee05d1615b767c14fa5e4753dd0c098c9989` before this iteration-state-only update.
 - `pnpm format:check` passed.
 - `pnpm lint` passed.
-- `pnpm build` passed across analysis-core, web, and API.
-- analysis-core: 6 test files / 14 tests passed, including contract, static-flow, location-insensitive comparison, and one-sided function behavior-delta coverage.
-- web: 7 test files / 24 tests passed, including the M10 change workspace and M4-M9 regressions.
-- API: 5 test files / 18 tests passed, including M7-M9 regressions.
-- Total automated regression surface: 56 tests passed.
-- Deployment/Compose validation and smoke were correctly skipped because M10 did not modify deployment surfaces.
-- Temporary M10 wiring helper and workflow were removed before the canonical PR gate; only canonical `ci.yml` remains.
+- `pnpm build` passed.
+- Web regression tests passed.
+- Deployment/Compose validation and smoke were correctly skipped because M11 does not modify deployment surfaces.
+- Temporary implementation/test helper workflows were removed before the canonical behavior gate.
 
 ## Boundaries Preserved
 
-- `apps/web -> apps/api -> packages/analysis-core` remains authoritative; behavior-delta semantics live in analysis-core.
-- Behavior delta is a derived comparison of supported static facts from frozen revisions, not observed runtime behavior.
-- Location-only movement does not become a semantic behavior change.
-- An empty static behavior delta does not mean runtime-equivalent or safe.
-- Existing M4-M9 acquisition, topology, architecture, function/data flow, static steps, impact, diff mapping, and relationship delta behavior remain intact.
-- No private GitHub auth, AI review/summary, risk score, breakage prediction, runtime tracing/execution, test/deployment prediction, Go/multi-language expansion, persistence, collaboration, CODEOWNERS, vulnerability scanning, or new graph infrastructure was added.
+- Evidence remains authoritative.
+- Static analysis does not imply observed runtime execution, branch outcome, safety, breakage, probability, or completeness.
+- `apps/web -> apps/api -> packages/analysis-core` ownership remains unchanged.
+- Existing Explore / Flow / Impact and pull-request Change Workspace capabilities remain intact.
+- No new product capability, backend contract, graph primitive, persistence model, or architecture boundary was introduced.
 
 ## Next State
 
-Select the next milestone from the highest-value remaining gap in the core program-understanding journey. Do not auto-activate deferred directions merely because they are listed in `PROJECT.md`.
+M11 is complete. Select the next milestone only from a material remaining gap in the core program-understanding journey.
