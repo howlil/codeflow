@@ -27,7 +27,7 @@ import {
   type SemanticGraphNode,
 } from './graph-model';
 import type { RepositorySelectionSummary } from './RepositoryPicker';
-import { Button, Input, Select } from './ui/primitives';
+import { Button, IconButton, Input, Select } from './ui/primitives';
 
 interface GraphWorkspaceProps {
   flow: FlowProjection;
@@ -52,6 +52,15 @@ const NODE_WIDTH = 196;
 const NODE_HEIGHT = 72;
 const COLUMN_GAP = 72;
 const ROW_GAP = 34;
+const MIN_GRAPH_ZOOM = 0.6;
+const MAX_GRAPH_ZOOM = 1.4;
+const GRAPH_ZOOM_STEP = 0.1;
+
+type SourceSnippetLine = {
+  lineNumber: number;
+  text: string;
+  active: boolean;
+};
 
 export function GraphWorkspace({
   flow,
@@ -680,6 +689,147 @@ function GraphCanvas({
   onSelectNode: (id: string) => void;
   onSelectEdge: (id: string) => void;
 }) {
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const [zoom, setZoom] = useState(1);
+  const zoomRef = useRef(1);
+
+  const nodesById = useMemo(
+    () => new Map(nodes.map((node) => [node.id, node])),
+    [nodes],
+  );
+
+  const emphasis = useMemo(() => {
+    const nodeIds = new Set<string>();
+    const edgeIds = new Set<string>();
+    const activeNodeId = selectedNodeId ?? focusId;
+
+    if (selectedEdgeId !== null) {
+      const selectedEdge = edges.find((edge) => edge.id === selectedEdgeId);
+      if (selectedEdge !== undefined) {
+        edgeIds.add(selectedEdge.id);
+        nodeIds.add(selectedEdge.sourceId);
+        nodeIds.add(selectedEdge.targetId);
+      }
+    } else if (activeNodeId !== null) {
+      nodeIds.add(activeNodeId);
+      for (const edge of edges) {
+        if (edge.sourceId === activeNodeId || edge.targetId === activeNodeId) {
+          edgeIds.add(edge.id);
+          nodeIds.add(edge.sourceId);
+          nodeIds.add(edge.targetId);
+        }
+      }
+    }
+
+    for (const id of impactIds) {
+      nodeIds.add(id);
+    }
+    for (const edge of edges) {
+      if (impactIds.has(edge.sourceId) && impactIds.has(edge.targetId)) {
+        edgeIds.add(edge.id);
+      }
+    }
+
+    return {
+      nodeIds,
+      edgeIds,
+      active: selectedEdgeId !== null || activeNodeId !== null,
+    };
+  }, [edges, focusId, impactIds, selectedEdgeId, selectedNodeId]);
+
+  function clampZoom(value: number) {
+    return Math.min(MAX_GRAPH_ZOOM, Math.max(MIN_GRAPH_ZOOM, value));
+  }
+
+  function setGraphZoom(value: number) {
+    const next = clampZoom(Number(value.toFixed(2)));
+    zoomRef.current = next;
+    setZoom(next);
+  }
+
+  function zoomBy(delta: number) {
+    setGraphZoom(zoomRef.current + delta);
+  }
+
+  function scrollFocusIntoCenter(behavior: ScrollBehavior) {
+    const canvas = canvasRef.current;
+    if (canvas === null || focusId === null) {
+      return;
+    }
+    const position = layout.positions.get(focusId);
+    if (
+      position === undefined ||
+      canvas.clientWidth <= 0 ||
+      canvas.clientHeight <= 0 ||
+      typeof canvas.scrollTo !== 'function'
+    ) {
+      return;
+    }
+    const scale = zoomRef.current;
+    const focusX = (position.x + NODE_WIDTH / 2) * scale;
+    const focusY = (position.y + NODE_HEIGHT / 2) * scale;
+    canvas.scrollTo({
+      left: Math.max(0, focusX - canvas.clientWidth / 2),
+      top: Math.max(0, focusY - canvas.clientHeight / 2),
+      behavior,
+    });
+  }
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas === null || focusId === null) {
+      return;
+    }
+    const position = layout.positions.get(focusId);
+    if (
+      position === undefined ||
+      canvas.clientWidth <= 0 ||
+      canvas.clientHeight <= 0 ||
+      typeof canvas.scrollTo !== 'function'
+    ) {
+      return;
+    }
+    const scale = zoomRef.current;
+    canvas.scrollTo({
+      left: Math.max(
+        0,
+        (position.x + NODE_WIDTH / 2) * scale - canvas.clientWidth / 2,
+      ),
+      top: Math.max(
+        0,
+        (position.y + NODE_HEIGHT / 2) * scale - canvas.clientHeight / 2,
+      ),
+      behavior: 'auto',
+    });
+  }, [focusId, layout]);
+
+  function fitGraph() {
+    const canvas = canvasRef.current;
+    if (
+      canvas === null ||
+      canvas.clientWidth <= 0 ||
+      canvas.clientHeight <= 0
+    ) {
+      return;
+    }
+    const horizontal = (canvas.clientWidth - 56) / layout.width;
+    const vertical = (canvas.clientHeight - 56) / layout.height;
+    const nextZoom = clampZoom(Math.min(1, horizontal, vertical));
+    setGraphZoom(nextZoom);
+    if (typeof canvas.scrollTo === 'function') {
+      requestAnimationFrame(() => {
+        canvas.scrollTo({
+          left: Math.max(0, (layout.width * nextZoom - canvas.clientWidth) / 2),
+          top: Math.max(
+            0,
+            (layout.height * nextZoom - canvas.clientHeight) / 2,
+          ),
+          behavior: 'smooth',
+        });
+      });
+    }
+  }
+
   if (nodes.length === 0) {
     return (
       <div className="graph-empty-state" role="status">
@@ -689,129 +839,180 @@ function GraphCanvas({
     );
   }
 
-  const nodesById = new Map(nodes.map((node) => [node.id, node]));
+  const dense = edges.length >= 8;
 
   return (
-    <div
-      className="graph-canvas"
-      role="region"
-      aria-label="Semantic code graph"
-    >
+    <div className="graph-canvas-shell">
       <div
-        className="graph-stage"
-        style={{ width: layout.width, height: layout.height }}
+        ref={canvasRef}
+        className={`graph-canvas${dense ? ' graph-canvas--dense' : ''}`}
+        role="region"
+        aria-label="Semantic code graph"
       >
-        <svg
-          className="graph-edge-layer"
-          width={layout.width}
-          height={layout.height}
-          viewBox={`0 0 ${layout.width} ${layout.height}`}
-          aria-label="Semantic relationships"
+        <div
+          className="graph-viewport"
+          style={{
+            width: layout.width * zoom,
+            height: layout.height * zoom,
+          }}
         >
-          <defs>
-            <marker
-              id="codeflow-arrow"
-              viewBox="0 0 10 10"
-              refX="8"
-              refY="5"
-              markerWidth="5"
-              markerHeight="5"
-              orient="auto-start-reverse"
+          <div
+            className="graph-stage"
+            style={{
+              width: layout.width,
+              height: layout.height,
+              transform: `scale(${zoom})`,
+            }}
+          >
+            <svg
+              className="graph-edge-layer"
+              width={layout.width}
+              height={layout.height}
+              viewBox={`0 0 ${layout.width} ${layout.height}`}
+              aria-label="Semantic relationships"
             >
-              <path d="M 0 0 L 10 5 L 0 10 z" />
-            </marker>
-          </defs>
-          {edges.map((edge) => {
-            const source = layout.positions.get(edge.sourceId);
-            const target = layout.positions.get(edge.targetId);
-            const sourceNode = nodesById.get(edge.sourceId);
-            const targetNode = nodesById.get(edge.targetId);
-            if (source === undefined || target === undefined) {
-              return null;
-            }
-            const path = edgePath(source, target);
-            const trust = evidenceTrust(edge.evidence);
-            const label = `${sourceNode?.label ?? edge.sourceId} ${edge.kind} ${targetNode?.label ?? edge.targetId}`;
-            return (
-              <g
-                key={edge.id}
-                className={`graph-edge graph-edge--${trust}${
-                  edge.changeKind === undefined
-                    ? ''
-                    : ` graph-edge--change-${edge.changeKind}`
-                }${selectedEdgeId === edge.id ? ' graph-edge--selected' : ''}`}
-                role="button"
-                tabIndex={0}
-                aria-label={label}
-                aria-pressed={selectedEdgeId === edge.id}
-                onClick={() => onSelectEdge(edge.id)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    onSelectEdge(edge.id);
-                  }
-                }}
-              >
-                <path className="graph-edge-hit" d={path} />
-                <path
-                  className="graph-edge-line"
-                  d={path}
-                  markerEnd="url(#codeflow-arrow)"
-                />
-                <text
-                  className="graph-edge-label"
-                  x={(source.x + target.x + NODE_WIDTH) / 2}
-                  y={(source.y + target.y + NODE_HEIGHT) / 2 - 6}
-                  textAnchor="middle"
+              <defs>
+                <marker
+                  id="codeflow-arrow"
+                  viewBox="0 0 10 10"
+                  refX="8"
+                  refY="5"
+                  markerWidth="5"
+                  markerHeight="5"
+                  orient="auto-start-reverse"
                 >
-                  {edge.kind}
-                </text>
-              </g>
-            );
-          })}
-        </svg>
+                  <path d="M 0 0 L 10 5 L 0 10 z" />
+                </marker>
+              </defs>
+              {edges.map((edge) => {
+                const source = layout.positions.get(edge.sourceId);
+                const target = layout.positions.get(edge.targetId);
+                const sourceNode = nodesById.get(edge.sourceId);
+                const targetNode = nodesById.get(edge.targetId);
+                if (source === undefined || target === undefined) {
+                  return null;
+                }
+                const path = edgePath(source, target);
+                const trust = evidenceTrust(edge.evidence);
+                const muted = emphasis.active && !emphasis.edgeIds.has(edge.id);
+                const label = `${sourceNode?.label ?? edge.sourceId} ${edge.kind} ${targetNode?.label ?? edge.targetId}`;
+                return (
+                  <g
+                    key={edge.id}
+                    className={`graph-edge graph-edge--${trust}${
+                      edge.changeKind === undefined
+                        ? ''
+                        : ` graph-edge--change-${edge.changeKind}`
+                    }${
+                      selectedEdgeId === edge.id ? ' graph-edge--selected' : ''
+                    }${muted ? ' graph-edge--muted' : ''}`}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={label}
+                    aria-pressed={selectedEdgeId === edge.id}
+                    onClick={() => onSelectEdge(edge.id)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        onSelectEdge(edge.id);
+                      }
+                    }}
+                  >
+                    <path className="graph-edge-hit" d={path} />
+                    <path
+                      className="graph-edge-line"
+                      d={path}
+                      markerEnd="url(#codeflow-arrow)"
+                    />
+                    <text
+                      className="graph-edge-label"
+                      x={(source.x + target.x + NODE_WIDTH) / 2}
+                      y={(source.y + target.y + NODE_HEIGHT) / 2 - 6}
+                      textAnchor="middle"
+                    >
+                      {edge.kind}
+                    </text>
+                  </g>
+                );
+              })}
+            </svg>
 
-        {nodes.map((node) => {
-          const position = layout.positions.get(node.id);
-          if (position === undefined) {
-            return null;
-          }
-          return (
-            <button
-              key={node.id}
-              type="button"
-              className={`semantic-graph-node${
-                focusId === node.id ? ' semantic-graph-node--focus' : ''
-              }${
-                selectedNodeId === node.id
-                  ? ' semantic-graph-node--selected'
-                  : ''
-              }${node.entryPoint ? ' semantic-graph-node--entry' : ''}${
-                impactIds.has(node.id) ? ' semantic-graph-node--impact' : ''
-              }${
-                node.changeKind === undefined
-                  ? ''
-                  : ` semantic-graph-node--change-${node.changeKind}`
-              }`}
-              style={{ left: position.x, top: position.y }}
-              aria-pressed={selectedNodeId === node.id}
-              aria-label={`${node.kind} ${node.label}${node.changeKind === undefined ? '' : ` ${node.changeKind}`}`}
-              onClick={() => onSelectNode(node.id)}
-            >
-              <span className="semantic-graph-node-meta">
-                <span>{node.kind}</span>
-                {node.entryPoint ? <span>ENTRY</span> : null}
-                {node.changeKind !== undefined ? (
-                  <span>{node.changeKind.toUpperCase()}</span>
-                ) : null}
-              </span>
-              <strong>{node.label}</strong>
-              <span className="semantic-graph-node-path">
-                {compactPath(node.path)}
-              </span>
-            </button>
-          );
-        })}
+            {nodes.map((node) => {
+              const position = layout.positions.get(node.id);
+              if (position === undefined) {
+                return null;
+              }
+              const muted = emphasis.active && !emphasis.nodeIds.has(node.id);
+              return (
+                <button
+                  key={node.id}
+                  type="button"
+                  className={`semantic-graph-node${
+                    focusId === node.id ? ' semantic-graph-node--focus' : ''
+                  }${
+                    selectedNodeId === node.id
+                      ? ' semantic-graph-node--selected'
+                      : ''
+                  }${node.entryPoint ? ' semantic-graph-node--entry' : ''}${
+                    impactIds.has(node.id) ? ' semantic-graph-node--impact' : ''
+                  }${
+                    node.changeKind === undefined
+                      ? ''
+                      : ` semantic-graph-node--change-${node.changeKind}`
+                  }${muted ? ' semantic-graph-node--muted' : ''}`}
+                  style={{ left: position.x, top: position.y }}
+                  aria-pressed={selectedNodeId === node.id}
+                  aria-label={`${node.kind} ${node.label}${
+                    node.changeKind === undefined ? '' : ` ${node.changeKind}`
+                  }`}
+                  onClick={() => onSelectNode(node.id)}
+                >
+                  <span className="semantic-graph-node-meta">
+                    <span>{node.kind}</span>
+                    {node.entryPoint ? <span>ENTRY</span> : null}
+                    {node.changeKind !== undefined ? (
+                      <span>{node.changeKind.toUpperCase()}</span>
+                    ) : null}
+                  </span>
+                  <strong>{node.label}</strong>
+                  <span className="semantic-graph-node-path">
+                    {compactPath(node.path)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div
+        className="graph-viewport-controls"
+        role="group"
+        aria-label="Graph viewport controls"
+      >
+        <IconButton
+          aria-label="Zoom out"
+          title="Zoom out"
+          disabled={zoom <= MIN_GRAPH_ZOOM}
+          onClick={() => zoomBy(-GRAPH_ZOOM_STEP)}
+        >
+          −
+        </IconButton>
+        <span aria-live="polite">{Math.round(zoom * 100)}%</span>
+        <IconButton
+          aria-label="Zoom in"
+          title="Zoom in"
+          disabled={zoom >= MAX_GRAPH_ZOOM}
+          onClick={() => zoomBy(GRAPH_ZOOM_STEP)}
+        >
+          +
+        </IconButton>
+        <Button variant="ghost" onClick={fitGraph}>
+          Fit graph
+        </Button>
+        <Button variant="ghost" onClick={() => scrollFocusIntoCenter('smooth')}>
+          Center focus
+        </Button>
       </div>
     </div>
   );
@@ -1003,7 +1204,24 @@ function GraphInspector({
             <span>{formatLocation(node.path, node.location)}</span>
           </div>
           <pre className="graph-source-snippet">
-            <code>{snippet}</code>
+            <code>
+              {snippet.map((line) => (
+                <span
+                  key={line.lineNumber}
+                  className={`graph-source-line${
+                    line.active ? ' graph-source-line--active' : ''
+                  }`}
+                  aria-current={line.active ? 'location' : undefined}
+                >
+                  <span className="graph-source-line-number">
+                    {line.lineNumber}
+                  </span>
+                  <span className="graph-source-line-code">
+                    {line.text === '' ? ' ' : line.text}
+                  </span>
+                </span>
+              ))}
+            </code>
           </pre>
         </section>
       ) : null}
@@ -1271,7 +1489,9 @@ function layoutGraph(
 
   const unresolved = nodes.filter((node) => !depth.has(node.id));
   const maxDepth = Math.max(0, ...Array.from(depth.values()));
-  unresolved.forEach((node, index) => depth.set(node.id, maxDepth + 1 + index));
+  for (const node of unresolved) {
+    depth.set(node.id, maxDepth + 1);
+  }
 
   const groups = new Map<number, SemanticGraphNode[]>();
   for (const node of nodes) {
@@ -1285,17 +1505,75 @@ function layoutGraph(
   }
 
   const depths = Array.from(groups.keys()).sort((left, right) => left - right);
+  const rootDepth = rootId === undefined ? 0 : (depth.get(rootId) ?? 0);
+
+  for (let pass = 0; pass < 3; pass += 1) {
+    const order = new Map<string, number>();
+    for (const nodeDepth of depths) {
+      const group = groups.get(nodeDepth) ?? [];
+      group.forEach((node, index) => order.set(node.id, index));
+    }
+
+    const orderedDepths = [...depths].sort((left, right) => {
+      const distance = Math.abs(left - rootDepth) - Math.abs(right - rootDepth);
+      return distance === 0 ? left - right : distance;
+    });
+
+    for (const nodeDepth of orderedDepths) {
+      if (nodeDepth === rootDepth) {
+        continue;
+      }
+      const anchorDepth = nodeDepth < rootDepth ? nodeDepth + 1 : nodeDepth - 1;
+      const anchorIds = new Set(
+        (groups.get(anchorDepth) ?? []).map((node) => node.id),
+      );
+      const group = groups.get(nodeDepth) ?? [];
+      group.sort((left, right) => {
+        const leftScore = relationshipOrderScore(
+          left.id,
+          anchorIds,
+          edges,
+          order,
+        );
+        const rightScore = relationshipOrderScore(
+          right.id,
+          anchorIds,
+          edges,
+          order,
+        );
+        if (
+          Number.isFinite(leftScore) &&
+          Number.isFinite(rightScore) &&
+          leftScore !== rightScore
+        ) {
+          return leftScore - rightScore;
+        }
+        if (Number.isFinite(leftScore) !== Number.isFinite(rightScore)) {
+          return Number.isFinite(leftScore) ? -1 : 1;
+        }
+        return left.label.localeCompare(right.label);
+      });
+    }
+  }
+
   const minDepth = depths[0] ?? 0;
+  const tallest = Math.max(
+    1,
+    ...Array.from(groups.values(), (group) => group.length),
+  );
+  const graphContentHeight =
+    tallest * NODE_HEIGHT + Math.max(0, tallest - 1) * ROW_GAP;
   const positions = new Map<string, GraphPosition>();
-  let tallest = 1;
 
   for (const nodeDepth of depths) {
     const group = groups.get(nodeDepth) ?? [];
-    tallest = Math.max(tallest, group.length);
+    const groupHeight =
+      group.length * NODE_HEIGHT + Math.max(0, group.length - 1) * ROW_GAP;
+    const yOffset = 42 + Math.max(0, (graphContentHeight - groupHeight) / 2);
     group.forEach((node, index) => {
       positions.set(node.id, {
         x: 42 + (nodeDepth - minDepth) * (NODE_WIDTH + COLUMN_GAP),
-        y: 42 + index * (NODE_HEIGHT + ROW_GAP),
+        y: yOffset + index * (NODE_HEIGHT + ROW_GAP),
       });
     });
   }
@@ -1308,11 +1586,30 @@ function layoutGraph(
         depths.length * NODE_WIDTH +
         Math.max(0, depths.length - 1) * COLUMN_GAP,
     ),
-    height: Math.max(
-      420,
-      84 + tallest * NODE_HEIGHT + Math.max(0, tallest - 1) * ROW_GAP,
-    ),
+    height: Math.max(420, 84 + graphContentHeight),
   };
+}
+
+function relationshipOrderScore(
+  nodeId: string,
+  anchorIds: Set<string>,
+  edges: SemanticGraphEdge[],
+  order: Map<string, number>,
+): number {
+  const scores: number[] = [];
+  for (const edge of edges) {
+    if (edge.sourceId === nodeId && anchorIds.has(edge.targetId)) {
+      const value = order.get(edge.targetId);
+      if (value !== undefined) scores.push(value);
+    } else if (edge.targetId === nodeId && anchorIds.has(edge.sourceId)) {
+      const value = order.get(edge.sourceId);
+      if (value !== undefined) scores.push(value);
+    }
+  }
+  if (scores.length === 0) {
+    return Number.POSITIVE_INFINITY;
+  }
+  return scores.reduce((sum, value) => sum + value, 0) / scores.length;
 }
 
 function edgePath(source: GraphPosition, target: GraphPosition): string {
@@ -1333,7 +1630,7 @@ function edgePath(source: GraphPosition, target: GraphPosition): string {
 function sourceSnippet(
   flow: FlowProjection,
   location: SourceLocation | null,
-): string | null {
+): SourceSnippetLine[] | null {
   if (location === null) {
     return null;
   }
@@ -1350,12 +1647,15 @@ function sourceSnippet(
     Math.max(location.endLine + 2, location.startLine + 4),
     start + 14,
   );
-  return lines
-    .slice(start, end)
-    .map(
-      (line, index) => `${String(start + index + 1).padStart(4, ' ')}  ${line}`,
-    )
-    .join('\n');
+  return lines.slice(start, end).map((line, index) => {
+    const lineNumber = start + index + 1;
+    return {
+      lineNumber,
+      text: line,
+      active:
+        lineNumber >= location.startLine && lineNumber <= location.endLine,
+    };
+  });
 }
 
 function evidenceTrust(evidence: FlowEvidence[]): string {

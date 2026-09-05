@@ -208,6 +208,23 @@ Use a quiet neutral plane with pane boundaries. No glow, gradient fog, decorativ
 
 Horizontal/vertical overflow is acceptable for a graph larger than the viewport. The user must retain a stable focus anchor and a clear way to recenter.
 
+## Graph Viewport & Attention
+
+The graph is a navigable spatial surface, not a static poster. Provide compact controls for zooming, fitting the visible projection, and recentering the current focus. These controls are operational overlays and should stay visually quiet.
+
+Selection creates an attention neighborhood:
+
+- selected node or relationship remains strongest;
+- directly connected nodes/edges retain normal prominence;
+- unrelated visible graph content recedes but is not removed;
+- impact paths remain legible when impact mode is active.
+
+For dense projections, edge labels are progressively disclosed on hover/focus/selection instead of showing every relationship label at equal prominence. Accessible relationship names remain available regardless of visual label visibility.
+
+Layered layout must remain deterministic. Prefer relationship-aware ordering within layers to reduce crossings, center smaller layers vertically around the active graph body, and group unresolved/disconnected entities rather than creating unnecessary horizontal columns.
+
+Source peek should visually mark the source range represented by the selected entity while preserving surrounding context lines.
+
 ## Context Bar
 
 The top context bar owns only orientation and high-frequency navigation:
