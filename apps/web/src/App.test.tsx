@@ -277,14 +277,17 @@ describe('App', () => {
     delete document.documentElement.dataset.theme;
   });
 
-  it('starts from local repository input rather than the sample fixture', () => {
+  it('starts from repository comprehension without analyzing a fixture', () => {
     const fetchMock = stubFlowRequest();
 
     render(<App />);
 
     expect(
-      screen.getByText('Select a local TypeScript repository'),
+      screen.getByRole('heading', {
+        name: 'Understand an unfamiliar codebase',
+      }),
     ).toBeInTheDocument();
+    expect(screen.getByText(/Analyze a local repository/)).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
