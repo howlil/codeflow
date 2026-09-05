@@ -1,0 +1,58 @@
+name: Apply M11 test fix
+
+on:
+  push:
+    branches:
+      - feat/m11-clear-entry-truthful-flow
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Update intent-gated tests
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          path = Path('apps/web/src/App.test.tsx')
+          text = path.read_text()
+          text = text.replace(
+              "screen.getByRole('button', { name: 'Understand repository' })",
+              "screen.getByRole('button', { name: /^Understand repository/ })",
+          )
+          for marker in [
+              "    render(<App />);\n    fireEvent.change(screen.getByLabelText('Repository directory'), {\n      target: { files: [oversized] },\n    });",
+              "    render(<App />);\n\n    fireEvent.change(screen.getByLabelText('Repository directory'), {\n      target: { files: repositoryFiles },\n    });",
+          ]:
+              if marker not in text:
+                  raise SystemExit(f'missing expected test marker: {marker[:80]!r}')
+          text = text.replace(
+              "    render(<App />);\n    fireEvent.change(screen.getByLabelText('Repository directory'), {\n      target: { files: [oversized] },\n    });",
+              "    render(<App />);\n    fireEvent.click(\n      screen.getByRole('button', { name: /^Understand repository/ }),\n    );\n    fireEvent.change(screen.getByLabelText('Repository directory'), {\n      target: { files: [oversized] },\n    });",
+              1,
+          )
+          text = text.replace(
+              "    render(<App />);\n\n    fireEvent.change(screen.getByLabelText('Repository directory'), {\n      target: { files: repositoryFiles },\n    });",
+              "    render(<App />);\n\n    fireEvent.click(\n      screen.getByRole('button', { name: /^Understand repository/ }),\n    );\n    fireEvent.change(screen.getByLabelText('Repository directory'), {\n      target: { files: repositoryFiles },\n    });",
+              1,
+          )
+          path.write_text(text)
+          PY
+          pnpm exec prettier --write apps/web/src/App.test.tsx
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add apps/web/src/App.test.tsx
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "test: follow intent-gated acquisition contract"
+          git push
