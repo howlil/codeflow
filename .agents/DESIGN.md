@@ -14,60 +14,91 @@ It is not a feature spec, milestone plan, task checklist, changelog, or componen
 
 ## Canonical Direction
 
-CodeFlow follows the Chatspace workspace design language:
+CodeFlow is a **compact operational developer workbench**.
 
-**compact, clean, minimalist, smooth, and selectively glassmorphic.**
+It should feel closer to an IDE/code-intelligence surface than a SaaS dashboard, marketing page, AI chat wrapper, or free-form diagram editor.
 
-CodeFlow should feel like a focused engineering workbench for program understanding, not a decorative AI dashboard, form-driven administration page, or free-form diagram editor.
+Canonical qualities:
+
+- operational over promotional;
+- compact over spacious;
+- flat over elevated;
+- code/content first;
+- monochrome by default;
+- explicit evidence hierarchy;
+- low-chroma semantic accent only;
+- direct, fast interaction;
+- bounded work surfaces rather than document-like scrolling.
 
 Priorities, in order:
 
 1. semantic comprehension and information clarity;
 2. evidence hierarchy and navigation speed;
 3. compact but readable information density;
-4. interaction quality and spatial continuity;
-5. accessibility and responsive task completion;
-6. visual refinement;
-7. selective depth/glass effects.
+4. stable spatial orientation across repository, code, and change views;
+5. interaction quality and keyboard efficiency;
+6. accessibility and responsive task completion;
+7. visual refinement.
 
-Distinctiveness comes from composition, typography, proportion, spacing, semantic graph treatment, evidence presentation, and disciplined surfaces—not generic glow, gradients, or ornament.
+Distinctiveness comes from composition, typography, proportion, semantic graph treatment, evidence presentation, and disciplined pane structure. Ornament is not a source of product identity.
+
+## Anti-Slop Invariants
+
+The following are not part of the ordinary CodeFlow interface:
+
+- gradient page backgrounds;
+- blue/purple glow;
+- gradient borders;
+- decorative glass panels;
+- floating card stacks;
+- giant rounded containers;
+- excessive pills/chips;
+- decorative dotted/radial canvas backgrounds;
+- oversized headings;
+- marketing-style whitespace;
+- iconography used as decoration rather than affordance;
+- shadows on ordinary panels, nodes, rows, or controls;
+- color used to compensate for weak hierarchy.
+
+Shadows are reserved for true overlays such as search/select popovers. Translucency is reserved for a real layered/sticky surface when it improves spatial continuity.
 
 ## Product Experience
 
-The primary CodeFlow job is repository comprehension.
+The primary CodeFlow job is repository comprehension and evidence-backed change reasoning.
 
-The interface should let a developer move from repository context to semantic relationships, source evidence, data flow, and deterministic static step-through without losing orientation.
+The interface should let a developer move between repository context, package/module/file/symbol structure, semantic relationships, pull-request changes, source evidence, data flow, impact, and deterministic static step-through without losing orientation.
 
-After analysis succeeds, the semantic workspace owns the viewport. Repository acquisition is setup, not permanent application chrome.
+Repository acquisition is setup. After analysis succeeds, work content owns the viewport.
 
 ## Information Hierarchy
 
 Use hierarchy through:
 
 1. typography;
-2. spacing;
-3. grouping and alignment;
-4. dividers/borders;
-5. controlled surface contrast;
-6. restrained elevation;
-7. semantic color only when it adds meaning.
+2. alignment;
+3. compact spacing;
+4. pane boundaries and 1px dividers;
+5. controlled neutral surface contrast;
+6. semantic accent only when it communicates state.
 
-Do not use color, glow, blur, cards, or oversized typography to compensate for weak structure.
+Do not create hierarchy by wrapping each concept in a card.
 
-Primary semantic work content must dominate. Metadata, repository statistics, legends, status, and secondary controls remain subordinate and contextual.
+Primary code/semantic work dominates. Repository statistics, legends, limits, metadata, and secondary controls remain subordinate and contextual.
 
 ## Workspace Model
 
 ### Before analysis
 
-Repository acquisition is an explicit setup surface:
+Repository acquisition is a compact setup surface, not a landing page.
 
 ```text
-repository directory
-entry source
-entry function
+source type
+repository / pull request / local selection
+entry source when required
 analyze
 ```
+
+Avoid hero copy, giant form cards, promotional illustration, and large empty margins.
 
 ### After analysis
 
@@ -75,49 +106,63 @@ Desktop default:
 
 ```text
 +--------------------------------------------------------------------+
-| CodeFlow / repository / entry          search        theme / more  |
+| CodeFlow / repository / revision or entry     search       actions |
++--------------------------------------------------------------------+
+| compact repository/change context                                  |
 +----------------------------------------------+---------------------+
 |                                              | selected entity     |
 |                                              | source location     |
-|             Semantic Workspace               |                     |
-|                                              | Overview Data       |
-|           bounded semantic graph             | Evidence Steps      |
+|             Primary work surface             |                     |
+|     semantic graph / diff / structure        | Overview Data       |
+|                                              | Evidence Steps      |
 |                                              |                     |
-|                                              | inspector content   |
 +----------------------------------------------+---------------------+
-| relationship lenses / contextual evidence                          |
+| contextual filters / relationship lenses                           |
 +--------------------------------------------------------------------+
 ```
 
-The default desktop split is approximately 70–75% semantic workspace and 25–30% inspector.
+The ordinary desktop semantic split is approximately 70–75% primary work area and 25–30% inspector. The shell uses the viewport intentionally and should not look like a centered website card.
 
-Do not keep a permanent repository rail merely for repository name, file counts, ignored-file counts, or evidence legend. A permanent navigation surface must be earned by real navigation capability such as repository/module/application/entry-point navigation.
+### Pane rule
 
-The application shell should use the viewport intentionally. Prefer a `100dvh` workbench with independently bounded canvas and inspector regions over document-style page scrolling.
+A first-level work surface is a pane, not a floating card.
+
+Use:
+
+- shared background plane;
+- 1px separators;
+- small or zero outer radius;
+- independently bounded overflow;
+- no ordinary pane shadow.
+
+Nested groups should use rows/dividers before bordered containers.
 
 ## Navigation Principles
 
 - navigation state is immediately understandable;
-- selected/active context is clear but not visually loud;
+- selected/active context is clear but visually quiet;
 - search is semantic/spatial navigation, not a detached results page;
 - selecting a search result selects and focuses the semantic entity while keeping inspector/source context synchronized;
 - search supports keyboard navigation and dismissal;
 - focus/neighborhood reduces visible context without changing canonical relationships;
-- terminology must describe actual behavior; do not label an entry neighborhood as a full graph;
+- terminology describes actual behavior and evidence scope;
 - relationship lenses expose only semantic kinds actually present;
-- relationship lens changes preserve selected semantic context;
 - repeated actions behave consistently across pointer and keyboard interaction;
 - secondary controls appear when relevant rather than permanently occupying space.
 
+A permanent navigation rail must be earned by actual navigation capability such as package/module/file/symbol/entry traversal. Metadata alone does not justify a rail.
+
 ## Inspector Model
 
-The inspector is a task-oriented work surface, not a long document of every available detail.
+The inspector is a task-oriented work surface, not a long settings/document panel.
 
 Use a stable selected-context header and distinct modes:
 
 ```text
 Overview | Data | Evidence | Steps
 ```
+
+Tabs use a compact underline/rail active treatment. Avoid rounded segmented-control styling for ordinary inspector modes.
 
 ### Overview
 
@@ -148,17 +193,31 @@ Never fabricate runtime values, chosen branch outcomes, timing, frequency, laten
 
 ## Canvas Language
 
-The canvas is a semantic exploration surface, not canonical model storage and not a free-form diagram editor.
+The canvas is a semantic exploration surface, not canonical model storage and not a decorative diagram background.
+
+### Canvas plane
+
+The ordinary canvas background is a quiet neutral plane. Do not use decorative dot grids, radial patterns, glow, gradient fog, or simulated infinite-canvas ornament unless a future interaction genuinely requires spatial grid cues.
 
 ### Nodes
 
-Nodes are compact, information-dense semantic entities. Prefer role/kind, name, source metadata, typography, spacing, shape, and border treatment before decorative color.
+Nodes are compact semantic entities.
 
-Avoid per-node gradients, giant rounded cards, oversized illustrative icons, glow, and rainbow taxonomy.
+Prefer:
+
+- small rectangular geometry;
+- 1px neutral border;
+- no ordinary shadow;
+- monospace for code identifiers where useful;
+- role/kind + name + source metadata;
+- minimal padding;
+- small radius, typically 3–5px.
+
+Avoid giant rounded cards, illustrative icons, colored header bands, glow, and rainbow taxonomy.
 
 ### Relationships
 
-Relationship meaning must remain legible without color.
+Relationship meaning remains legible without color.
 
 ```text
 solid   -> verified/static/configured relationship
@@ -166,145 +225,194 @@ dashed  -> inferred relationship
 dotted  -> unavailable/unsupported evidence
 ```
 
-Calls, reads, writes, mutations, argument passing, returns, and value flow are distinguished primarily through explicit labels/kinds and evidence—not a rainbow palette.
+Calls, reads, writes, mutations, argument passing, returns, and value flow are distinguished primarily through explicit labels/kinds and evidence.
 
 Use stable spatial direction and bounded topology where it improves comprehension. Do not introduce arbitrary physics layout or generic node-editor behavior without product need.
 
 ### Selection
 
-Selection is obvious but restrained. Use the steel-blue active/focus system through border, subtle active surface, and weight—not bloom or saturated fill.
+Selection is obvious but restrained.
+
+Preferred treatment:
+
+- steel-blue border or 1–2px side rail;
+- subtle active neutral surface where needed;
+- typography/weight change only when useful.
+
+Do not use bloom, glow, saturated fill, or large tinted cards.
 
 Selection never changes semantic or evidence truth.
 
-## Interaction Behavior
+## Pull-Request / Diff Surface
 
-Interactions should feel direct and smooth.
+The change workspace should resemble a code-review workbench, not an analytics dashboard.
 
-- avoid unnecessary modal or multi-step friction;
-- use motion to preserve spatial/causal continuity, not decoration;
-- state changes should be fast and visually legible;
-- loading, unavailable, empty, partial, error, recovery, disabled, selected, and focused states must be explicit;
-- no important action may depend only on hover;
-- motion should be short, restrained, interruptible, and unnecessary for understanding state.
-
-## Responsive Behavior
-
-Desktop favors the semantic workspace + inspector split.
-
-On narrow layouts, preserve the primary semantic canvas and move secondary inspection into a bounded collapsible/drawer surface rather than stacking an unbounded inspector document below the graph.
-
-Task order remains:
+Prefer:
 
 ```text
-repository context
- -> semantic workspace
- -> inspector/source
+changed entities/files | source diff | behavior/impact/evidence
 ```
 
-Simplify layout before removing information. Prefer bounded overflow and contextual surfaces over permanently tiny columns.
+Rules:
 
-## Accessibility
+- diff/code receives the highest visual weight;
+- change counts are inline metadata, not a chip cloud;
+- added/removed markers may use semantic state, but text and symbols must remain sufficient without color;
+- behavior delta, impact, and evidence use rows/dividers rather than card stacks;
+- BASE/HEAD/revision identifiers use monospace where practical;
+- relationship/impact wording must preserve the existing truth boundaries.
 
-Minimum durable expectations:
+## Typography
 
-- keyboard-reachable core workflows;
-- visible focus treatment that is stronger than hover treatment;
-- semantic controls and labels;
-- accessible names for icon-only controls;
-- understandable toggle/pressed/selected/tab states;
-- sufficient contrast in light and dark token sets;
-- no required hover-only interactions;
-- relationship/evidence meaning does not depend only on color;
-- motion is not required to understand state.
+Use system/Inter-style sans for application chrome and prose. Use monospace intentionally for:
 
-Normal reading text should not use microscopic type merely to appear compact. Reserve the lowest-contrast text token for non-essential hints, disabled context, and separators rather than primary metadata.
+- code identifiers;
+- file paths;
+- revision/SHA identity;
+- source locations;
+- compact technical metrics where scanning improves;
+- patch/code content.
 
-## Visual Language
+Normal reading text must remain readable. Compact does not mean microscopic.
 
-Use the restrained Chatspace workspace language:
+Recommended working scale:
 
-- compact spacing;
-- readable dense typography;
-- clean geometry;
-- consistent small radii;
-- thin borders/dividers;
-- subtle depth;
-- limited accent usage;
-- selective translucent/glass surfaces only where layering benefits comprehension.
+- primary chrome/body: 11–12px;
+- technical metadata: 9–10px;
+- section title: 12–13px;
+- product mark: approximately 13px;
+- avoid routine headings larger than needed for operational hierarchy.
+
+## Geometry and Depth
+
+Default geometry:
+
+- pane radius: 0–4px;
+- ordinary control radius: about 4px;
+- semantic node radius: about 4px;
+- popover radius: about 5–6px;
+- pills only for semantics that are genuinely tag/status-like.
+
+Default depth:
+
+- ordinary pane: no shadow;
+- ordinary node: no shadow;
+- ordinary control: no shadow;
+- selected state: border/rail, not shadow;
+- overlay/popover: restrained shadow allowed.
+
+## Color
+
+CodeFlow is neutral-first.
 
 The canonical accent is **desaturated steel blue** over neutral surfaces. Use it for selected/active context, focus treatment, graph/reference emphasis, and similar meaningful state—not as a wash over ordinary panels.
 
-Reference values:
+Reference semantic values:
 
-- dark: `cs-hover #19202a`, `cs-active #1b2636`, `cs-focus #7fa6c9`;
-- light: `cs-hover #f0f4f8`, `cs-active #e8eef6`, `cs-focus #4f7396`.
+- dark focus: `#7fa6c9`;
+- light focus: `#4f7396`.
 
-Do not introduce saturated electric blue, purple-blue gradients, or blue glow.
+Do not introduce saturated electric blue, purple-blue gradients, blue glow, or feature-specific rainbow colors.
 
-Glassmorphism is an accent, not the interface. Use it only for genuinely layered shell/overlay/floating contexts where translucency communicates hierarchy.
-
-Avoid AI-slop styling:
-
-- purple/blue gradient backgrounds;
-- neon glow;
-- shiny gradient borders;
-- giant rounded cards without structural purpose;
-- excessive pills;
-- decorative blobs/orbs/sparkles;
-- card-on-card composition;
-- decorative animation;
-- excessive whitespace that reduces workspace density.
+Error/destructive state may use the semantic danger tokens. Other states should stay neutral unless color carries information that cannot be expressed as clearly by structure/text.
 
 ## Tokens and Theming
 
-Use semantic `cs-*` tokens rather than feature-local hard-coded theme colors.
-
-Canonical semantic primitives include:
+Use the canonical Tailwind-backed CSS variables emitted from semantic `cs-*` tokens:
 
 ```text
-cs-bg
-cs-panel
-cs-surface
-cs-raised
-cs-border
-cs-control
-cs-hover
-cs-active
-cs-focus
-cs-primary
-cs-primary-contrast
-cs-text
-cs-muted
-cs-subtle
-cs-danger
-cs-danger-surface
-cs-danger-border
+--color-cs-bg
+--color-cs-panel
+--color-cs-surface
+--color-cs-raised
+--color-cs-border
+--color-cs-control
+--color-cs-hover
+--color-cs-active
+--color-cs-focus
+--color-cs-primary
+--color-cs-primary-contrast
+--color-cs-text
+--color-cs-muted
+--color-cs-subtle
+--color-cs-danger
+--color-cs-danger-surface
+--color-cs-danger-border
 ```
 
-Token names describe responsibility. Do not maintain a parallel legacy token vocabulary once migration is complete.
+Do not maintain feature-local `--cs-*` aliases or another parallel theme vocabulary. Token names describe responsibility; feature CSS consumes the canonical variables directly.
 
 Dark and light are both designed surfaces. Support explicit user selection, persist that explicit preference, and use system preference only as the initial fallback when the user has not chosen a theme.
 
 ## Component Styling Principles
 
 - Tailwind CSS v4 is the utility/token implementation layer;
-- Radix UI Primitives is the default interaction foundation for reusable complex controls;
-- use Radix behavior without importing a generic visual theme that overrides CodeFlow hierarchy or `cs-*` tokens;
+- Radix UI Primitives is the default behavior foundation for reusable complex controls;
+- Radix provides behavior, not a generic visual theme;
 - reusable ordinary controls live under `apps/web/src/ui/` and remain product-specific in appearance;
+- controls default to compact height, 3–4px radius, neutral background, 1px border, and 1px focus treatment;
 - generic controls reuse shared primitives; semantic graph nodes/relationships remain product components rather than being forced into generic controls;
 - Lucide is the standard UI affordance icon set;
 - icon-only controls require accessible names/tooltips;
 - controls with the same semantic action share behavior and visual language;
-- `cs-panel` represents application panels, `cs-surface` nested content surfaces, and `cs-control` interactive control surfaces;
 - avoid one-off shadows, gradients, radii, or colors when semantic tokens can express intent.
+
+## Interaction and Motion
+
+Interactions should feel direct and fast.
+
+- avoid unnecessary modal or multi-step friction;
+- use motion only to preserve causal/spatial continuity;
+- ordinary hover/selection transitions should be short, typically around 80–140ms;
+- loading, unavailable, empty, partial, error, recovery, disabled, selected, and focused states remain explicit;
+- no important action depends only on hover;
+- motion is interruptible and never required to understand state;
+- do not animate decoration merely because a motion library exists.
+
+## Responsive Behavior
+
+Desktop favors bounded work panes.
+
+On narrow layouts:
+
+- preserve the primary semantic/diff task first;
+- simplify or collapse secondary context before shrinking everything;
+- inspector may move below or into a bounded drawer/collapsible surface;
+- avoid permanently tiny multi-column layouts;
+- horizontal code overflow remains preferable to wrapping source code incorrectly.
+
+Task order remains:
+
+```text
+repository/change context
+ -> primary work surface
+ -> inspector/source/evidence
+```
+
+## Accessibility
+
+Minimum durable expectations:
+
+- keyboard-reachable core workflows;
+- visible focus treatment stronger than hover treatment;
+- semantic controls and labels;
+- accessible names for icon-only controls;
+- understandable pressed/selected/tab states;
+- sufficient contrast in light and dark token sets;
+- no required hover-only interaction;
+- relationship/evidence meaning does not depend only on color;
+- motion is not required to understand state.
+
+Reserve the lowest-contrast text token for non-essential hints, disabled context, and separators rather than primary metadata.
 
 ## Product Copy
 
-Prefer literal product language over internal milestone terminology or generic marketing language.
+Prefer literal product language over milestone terminology or marketing language.
 
 - user-facing limits and failures refer to CodeFlow behavior, not internal milestone names;
 - preserve explicit trust boundaries such as `Evidence first · static analysis only` where they clarify real behavior;
-- do not use broad labels such as `repository intelligence` when repository/function context communicates more directly.
+- avoid broad promotional labels such as `repository intelligence` when repository/function/change context communicates more directly;
+- concise technical labels are preferred to explanatory paragraph copy inside dense work surfaces.
 
 ## Design Quality Rule
 
@@ -312,10 +420,12 @@ A design change is complete when the affected surface:
 
 - improves or preserves task clarity;
 - preserves semantic/evidence truth;
-- keeps the semantic workspace dominant after setup;
-- has clear interaction and UI states;
+- keeps code/semantic work visually dominant;
+- removes unnecessary framing rather than adding another visual layer;
+- has explicit interaction and UI states;
 - remains keyboard/accessibility sound;
 - works intentionally in light and dark themes;
 - remains task-completable on narrow layouts;
-- uses depth only where hierarchy benefits;
+- uses depth only for actual layered surfaces;
+- uses one canonical token vocabulary;
 - does not add decorative complexity without product value.

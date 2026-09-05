@@ -30,8 +30,8 @@ const buttonVariantClasses: Record<ButtonVariant, string> = {
 };
 
 const buttonSizeClasses: Record<ButtonSize, string> = {
-  sm: 'h-7 px-2.5 text-[12px]',
-  md: 'h-8 px-3 text-[12px]',
+  sm: 'h-7 px-2 text-[11px]',
+  md: 'h-8 px-2.5 text-[11px]',
   icon: 'size-7 p-0',
 };
 
@@ -55,7 +55,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) {
     const classes = cn(
-      'inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md border font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cs-focus/60 disabled:pointer-events-none disabled:opacity-45',
+      'inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[4px] border font-medium transition-colors duration-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cs-focus disabled:pointer-events-none disabled:opacity-45',
       buttonVariantClasses[variant],
       buttonSizeClasses[size],
       className,
@@ -92,7 +92,7 @@ export const IconButton = forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 const controlClass =
-  'h-7 min-w-0 rounded-md border border-cs-border bg-cs-control px-2 text-[12px] text-cs-text outline-none transition-colors placeholder:text-cs-subtle focus:border-cs-focus focus:ring-2 focus:ring-cs-focus/30 disabled:cursor-not-allowed disabled:opacity-50';
+  'h-7 min-w-0 rounded-[4px] border border-cs-border bg-cs-control px-2 text-[11px] text-cs-text outline-none transition-colors duration-100 placeholder:text-cs-subtle focus:border-cs-focus focus:ring-1 focus:ring-cs-focus/40 disabled:cursor-not-allowed disabled:opacity-50';
 
 export const Input = forwardRef<
   HTMLInputElement,
@@ -109,7 +109,7 @@ export const Textarea = forwardRef<
     <textarea
       ref={ref}
       className={cn(
-        'min-w-0 rounded-md border border-cs-border bg-cs-control px-2.5 py-2 text-[12px] leading-5 text-cs-text outline-none transition-colors placeholder:text-cs-subtle focus:border-cs-focus focus:ring-2 focus:ring-cs-focus/30 disabled:cursor-not-allowed disabled:opacity-50',
+        'min-w-0 rounded-[4px] border border-cs-border bg-cs-control px-2.5 py-2 text-[11px] leading-5 text-cs-text outline-none transition-colors duration-100 placeholder:text-cs-subtle focus:border-cs-focus focus:ring-1 focus:ring-cs-focus/40 disabled:cursor-not-allowed disabled:opacity-50',
         className,
       )}
       {...props}
@@ -169,8 +169,8 @@ export const Select = ({
     <RadixSelect.Portal>
       <RadixSelect.Content
         position="popper"
-        sideOffset={4}
-        className="z-[80] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-lg border border-cs-border bg-cs-surface p-1 text-cs-text shadow-[var(--shadow-overlay)]"
+        sideOffset={3}
+        className="z-[80] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-[5px] border border-cs-border bg-cs-panel p-1 text-cs-text shadow-[var(--shadow-overlay)]"
       >
         <RadixSelect.Viewport>
           {options.map((option) => (
@@ -178,7 +178,7 @@ export const Select = ({
               key={option.value}
               value={radixValue(option.value)}
               disabled={option.disabled ?? false}
-              className="relative flex h-7 cursor-default select-none items-center rounded px-7 pr-2 text-[11px] text-cs-muted outline-none data-[highlighted]:bg-cs-hover data-[highlighted]:text-cs-text data-[disabled]:pointer-events-none data-[disabled]:opacity-40"
+              className="relative flex h-7 cursor-default select-none items-center rounded-[3px] px-7 pr-2 text-[10px] text-cs-muted outline-none data-[highlighted]:bg-cs-hover data-[highlighted]:text-cs-text data-[disabled]:pointer-events-none data-[disabled]:opacity-40"
             >
               <RadixSelect.ItemIndicator className="absolute left-2 grid place-items-center text-cs-text">
                 <Check size={11} aria-hidden="true" />
@@ -213,7 +213,7 @@ export function Checkbox({
       disabled={disabled}
       aria-label={ariaLabel}
       className={cn(
-        'grid size-4 shrink-0 place-items-center rounded border border-cs-border bg-cs-control text-cs-text outline-none transition-colors hover:bg-cs-hover focus-visible:ring-2 focus-visible:ring-cs-focus/60 data-[state=checked]:border-cs-primary data-[state=checked]:bg-cs-primary data-[state=checked]:text-cs-primary-contrast disabled:opacity-45',
+        'grid size-4 shrink-0 place-items-center rounded-[3px] border border-cs-border bg-cs-control text-cs-text outline-none transition-colors duration-100 hover:bg-cs-hover focus-visible:ring-1 focus-visible:ring-cs-focus data-[state=checked]:border-cs-primary data-[state=checked]:bg-cs-primary data-[state=checked]:text-cs-primary-contrast disabled:opacity-45',
         className,
       )}
       onCheckedChange={(next) => onCheckedChange(next === true)}
@@ -229,7 +229,7 @@ export function Panel({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
-        'rounded-lg border border-cs-border bg-cs-panel',
+        'rounded-[4px] border border-cs-border bg-cs-panel',
         className,
       )}
       {...props}
@@ -244,7 +244,7 @@ export function SectionLabel({
   return (
     <div
       className={cn(
-        'text-[11px] font-semibold uppercase tracking-[0.12em] text-cs-muted',
+        'text-[10px] font-semibold uppercase tracking-[0.08em] text-cs-muted',
         className,
       )}
       {...props}
@@ -269,7 +269,7 @@ export function TabsList({
 }: ComponentPropsWithoutRef<typeof RadixTabs.List>) {
   return (
     <RadixTabs.List
-      className={cn('flex min-w-0 gap-1 border-b border-cs-border', className)}
+      className={cn('flex min-w-0 gap-0 border-b border-cs-border', className)}
       {...props}
     />
   );
@@ -282,7 +282,7 @@ export function TabsTrigger({
   return (
     <RadixTabs.Trigger
       className={cn(
-        'relative h-8 min-w-0 px-2 text-[11px] font-medium text-cs-muted outline-none transition-colors hover:text-cs-text focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cs-focus/60 data-[state=active]:text-cs-text data-[state=active]:after:absolute data-[state=active]:after:inset-x-1 data-[state=active]:after:bottom-0 data-[state=active]:after:h-px data-[state=active]:after:bg-cs-focus',
+        'relative h-7 min-w-0 px-2 text-[10px] font-medium text-cs-muted outline-none transition-colors duration-100 hover:text-cs-text focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-cs-focus data-[state=active]:text-cs-text data-[state=active]:after:absolute data-[state=active]:after:inset-x-2 data-[state=active]:after:bottom-0 data-[state=active]:after:h-px data-[state=active]:after:bg-cs-focus',
         className,
       )}
       {...props}
@@ -297,7 +297,7 @@ export function TabsContent({
   return (
     <RadixTabs.Content
       className={cn(
-        'min-h-0 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cs-focus/60',
+        'min-h-0 outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-cs-focus',
         className,
       )}
       {...props}
