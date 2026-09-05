@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from 'react';
 
 import type { PullRequestAnalysis } from './change-client';
 import {
@@ -212,7 +218,8 @@ export function GraphWorkspace({
     () =>
       filteredEdges.filter(
         (edge) =>
-          visibleNodeIds.has(edge.sourceId) && visibleNodeIds.has(edge.targetId),
+          visibleNodeIds.has(edge.sourceId) &&
+          visibleNodeIds.has(edge.targetId),
       ),
     [filteredEdges, visibleNodeIds],
   );
@@ -504,9 +511,7 @@ function GraphContextBar({
   searchResults: SemanticGraphNode[];
   activeSearchIndex: number;
   searchInputRef: React.RefObject<HTMLInputElement | null>;
-  currentEntryPoint:
-    | FlowProjection['entryPoints'][number]
-    | undefined;
+  currentEntryPoint: FlowProjection['entryPoints'][number] | undefined;
   onQueryChange: (value: string) => void;
   onSearchKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void;
   onActiveSearchIndexChange: (index: number) => void;
@@ -543,7 +548,9 @@ function GraphContextBar({
               label: `${entry.name} — ${entry.filePath}`,
             }))}
             onValueChange={(id) => {
-              const entry = entryPoints.find((candidate) => candidate.id === id);
+              const entry = entryPoints.find(
+                (candidate) => candidate.id === id,
+              );
               if (entry !== undefined && entry.id !== flow.entryPointId) {
                 onSelectEntry({ filePath: entry.filePath, name: entry.name });
               }
@@ -566,7 +573,11 @@ function GraphContextBar({
           onKeyDown={onSearchKeyDown}
         />
         {query.trim() !== '' ? (
-          <div className="graph-search-results" role="listbox" aria-label="Graph search results">
+          <div
+            className="graph-search-results"
+            role="listbox"
+            aria-label="Graph search results"
+          >
             {searchResults.length === 0 ? (
               <p>No matching semantic entity.</p>
             ) : (
@@ -636,7 +647,10 @@ function GraphNavigationRail({
               aria-current={focusId === flow.entryPointId ? 'true' : undefined}
               onClick={() => onFocusNode(flow.entryPointId, 'code')}
             >
-              <strong>{flow.nodes.find((node) => node.id === flow.entryPointId)?.label ?? 'Current entry'}</strong>
+              <strong>
+                {flow.nodes.find((node) => node.id === flow.entryPointId)
+                  ?.label ?? 'Current entry'}
+              </strong>
               <span>current projection</span>
             </button>
           ) : (
@@ -644,17 +658,27 @@ function GraphNavigationRail({
               <button
                 key={entry.id}
                 type="button"
-                aria-current={flow.entryPointId === entry.id ? 'true' : undefined}
+                aria-current={
+                  flow.entryPointId === entry.id ? 'true' : undefined
+                }
                 onClick={() => {
-                  if (entry.id === flow.entryPointId && graph.nodes.some((node) => node.id === entry.id)) {
+                  if (
+                    entry.id === flow.entryPointId &&
+                    graph.nodes.some((node) => node.id === entry.id)
+                  ) {
                     onFocusNode(entry.id, 'code');
                   } else {
-                    onSelectEntry({ filePath: entry.filePath, name: entry.name });
+                    onSelectEntry({
+                      filePath: entry.filePath,
+                      name: entry.name,
+                    });
                   }
                 }}
               >
                 <strong>{entry.name}</strong>
-                <span>{entry.confidence} · {entry.filePath}</span>
+                <span>
+                  {entry.confidence} · {entry.filePath}
+                </span>
               </button>
             ))
           )}
@@ -668,7 +692,9 @@ function GraphNavigationRail({
         </div>
         <div className="graph-rail-options">
           {levels.map((candidate) => {
-            const count = graph.nodes.filter((node) => graphNodeBelongsToLevel(node, candidate)).length;
+            const count = graph.nodes.filter((node) =>
+              graphNodeBelongsToLevel(node, candidate),
+            ).length;
             return (
               <Button
                 key={candidate}
@@ -691,7 +717,15 @@ function GraphNavigationRail({
           <span>lens</span>
         </div>
         <div className="graph-rail-options">
-          {(['ALL', 'CALLS', 'REFERENCES', 'DEPENDENCIES', 'TYPES'] as GraphLens[]).map((candidate) => (
+          {(
+            [
+              'ALL',
+              'CALLS',
+              'REFERENCES',
+              'DEPENDENCIES',
+              'TYPES',
+            ] as GraphLens[]
+          ).map((candidate) => (
             <Button
               key={candidate}
               variant="ghost"
@@ -741,7 +775,11 @@ function GraphCanvas({
   const nodesById = new Map(nodes.map((node) => [node.id, node]));
 
   return (
-    <div className="graph-canvas" role="region" aria-label="Semantic code graph">
+    <div
+      className="graph-canvas"
+      role="region"
+      aria-label="Semantic code graph"
+    >
       <div
         className="graph-stage"
         style={{ width: layout.width, height: layout.height }}
@@ -781,7 +819,9 @@ function GraphCanvas({
               <g
                 key={edge.id}
                 className={`graph-edge graph-edge--${trust}${
-                  edge.changeKind === undefined ? '' : ` graph-edge--change-${edge.changeKind}`
+                  edge.changeKind === undefined
+                    ? ''
+                    : ` graph-edge--change-${edge.changeKind}`
                 }${selectedEdgeId === edge.id ? ' graph-edge--selected' : ''}`}
                 role="button"
                 tabIndex={0}
@@ -796,7 +836,11 @@ function GraphCanvas({
                 }}
               >
                 <path className="graph-edge-hit" d={path} />
-                <path className="graph-edge-line" d={path} markerEnd="url(#codeflow-arrow)" />
+                <path
+                  className="graph-edge-line"
+                  d={path}
+                  markerEnd="url(#codeflow-arrow)"
+                />
                 <text
                   className="graph-edge-label"
                   x={(source.x + target.x + NODE_WIDTH) / 2}
@@ -822,7 +866,9 @@ function GraphCanvas({
               className={`semantic-graph-node${
                 focusId === node.id ? ' semantic-graph-node--focus' : ''
               }${
-                selectedNodeId === node.id ? ' semantic-graph-node--selected' : ''
+                selectedNodeId === node.id
+                  ? ' semantic-graph-node--selected'
+                  : ''
               }${node.entryPoint ? ' semantic-graph-node--entry' : ''}${
                 impactIds.has(node.id) ? ' semantic-graph-node--impact' : ''
               }${
@@ -892,17 +938,25 @@ function GraphInspector({
   onSelectEdge: (id: string) => void;
 }) {
   if (edge !== null) {
-    const source = graph.nodes.find((candidate) => candidate.id === edge.sourceId);
-    const target = graph.nodes.find((candidate) => candidate.id === edge.targetId);
+    const source = graph.nodes.find(
+      (candidate) => candidate.id === edge.sourceId,
+    );
+    const target = graph.nodes.find(
+      (candidate) => candidate.id === edge.targetId,
+    );
     return (
       <aside className="graph-inspector" aria-label="Graph inspector">
         <div className="graph-inspector-header">
           <span className="panel-kicker">Relationship</span>
           <strong>{edge.kind}</strong>
-          <span>{source?.label ?? edge.sourceId} → {target?.label ?? edge.targetId}</span>
+          <span>
+            {source?.label ?? edge.sourceId} → {target?.label ?? edge.targetId}
+          </span>
         </div>
         {edge.changeKind !== undefined ? (
-          <div className="graph-change-state">{edge.changeKind} relationship</div>
+          <div className="graph-change-state">
+            {edge.changeKind} relationship
+          </div>
         ) : null}
         <EvidenceList evidence={edge.evidence} />
       </aside>
@@ -921,19 +975,27 @@ function GraphInspector({
   }
 
   const relatedEdges = graph.edges.filter(
-    (candidate) => candidate.sourceId === node.id || candidate.targetId === node.id,
+    (candidate) =>
+      candidate.sourceId === node.id || candidate.targetId === node.id,
   );
-  const incoming = relatedEdges.filter((candidate) => candidate.targetId === node.id);
-  const outgoing = relatedEdges.filter((candidate) => candidate.sourceId === node.id);
+  const incoming = relatedEdges.filter(
+    (candidate) => candidate.targetId === node.id,
+  );
+  const outgoing = relatedEdges.filter(
+    (candidate) => candidate.sourceId === node.id,
+  );
   const sourceFlow =
     node.changeKind === 'removed' && changeAnalysis !== null
       ? changeAnalysis.base
       : flow;
   const snippet = sourceSnippet(sourceFlow, node.location);
-  const projectedFunction = flow.nodes.some((candidate) => candidate.id === node.id);
+  const projectedFunction = flow.nodes.some(
+    (candidate) => candidate.id === node.id,
+  );
   const behaviorDelta = changeAnalysis?.change.behaviorDeltas.find(
     (candidate) =>
-      candidate.baseFunctionId === node.id || candidate.headFunctionId === node.id,
+      candidate.baseFunctionId === node.id ||
+      candidate.headFunctionId === node.id,
   );
 
   return (
@@ -945,15 +1007,26 @@ function GraphInspector({
       </div>
 
       {node.changeKind !== undefined ? (
-        <div className={`graph-change-state graph-change-state--${node.changeKind}`}>
+        <div
+          className={`graph-change-state graph-change-state--${node.changeKind}`}
+        >
           {node.changeKind} in pull request
         </div>
       ) : null}
 
       <div className="graph-relationship-summary">
-        <div><strong>{incoming.length}</strong><span>incoming</span></div>
-        <div><strong>{outgoing.length}</strong><span>outgoing</span></div>
-        <div><strong>{relatedEdges.length}</strong><span>relationships</span></div>
+        <div>
+          <strong>{incoming.length}</strong>
+          <span>incoming</span>
+        </div>
+        <div>
+          <strong>{outgoing.length}</strong>
+          <span>outgoing</span>
+        </div>
+        <div>
+          <strong>{relatedEdges.length}</strong>
+          <span>relationships</span>
+        </div>
       </div>
 
       <section className="graph-inspector-section">
@@ -983,12 +1056,17 @@ function GraphInspector({
             Focus here
           </Button>
           {node.kind !== 'Repository' && node.kind !== 'Workspace' ? (
-            <Button disabled={impactLoading} onClick={() => void onShowDependents(node)}>
+            <Button
+              disabled={impactLoading}
+              onClick={() => void onShowDependents(node)}
+            >
               {impactLoading ? 'Tracing…' : 'Show dependents'}
             </Button>
           ) : null}
           {node.kind === 'Function' && !projectedFunction ? (
-            <Button onClick={() => onTraceFunction(node)}>Trace calls from here</Button>
+            <Button onClick={() => onTraceFunction(node)}>
+              Trace calls from here
+            </Button>
           ) : null}
         </div>
       </section>
@@ -999,7 +1077,9 @@ function GraphInspector({
             <strong>Source</strong>
             <span>{formatLocation(node.path, node.location)}</span>
           </div>
-          <pre className="graph-source-snippet"><code>{snippet}</code></pre>
+          <pre className="graph-source-snippet">
+            <code>{snippet}</code>
+          </pre>
         </section>
       ) : null}
 
@@ -1010,12 +1090,16 @@ function GraphInspector({
             <span>BASE → HEAD static facts</span>
           </div>
           {behaviorDelta.items.length === 0 ? (
-            <p className="graph-inspector-note">No supported static behavior delta found.</p>
+            <p className="graph-inspector-note">
+              No supported static behavior delta found.
+            </p>
           ) : (
             <div className="graph-behavior-delta-list">
               {behaviorDelta.items.slice(0, 8).map((item) => (
                 <div key={item.id}>
-                  <span>{item.changeKind} · {item.category}</span>
+                  <span>
+                    {item.changeKind} · {item.category}
+                  </span>
                   <strong>{item.label}</strong>
                   {item.detail === null ? null : <small>{item.detail}</small>}
                 </div>
@@ -1031,17 +1115,27 @@ function GraphInspector({
           <span>select for evidence</span>
         </div>
         {relatedEdges.length === 0 ? (
-          <p className="graph-inspector-note">No supported semantic relationships for this entity.</p>
+          <p className="graph-inspector-note">
+            No supported semantic relationships for this entity.
+          </p>
         ) : (
           <div className="graph-related-edge-list">
             {relatedEdges.slice(0, 12).map((candidate) => {
               const outgoingEdge = candidate.sourceId === node.id;
               const other = graph.nodes.find(
-                (graphNode) => graphNode.id === (outgoingEdge ? candidate.targetId : candidate.sourceId),
+                (graphNode) =>
+                  graphNode.id ===
+                  (outgoingEdge ? candidate.targetId : candidate.sourceId),
               );
               return (
-                <button key={candidate.id} type="button" onClick={() => onSelectEdge(candidate.id)}>
-                  <span>{outgoingEdge ? '→' : '←'} {candidate.kind}</span>
+                <button
+                  key={candidate.id}
+                  type="button"
+                  onClick={() => onSelectEdge(candidate.id)}
+                >
+                  <span>
+                    {outgoingEdge ? '→' : '←'} {candidate.kind}
+                  </span>
                   <strong>{other?.label ?? 'Unknown entity'}</strong>
                   <small>{evidenceTrust(candidate.evidence)}</small>
                 </button>
@@ -1066,13 +1160,19 @@ function ChangeOverlayBar({ analysis }: { analysis: PullRequestAnalysis }) {
     <div className="graph-change-overlay-bar" role="status">
       <div>
         <span className="panel-kicker">Change overlay</span>
-        <strong>PR #{analysis.change.source.pullRequestNumber} · {analysis.change.source.title}</strong>
+        <strong>
+          PR #{analysis.change.source.pullRequestNumber} ·{' '}
+          {analysis.change.source.title}
+        </strong>
       </div>
       <div className="graph-change-counts">
         <span>+ {counts.added} added</span>
         <span>~ {counts.modified} modified</span>
         <span>− {counts.removed} removed</span>
-        <span>{analysis.change.source.baseRevision.slice(0, 7)} → {analysis.change.source.headRevision.slice(0, 7)}</span>
+        <span>
+          {analysis.change.source.baseRevision.slice(0, 7)} →{' '}
+          {analysis.change.source.headRevision.slice(0, 7)}
+        </span>
       </div>
     </div>
   );
@@ -1086,14 +1186,22 @@ function EvidenceList({ evidence }: { evidence: FlowEvidence[] }) {
         <span>{evidence.length}</span>
       </div>
       {evidence.length === 0 ? (
-        <p className="graph-inspector-note">No supporting evidence is available for this projected relationship.</p>
+        <p className="graph-inspector-note">
+          No supporting evidence is available for this projected relationship.
+        </p>
       ) : (
         <div className="graph-evidence-list">
           {evidence.map((item, index) => (
-            <div key={`${item.source}:${item.location.filePath}:${item.location.startLine}:${index}`}>
-              <span>{item.kind} · {item.source}</span>
+            <div
+              key={`${item.source}:${item.location.filePath}:${item.location.startLine}:${index}`}
+            >
+              <span>
+                {item.kind} · {item.source}
+              </span>
               <strong>{item.reason}</strong>
-              <small>{formatLocation(item.location.filePath, item.location)}</small>
+              <small>
+                {formatLocation(item.location.filePath, item.location)}
+              </small>
             </div>
           ))}
         </div>
@@ -1139,7 +1247,10 @@ function appendImpactProjection(
       });
     }
   }
-  return { nodes: Array.from(nodes.values()), edges: Array.from(edges.values()) };
+  return {
+    nodes: Array.from(nodes.values()),
+    edges: Array.from(edges.values()),
+  };
 }
 
 function resolveFocusForLevel(
@@ -1176,7 +1287,10 @@ function resolveFocusForLevel(
 
   if (level === 'packages') {
     const ownerId = flow.topology?.fileOwners[entryPath];
-    if (ownerId !== undefined && graph.nodes.some((node) => node.id === ownerId)) {
+    if (
+      ownerId !== undefined &&
+      graph.nodes.some((node) => node.id === ownerId)
+    ) {
       return ownerId;
     }
     if (
@@ -1188,7 +1302,9 @@ function resolveFocusForLevel(
     }
   }
 
-  return graph.nodes.find((node) => graphNodeBelongsToLevel(node, level))?.id ?? null;
+  return (
+    graph.nodes.find((node) => graphNodeBelongsToLevel(node, level))?.id ?? null
+  );
 }
 
 function layoutGraph(
@@ -1257,8 +1373,16 @@ function layoutGraph(
 
   return {
     positions,
-    width: Math.max(680, 84 + depths.length * NODE_WIDTH + Math.max(0, depths.length - 1) * COLUMN_GAP),
-    height: Math.max(420, 84 + tallest * NODE_HEIGHT + Math.max(0, tallest - 1) * ROW_GAP),
+    width: Math.max(
+      680,
+      84 +
+        depths.length * NODE_WIDTH +
+        Math.max(0, depths.length - 1) * COLUMN_GAP,
+    ),
+    height: Math.max(
+      420,
+      84 + tallest * NODE_HEIGHT + Math.max(0, tallest - 1) * ROW_GAP,
+    ),
   };
 }
 
@@ -1277,26 +1401,41 @@ function edgePath(source: GraphPosition, target: GraphPosition): string {
   return `M ${leftSourceX} ${sourceY} C ${middleX} ${sourceY}, ${middleX} ${targetY}, ${rightTargetX} ${targetY}`;
 }
 
-function sourceSnippet(flow: FlowProjection, location: SourceLocation | null): string | null {
+function sourceSnippet(
+  flow: FlowProjection,
+  location: SourceLocation | null,
+): string | null {
   if (location === null) {
     return null;
   }
-  const source = flow.sources.find((candidate) => candidate.filePath === location.filePath);
+  const source = flow.sources.find(
+    (candidate) => candidate.filePath === location.filePath,
+  );
   if (source === undefined) {
     return null;
   }
   const lines = source.text.split('\n');
   const start = Math.max(0, location.startLine - 3);
-  const end = Math.min(lines.length, Math.max(location.endLine + 2, location.startLine + 4), start + 14);
+  const end = Math.min(
+    lines.length,
+    Math.max(location.endLine + 2, location.startLine + 4),
+    start + 14,
+  );
   return lines
     .slice(start, end)
-    .map((line, index) => `${String(start + index + 1).padStart(4, ' ')}  ${line}`)
+    .map(
+      (line, index) => `${String(start + index + 1).padStart(4, ' ')}  ${line}`,
+    )
     .join('\n');
 }
 
 function evidenceTrust(evidence: FlowEvidence[]): string {
   const kind = evidence[0]?.kind;
-  if (kind === 'verified-static' || kind === 'configured' || kind === 'observed-runtime') {
+  if (
+    kind === 'verified-static' ||
+    kind === 'configured' ||
+    kind === 'observed-runtime'
+  ) {
     return 'verified';
   }
   if (kind === 'inferred-static') {
@@ -1330,7 +1469,10 @@ function compactPath(path: string | null): string {
   return `…/${parts.slice(-3).join('/')}`;
 }
 
-function formatLocation(path: string | null, location: SourceLocation | null): string {
+function formatLocation(
+  path: string | null,
+  location: SourceLocation | null,
+): string {
   if (location === null) {
     return path ?? 'source location unavailable';
   }

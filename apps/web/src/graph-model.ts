@@ -8,11 +8,7 @@ import type {
 
 export type GraphLevel = 'code' | 'structure' | 'packages';
 export type GraphLens =
-  | 'ALL'
-  | 'CALLS'
-  | 'REFERENCES'
-  | 'DEPENDENCIES'
-  | 'TYPES';
+  'ALL' | 'CALLS' | 'REFERENCES' | 'DEPENDENCIES' | 'TYPES';
 
 export type GraphNodeKind = RepositoryEntityKind | 'Package' | 'Workspace';
 
@@ -282,8 +278,16 @@ function applyChangeOverlay(
   }
 
   for (const delta of analysis.change.relationshipDeltas) {
-    const sourceId = resolveChangeEndpoint(nodes, delta.source.name, delta.source.path);
-    const targetId = resolveChangeEndpoint(nodes, delta.target.name, delta.target.path);
+    const sourceId = resolveChangeEndpoint(
+      nodes,
+      delta.source.name,
+      delta.source.path,
+    );
+    const targetId = resolveChangeEndpoint(
+      nodes,
+      delta.target.name,
+      delta.target.path,
+    );
     if (sourceId === null || targetId === null) {
       continue;
     }

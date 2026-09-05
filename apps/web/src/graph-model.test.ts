@@ -45,8 +45,13 @@ const flow: FlowProjection = {
       evidence: [],
     },
   ],
-  source: { filePath: 'src/orders.ts', text: 'export function createOrder() {}' },
-  sources: [{ filePath: 'src/orders.ts', text: 'export function createOrder() {}' }],
+  source: {
+    filePath: 'src/orders.ts',
+    text: 'export function createOrder() {}',
+  },
+  sources: [
+    { filePath: 'src/orders.ts', text: 'export function createOrder() {}' },
+  ],
   analysis: {
     status: 'complete',
     analyzedFileCount: 1,
@@ -150,7 +155,9 @@ describe('graph model', () => {
   it('combines code, structure, package, and call relationships into one graph', () => {
     const graph = buildSemanticGraph(flow);
 
-    expect(graph.nodes.some((node) => node.id === 'function:createOrder')).toBe(true);
+    expect(graph.nodes.some((node) => node.id === 'function:createOrder')).toBe(
+      true,
+    );
     expect(graph.nodes.some((node) => node.id === 'file:orders')).toBe(true);
     expect(graph.nodes.some((node) => node.id === 'package:api')).toBe(true);
     expect(graph.edges.some((edge) => edge.kind === 'CALLS')).toBe(true);
@@ -212,7 +219,8 @@ describe('graph model', () => {
 
     const graph = buildSemanticGraph(flow, changeAnalysis);
     expect(
-      graph.nodes.find((node) => node.id === 'function:createOrder')?.changeKind,
+      graph.nodes.find((node) => node.id === 'function:createOrder')
+        ?.changeKind,
     ).toBe('modified');
   });
 });
