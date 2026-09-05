@@ -2,57 +2,57 @@
 
 Status: READY_FOR_MILESTONE
 
-Last Completed Milestone: M12 - Graph-First CodeFlow
+Last Completed Milestone: M13 - Evidence-First Graph UI
 
-## Outcome
+## Product Outcome Delivered
 
-CodeFlow is now graph-first: repository analysis lands directly in one navigable semantic graph where a developer can start from an entry point or symbol, progressively follow supported calls, references, type relationships, dependencies, source evidence, and dependents, and visualize pull-request changes without switching among separate Explore, Flow, Impact, Architecture, Package, or Change workspaces.
+The M12 graph-first product now reads as a compact developer workbench rather than a multi-pane analysis dashboard. The semantic graph is the dominant plane, graph projection controls are contextual, source/evidence inspection remains readable, and narrow layouts preserve the complete comprehension task instead of hiding the inspector.
 
-The core product loop is now:
+The resulting interaction hierarchy is:
 
 ```text
-OPEN REPOSITORY
-  -> DISCOVER OR SEARCH ENTRY POINT / SYMBOL
-  -> CENTER GRAPH ON THAT ENTITY
-  -> FOLLOW CALLS / TYPES / REFERENCES / DEPENDENCIES
-  -> EXPAND OR COLLAPSE NEIGHBORHOODS
-  -> INSPECT SOURCE + EVIDENCE
-  -> MOVE FOCUS
-  -> BUILD A MENTAL MODEL OF THE CODEBASE
+REPOSITORY + ENTRY + SEARCH
+  -> GRAPH FOCUS
+  -> CODE / STRUCTURE / PACKAGE PROJECTION
+  -> RELATIONSHIP LENS
+  -> SELECT NODE OR EDGE
+  -> TRACE / SOURCE / RELATIONSHIPS / EVIDENCE
+  -> REFOCUS OR ASSESS DEPENDENTS
 ```
 
 ## Completed Slices
 
-- S1 reset `PROJECT.md` and `DESIGN.md` around the graph-first product invariant.
-- S2 added one client semantic graph projection across code entities, repository structure, package topology, evidence, and pull-request change state.
-- S3 replaced the Explore / Flow / Impact primary navigation with one graph shell.
-- S4 made entry points and semantic search graph-navigation primitives.
-- S5 added bounded progressive incoming/outgoing expansion, both-direction expansion, collapse, focus, and Code / Structure / Packages semantic zoom.
-- S6 added All / Calls / References / Dependencies / Types relationship lenses over the same graph truth.
-- S7 moved downstream impact into `Show dependents`, rendering bounded dependent paths on the graph.
-- S8 moved pull-request analysis into a BASE/HEAD change overlay on the same graph, with selected-function behavior delta available contextually in the inspector.
-- S9 removed superseded primary-surface Architecture, Package Topology, Impact, and Change workspaces and replaced their top-level regressions with graph-first behavior coverage.
+- S1 removed the persistent graph navigation rail and moved semantic level/lens controls into the graph toolbar.
+- S2 strengthened repository, entry-point, focus, search, and projection hierarchy without creating new product modes.
+- S3 made the inspector task-oriented: primary incoming/outgoing trace actions first, quieter secondary operations, readable source, relationship evidence, and node-level evidence.
+- S4 raised active-workspace typography to readable developer-tool density and removed 8–9px operational text from the graph work surface.
+- S5 flattened the graph workspace around alignment, 1px dividers, neutral panes, and restrained steel-blue focus; ordinary graph surfaces no longer depend on card/elevation treatment.
+- S6 preserved inspector/task completion on narrow layouts by placing the inspector below the graph instead of hiding it.
+- S7 aligned durable `DESIGN.md` with the evidence-first graph interaction model and verified the existing graph-first regression contract.
 
-## Verification Evidence
+## Evidence / Reference Direction
 
-- PR #34 exact head `84af73824d3175fac080a14cf6ab2b692a690ef9` passed canonical GitHub Actions CI #245 (`33992668112`) before this completion-state update.
-- `pnpm format:check` passed.
-- `pnpm lint` passed.
-- `pnpm build` passed across analysis-core, web, and API.
-- web tests passed, including graph model projection, direct graph landing, progressive call expansion, semantic search, semantic zoom, graph-native dependents, pull-request change overlay, behavior-delta inspection, repository acquisition, and retained static-flow regressions.
-- Deployment/Compose validation and smoke were correctly skipped because M12 changes product/UI composition rather than deployment surfaces.
-- Temporary formatter/fix workflows were removed from the branch before the canonical gate.
+- GitHub code navigation: symbol search and definition/reference navigation stay anchored to the code-reading task rather than becoming separate dashboards.
+- Sourcegraph code navigation: selected symbols expose contextual navigation/reference evidence without forcing a context switch.
+- VS Code call hierarchy: incoming/outgoing relationships are progressive and anchored on a selected function rather than rendering an unrestricted repository graph.
+
+References informed interaction behavior only; CodeFlow retains its own compact neutral visual language and semantic truth model.
 
 ## Boundaries Preserved
 
-- Existing API and analysis-core semantic contracts remain authoritative.
-- Static relationships remain static; CodeFlow does not claim observed runtime execution.
-- Evidence kinds remain distinguishable and missing evidence remains explicit.
-- Pull-request BASE/HEAD revision identity and existing semantic change contracts remain intact.
-- Impact remains a bounded derived traversal rather than a fabricated canonical relationship.
-- No AI, persistence, private auth, runtime execution, graph database, queue, or unrelated infrastructure was added.
-- Large repositories remain bounded and progressively disclosed instead of rendering a complete graph by default.
+- Existing graph-first M12 product behavior and analysis/API semantic contracts remain unchanged.
+- No new product modes, analytics dashboards, AI, persistence, auth, runtime execution, graph database, or decorative visualization features were added.
+- Source/evidence truth and static-analysis boundaries remain explicit.
+- The canvas remains a bounded semantic navigator, not a free-form editor or physics graph.
+- Existing dark/light neutral tokens and restrained steel-blue focus remain authoritative.
 
-## Next State
+## Verification
 
-Select the next milestone only from a material gap in the graph-first core journey. Do not reintroduce separate analysis workspaces merely because their underlying semantic capabilities still exist.
+Canonical CI #257 on exact runtime head `32c0e1a2e93c6adca6be33faf8c02a4a6c9ea5af` passed:
+
+- formatting;
+- lint;
+- production build;
+- 15/15 web behavior tests.
+
+Production Compose gates were correctly skipped because the milestone changes only the frontend interaction/design layer and agent knowledge.

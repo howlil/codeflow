@@ -143,6 +143,11 @@ export function GraphWorkspace({
     () => resolveFocusForLevel(flow, graphWithImpact, level, focusId),
     [flow, graphWithImpact, level, focusId],
   );
+  const focusNode = useMemo(
+    () =>
+      graphWithImpact.nodes.find((node) => node.id === resolvedFocusId) ?? null,
+    [graphWithImpact.nodes, resolvedFocusId],
+  );
 
   const impactIds = useMemo(() => {
     const ids = new Set<string>();
@@ -383,31 +388,25 @@ export function GraphWorkspace({
       ) : null}
 
       <div className="graph-workspace-body">
-        <GraphNavigationRail
-          flow={flow}
-          graph={graph}
-          level={level}
-          lens={lens}
-          availableLenses={availableLenses}
-          focusId={resolvedFocusId}
-          onLevelChange={changeLevel}
-          onLensChange={setRequestedLens}
-          onFocusNode={focusGraph}
-          onSelectEntry={onSelectEntry}
-        />
-
         <div className="graph-primary-pane">
           <div className="graph-primary-toolbar">
             <div className="graph-primary-heading">
-              <span className="panel-kicker">Semantic graph</span>
-              <strong>
-                {levelLabel(level)} · {lensLabel(lens)}
-              </strong>
+              <strong>{focusNode?.label ?? 'Semantic graph'}</strong>
               <span>
-                {visibleNodes.length} visible / {levelNodes.length} available
-                nodes · static relationships, not runtime execution
+                {levelLabel(level)} · {lensLabel(lens)} · {visibleNodes.length}/
+                {levelNodes.length} visible · static projection
               </span>
             </div>
+
+            <GraphProjectionControls
+              graph={graphWithImpact}
+              level={level}
+              lens={lens}
+              availableLenses={availableLenses}
+              onLevelChange={changeLevel}
+              onLensChange={setRequestedLens}
+            />
+
             {impact !== null ? (
               <div className="graph-impact-status" role="status">
                 <span>
@@ -593,138 +592,70 @@ function GraphContextBar({
   );
 }
 
-function GraphNavigationRail({
-  flow,
+function GraphProjectionControls({
   graph,
   level,
   lens,
   availableLenses,
-  focusId,
   onLevelChange,
   onLensChange,
-  onFocusNode,
-  onSelectEntry,
 }: {
-  flow: FlowProjection;
   graph: SemanticGraph;
   level: GraphLevel;
   lens: GraphLens;
   availableLenses: GraphLens[];
-  focusId: string | null;
   onLevelChange: (level: GraphLevel) => void;
   onLensChange: (lens: GraphLens) => void;
-  onFocusNode: (id: string, level?: GraphLevel) => void;
-  onSelectEntry: (entryPoint: { filePath: string; name: string }) => void;
 }) {
-  const entryPoints = flow.entryPoints ?? [];
   const levels: GraphLevel[] = ['code', 'structure', 'packages'];
+  const lenses: GraphLens[] = [
+    'ALL',
+    'CALLS',
+    'REFERENCES',
+    'DEPENDENCIES',
+    'TYPES',
+  ];
 
   return (
-    <aside className="graph-navigation-rail" aria-label="Graph navigation">
-      <section>
-        <div className="graph-rail-heading">
-          <strong>Entry points</strong>
-          <span>{entryPoints.length || 1}</span>
-        </div>
-        <div className="graph-entry-list">
-          {entryPoints.length === 0 ? (
-            <button
-              type="button"
-              aria-current={focusId === flow.entryPointId ? 'true' : undefined}
-              onClick={() => onFocusNode(flow.entryPointId, 'code')}
-            >
-              <strong>
-                {flow.nodes.find((node) => node.id === flow.entryPointId)
-                  ?.label ?? 'Current entry'}
-              </strong>
-              <span>current projection</span>
-            </button>
-          ) : (
-            entryPoints.slice(0, 10).map((entry) => (
-              <button
-                key={entry.id}
-                type="button"
-                aria-current={
-                  flow.entryPointId === entry.id ? 'true' : undefined
-                }
-                onClick={() => {
-                  if (
-                    entry.id === flow.entryPointId &&
-                    graph.nodes.some((node) => node.id === entry.id)
-                  ) {
-                    onFocusNode(entry.id, 'code');
-                  } else {
-                    onSelectEntry({
-                      filePath: entry.filePath,
-                      name: entry.name,
-                    });
-                  }
-                }}
-              >
-                <strong>{entry.name}</strong>
-                <span>
-                  {entry.confidence} · {entry.filePath}
-                </span>
-              </button>
-            ))
-          )}
-        </div>
-      </section>
-
-      <section>
-        <div className="graph-rail-heading">
-          <strong>Level</strong>
-          <span>semantic zoom</span>
-        </div>
-        <div className="graph-rail-options">
-          {levels.map((candidate) => {
-            const count = graph.nodes.filter((node) =>
-              graphNodeBelongsToLevel(node, candidate),
-            ).length;
-            return (
-              <Button
-                key={candidate}
-                variant="ghost"
-                aria-pressed={level === candidate}
-                disabled={count === 0}
-                onClick={() => onLevelChange(candidate)}
-              >
-                <span>{levelLabel(candidate)}</span>
-                <small>{count}</small>
-              </Button>
-            );
-          })}
-        </div>
-      </section>
-
-      <section>
-        <div className="graph-rail-heading">
-          <strong>Relationships</strong>
-          <span>lens</span>
-        </div>
-        <div className="graph-rail-options">
-          {(
-            [
-              'ALL',
-              'CALLS',
-              'REFERENCES',
-              'DEPENDENCIES',
-              'TYPES',
-            ] as GraphLens[]
-          ).map((candidate) => (
+    <div className="graph-projection-controls">
+      <div
+        className="graph-level-switcher"
+        role="group"
+        aria-label="Graph level"
+      >
+        {levels.map((candidate) => {
+          const count = graph.nodes.filter((node) =>
+            graphNodeBelongsToLevel(node, candidate),
+          ).length;
+          return (
             <Button
               key={candidate}
               variant="ghost"
-              aria-pressed={lens === candidate}
-              disabled={!availableLenses.includes(candidate)}
-              onClick={() => onLensChange(candidate)}
+              aria-pressed={level === candidate}
+              disabled={count === 0}
+              onClick={() => onLevelChange(candidate)}
             >
-              {lensLabel(candidate)}
+              <span>{levelLabel(candidate)}</span>
+              <small>{count}</small>
             </Button>
-          ))}
-        </div>
-      </section>
-    </aside>
+          );
+        })}
+      </div>
+
+      <div className="graph-lens-control">
+        <span>Relationship</span>
+        <Select
+          aria-label="Relationship lens"
+          value={lens}
+          options={lenses.map((candidate) => ({
+            value: candidate,
+            label: lensLabel(candidate),
+            disabled: !availableLenses.includes(candidate),
+          }))}
+          onValueChange={(value) => onLensChange(value as GraphLens)}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -1000,49 +931,57 @@ function GraphInspector({
         </div>
       ) : null}
 
-      <div className="graph-relationship-summary">
-        <div>
-          <strong>{incoming.length}</strong>
-          <span>incoming</span>
-        </div>
-        <div>
-          <strong>{outgoing.length}</strong>
-          <span>outgoing</span>
-        </div>
-        <div>
-          <strong>{relatedEdges.length}</strong>
-          <span>relationships</span>
-        </div>
+      <div
+        className="graph-relationship-summary"
+        aria-label="Relationship summary"
+      >
+        <span>
+          <strong>{incoming.length}</strong> incoming
+        </span>
+        <span>
+          <strong>{outgoing.length}</strong> outgoing
+        </span>
+        <span>
+          <strong>{relatedEdges.length}</strong> total
+        </span>
       </div>
 
       <section className="graph-inspector-section">
         <div className="graph-inspector-section-heading">
-          <strong>Explore</strong>
-          <span>graph operations</span>
+          <strong>Trace</strong>
+          <span>from selected entity</span>
         </div>
-        <div className="graph-node-actions">
-          <Button
-            aria-pressed={expandedIncoming.has(node.id)}
-            onClick={() => onExpandIncoming(node.id)}
-          >
-            Expand incoming
-          </Button>
+        <div className="graph-node-primary-actions">
           <Button
             aria-pressed={expandedOutgoing.has(node.id)}
             onClick={() => onExpandOutgoing(node.id)}
           >
             Expand outgoing
           </Button>
-          <Button onClick={() => onShowBoth(node.id)}>Show both</Button>
-          <Button onClick={() => onCollapse(node.id)}>Collapse branch</Button>
           <Button
-            variant={focusId === node.id ? 'primary' : 'secondary'}
+            aria-pressed={expandedIncoming.has(node.id)}
+            onClick={() => onExpandIncoming(node.id)}
+          >
+            Expand incoming
+          </Button>
+        </div>
+        <div className="graph-node-secondary-actions">
+          <Button variant="ghost" onClick={() => onShowBoth(node.id)}>
+            Show both
+          </Button>
+          <Button
+            variant="ghost"
+            aria-pressed={focusId === node.id}
             onClick={() => onFocus(node)}
           >
-            Focus here
+            {focusId === node.id ? 'Focused' : 'Focus here'}
+          </Button>
+          <Button variant="ghost" onClick={() => onCollapse(node.id)}>
+            Collapse branch
           </Button>
           {node.kind !== 'Repository' && node.kind !== 'Workspace' ? (
             <Button
+              variant="ghost"
               disabled={impactLoading}
               onClick={() => void onShowDependents(node)}
             >
@@ -1098,7 +1037,7 @@ function GraphInspector({
       <section className="graph-inspector-section">
         <div className="graph-inspector-section-heading">
           <strong>Relationships</strong>
-          <span>select for evidence</span>
+          <span>select one to inspect evidence</span>
         </div>
         {relatedEdges.length === 0 ? (
           <p className="graph-inspector-note">
@@ -1130,6 +1069,10 @@ function GraphInspector({
           </div>
         )}
       </section>
+
+      {node.evidence.length > 0 ? (
+        <EvidenceList evidence={node.evidence} />
+      ) : null}
     </aside>
   );
 }
