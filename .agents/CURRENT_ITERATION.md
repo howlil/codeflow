@@ -1,33 +1,58 @@
 # Current Iteration
 
-Status: IN_PROGRESS
+Status: READY_FOR_MILESTONE
 
-Active Milestone: M12 - Graph-First CodeFlow
+Last Completed Milestone: M12 - Graph-First CodeFlow
 
-## Product Outcome
+## Outcome
 
-Replace the multi-workspace analysis-suite interaction with one graph-first CodeFlow experience where a developer can start from an entry point or symbol and progressively follow calls, references, type relationships, dependencies, source evidence, dependents, and pull-request changes without switching among Explore, Flow, Impact, Architecture, Package, or Change workspaces.
+CodeFlow is now graph-first: repository analysis lands directly in one navigable semantic graph where a developer can start from an entry point or symbol, progressively follow supported calls, references, type relationships, dependencies, source evidence, and dependents, and visualize pull-request changes without switching among separate Explore, Flow, Impact, Architecture, Package, or Change workspaces.
 
-## Slices
+The core product loop is now:
 
-- S1 product/design contract reset to the graph-first product definition.
-- S2 unified client semantic graph projection across code, structure, packages, evidence, and change state.
-- S3 single graph shell replacing Explore / Flow / Impact as primary surfaces.
-- S4 first-class entry-point navigation and semantic search.
-- S5 progressive incoming/outgoing expansion, focus, collapse, and semantic zoom.
-- S6 Calls / References / Dependencies / Types relationship lenses.
-- S7 graph-native downstream impact traversal.
-- S8 pull-request changes as an overlay on the same graph plus selected-function change details.
-- S9 remove superseded primary-surface UI, add graph-first regressions, run canonical gates, and merge.
+```text
+OPEN REPOSITORY
+  -> DISCOVER OR SEARCH ENTRY POINT / SYMBOL
+  -> CENTER GRAPH ON THAT ENTITY
+  -> FOLLOW CALLS / TYPES / REFERENCES / DEPENDENCIES
+  -> EXPAND OR COLLAPSE NEIGHBORHOODS
+  -> INSPECT SOURCE + EVIDENCE
+  -> MOVE FOCUS
+  -> BUILD A MENTAL MODEL OF THE CODEBASE
+```
 
-## Boundaries
+## Completed Slices
 
-- Preserve existing API and analysis-core semantic contracts unless implementation evidence proves a change is necessary.
-- Static relationships remain static; no runtime-execution claims.
-- Evidence kinds remain distinguishable.
-- Do not add AI, persistence, auth, graph database, runtime execution, or unrelated infrastructure.
-- Large repositories remain bounded and progressively disclosed.
+- S1 reset `PROJECT.md` and `DESIGN.md` around the graph-first product invariant.
+- S2 added one client semantic graph projection across code entities, repository structure, package topology, evidence, and pull-request change state.
+- S3 replaced the Explore / Flow / Impact primary navigation with one graph shell.
+- S4 made entry points and semantic search graph-navigation primitives.
+- S5 added bounded progressive incoming/outgoing expansion, both-direction expansion, collapse, focus, and Code / Structure / Packages semantic zoom.
+- S6 added All / Calls / References / Dependencies / Types relationship lenses over the same graph truth.
+- S7 moved downstream impact into `Show dependents`, rendering bounded dependent paths on the graph.
+- S8 moved pull-request analysis into a BASE/HEAD change overlay on the same graph, with selected-function behavior delta available contextually in the inspector.
+- S9 removed superseded primary-surface Architecture, Package Topology, Impact, and Change workspaces and replaced their top-level regressions with graph-first behavior coverage.
 
-## Done When
+## Verification Evidence
 
-A repository analysis lands directly in one semantic graph; entry points and search navigate it; graph nodes can expand incoming/outgoing relationships and refocus; semantic level and relationship lenses change projection without changing truth; dependents appear as graph paths; pull-request analysis appears as change state over the graph; source/evidence remains inspectable; legacy primary workspaces are no longer part of the user journey; canonical CI is green.
+- PR #34 exact head `84af73824d3175fac080a14cf6ab2b692a690ef9` passed canonical GitHub Actions CI #245 (`33992668112`) before this completion-state update.
+- `pnpm format:check` passed.
+- `pnpm lint` passed.
+- `pnpm build` passed across analysis-core, web, and API.
+- web tests passed, including graph model projection, direct graph landing, progressive call expansion, semantic search, semantic zoom, graph-native dependents, pull-request change overlay, behavior-delta inspection, repository acquisition, and retained static-flow regressions.
+- Deployment/Compose validation and smoke were correctly skipped because M12 changes product/UI composition rather than deployment surfaces.
+- Temporary formatter/fix workflows were removed from the branch before the canonical gate.
+
+## Boundaries Preserved
+
+- Existing API and analysis-core semantic contracts remain authoritative.
+- Static relationships remain static; CodeFlow does not claim observed runtime execution.
+- Evidence kinds remain distinguishable and missing evidence remains explicit.
+- Pull-request BASE/HEAD revision identity and existing semantic change contracts remain intact.
+- Impact remains a bounded derived traversal rather than a fabricated canonical relationship.
+- No AI, persistence, private auth, runtime execution, graph database, queue, or unrelated infrastructure was added.
+- Large repositories remain bounded and progressively disclosed instead of rendering a complete graph by default.
+
+## Next State
+
+Select the next milestone only from a material gap in the graph-first core journey. Do not reintroduce separate analysis workspaces merely because their underlying semantic capabilities still exist.
