@@ -13,13 +13,13 @@ PRODUCT PROBLEM
 -> SHIPPED-PRODUCT INTERACTION EVIDENCE
 -> REAL CODE-COMPREHENSION FLOW
 -> COMPONENT / ACCESSIBILITY CONVENTIONS
--> EXISTING CODEFLOW DESIGN TOKENS
+-> CODEFLOW TOKENS + PRIMITIVES
 -> VISUAL CRAFT
 ```
 
 Visual novelty is not a goal. Product clarity is.
 
-The primary visual hierarchy is:
+Primary hierarchy:
 
 ```text
 1. semantic graph + current focus
@@ -33,34 +33,36 @@ The graph must never be reduced to a small panel between competing navigation, a
 
 ## Product References
 
-Use shipped products as behavioral evidence, not as skins to copy.
+Use shipped products as behavioral or visual evidence, never as a literal skin copy.
 
 ### GitHub code navigation
 
-Borrow:
-
-- symbol search anchored to the code-reading task;
-- direct navigation to definitions/references;
-- contextual information instead of separate analysis dashboards.
+Borrow symbol search anchored to code reading, direct definition/reference navigation, and contextual information instead of separate analysis dashboards.
 
 ### Sourcegraph code navigation
 
-Borrow:
-
-- symbol-centered navigation;
-- contextual references/evidence without unnecessary context switching;
-- clear distinction between precise/static evidence and heuristic fallback.
+Borrow symbol-centered navigation, contextual evidence without unnecessary context switching, and clear distinction between precise/static evidence and heuristic fallback.
 
 ### VS Code call hierarchy
 
+Borrow selected-function anchoring, explicit incoming/outgoing calls, progressive drill-down, and source inspection without losing orientation.
+
+### Anthropic / Claude product UI
+
+Anthropic/Claude is the canonical **visual-language reference** for CodeFlow.
+
 Borrow:
 
-- selected-function anchoring;
-- explicit incoming vs outgoing calls;
-- progressive drill-down instead of rendering an unrestricted repository graph;
-- source peek/inspection without losing orientation.
+- warm paper-like light surfaces and warm charcoal dark surfaces;
+- dark ink / warm off-white typography rather than cool blue-gray chrome;
+- restrained terracotta/orange for focus, selection, and meaningful attention;
+- soft but not inflated corner radii;
+- quiet 1px borders and low-elevation surfaces;
+- calm spacing and typography with clear hierarchy;
+- rounded controls and menus that remain operational rather than decorative;
+- editorial display typography only where it improves identity or acquisition hierarchy.
 
-Do not copy their branding, chrome density, colors, or layout literally.
+Do **not** copy Anthropic proprietary fonts, logos, illustrations, brand marks, or exact marketing compositions. CodeFlow uses its own token values and system-font fallbacks while preserving the observable product-language principles.
 
 ## Workspace Model
 
@@ -81,17 +83,15 @@ After analysis, desktop defaults to one bounded operational work surface:
 
 There is **no permanent left navigation rail**. Entry point, semantic level, and relationship lens are graph context, not separate navigation destinations.
 
-Approximate desktop allocation:
+Desktop allocation:
 
 - graph plane: normally 75–80% of usable width;
-- inspector: normally 286–320px;
+- inspector: normally 286–352px;
 - context and projection controls: one compact row each where viewport width allows.
 
-On narrower screens the inspector moves below the graph. It must not disappear because source/evidence inspection is part of the core task.
+On narrower screens the inspector moves below the graph or becomes a bounded drawer. Source/evidence inspection must remain available.
 
 ## Core User Flow
-
-The default comprehension loop is:
 
 ```text
 OPEN REPOSITORY
@@ -111,7 +111,7 @@ Controls should be placed where they answer the next question in that loop.
 ### Entry and focus
 
 - analysis starts centered on the selected/detected entry point;
-- choosing another entry point recenters/reanalyzes the relevant call projection when required;
+- choosing another entry point recenters/reanalyzes the relevant projection when required;
 - semantic search moves graph focus to the selected entity;
 - current focus remains visually and textually explicit;
 - search remains keyboard-first and supports Escape dismissal.
@@ -120,7 +120,7 @@ Controls should be placed where they answer the next question in that loop.
 
 Never render the entire repository graph by default.
 
-A selected node supports graph-native actions where applicable:
+Selected-node actions, where applicable:
 
 ```text
 Expand outgoing
@@ -132,9 +132,7 @@ Trace calls from here
 Show dependents
 ```
 
-`Expand outgoing` and `Expand incoming` are primary trace actions. `Show both`, `Collapse branch`, focus, impact, and re-tracing are quieter contextual operations.
-
-Expanding a node reveals only bounded neighboring relationships. Focus resets the local mental model around the selected entity without changing canonical truth.
+`Expand outgoing` and `Expand incoming` are primary trace actions. Other actions are quieter contextual operations. Expansion reveals only bounded neighboring relationships.
 
 ### Semantic zoom
 
@@ -146,11 +144,11 @@ Structure -> repository/module/file relationships
 Code      -> class/type/function/method relationships and call paths
 ```
 
-The three levels are directly accessible in the graph toolbar. Changing level preserves orientation around the owning entity where evidence exists.
+Changing level preserves orientation around the owning entity where evidence exists.
 
 ### Relationship lenses
 
-Relationship filtering is secondary to semantic level and should use one compact control:
+Relationship filtering is secondary to semantic level and uses one compact control:
 
 ```text
 All | Calls | References | Dependencies | Types
@@ -160,35 +158,28 @@ Only lenses backed by relationships actually present should be enabled. Lens sta
 
 ### Impact
 
-Impact is invoked from a selected entity with `Show dependents`. Direct/transitive dependent paths are added to the graph and visually distinguished. It is not a permanent top-level tab or analytics panel.
+Impact is invoked from a selected entity with `Show dependents`. Direct/transitive dependent paths are added to the graph and visually distinguished. It is not a permanent analytics panel.
 
 ### Pull-request overlay
 
-Pull requests reuse the same graph. Change state is an overlay:
-
-- added;
-- modified;
-- removed;
-- unchanged.
-
-Change state must be legible through text/symbol/border treatment, not color alone. Selecting a changed function may expose its BASE -> HEAD behavior delta in the inspector. Do not switch to an analytics dashboard merely because change metadata exists.
+Pull requests reuse the same graph. Change state is an overlay: added, modified, removed, unchanged. State must remain legible through text/symbol/border treatment, not color alone.
 
 ## Node Language
 
-Nodes are compact semantic objects, not cards.
+Nodes are compact semantic objects, not dashboard cards.
 
 Prefer:
 
-- rectangular geometry with 3–5px radius;
-- neutral 1px stroke;
-- code identifier as the strongest text;
+- rectangular geometry with approximately 8–10px radius;
+- warm neutral 1px stroke;
+- code identifier as strongest text;
 - kind and repository-relative path as secondary metadata;
 - no ordinary shadow;
-- restrained selected/focus treatment using the steel-blue accent;
+- terracotta focus/selection stroke or inset rule;
 - visible entry-point marker;
-- subtle added/modified/removed marker when a change overlay is active.
+- subtle added/modified/removed marker when change overlay is active.
 
-Focus and selection may use a steel-blue border/inset rule. Impact may use a quiet active neutral surface. Avoid double borders, glow, and saturated category colors.
+Avoid double borders, glow, saturated category colors, and decorative elevation.
 
 ## Edge Language
 
@@ -200,30 +191,28 @@ dashed -> inferred static relationship
 dotted -> evidence unavailable / change-only relationship
 ```
 
-Edges carry concise relationship labels. Direction is explicit. Avoid arbitrary physics layouts that move continuously; stable deterministic spatial orientation is more important than decorative graph motion.
+Edges carry concise relationship labels and explicit direction. Stable deterministic spatial orientation is more important than decorative physics or motion. Selected/focused edges may use the terracotta focus token.
 
 ## Canvas Plane
 
-Use a quiet neutral plane with pane boundaries. No glow, gradient fog, decorative dot-grid wallpaper, giant empty margins, or generic node-editor chrome.
+Use a quiet warm neutral plane with pane boundaries. No glow, gradient fog, decorative dot-grid wallpaper, giant empty margins, or generic node-editor chrome.
 
-Horizontal/vertical overflow is acceptable for a graph larger than the viewport. The user must retain a stable focus anchor and a clear way to recenter.
+Overflow is acceptable for a graph larger than the viewport. The user must retain a stable focus anchor and a clear way to recenter.
 
 ## Graph Viewport & Attention
 
-The graph is a navigable spatial surface, not a static poster. Provide compact controls for zooming, fitting the visible projection, and recentering the current focus. These controls are operational overlays and should stay visually quiet.
+The graph is a navigable spatial surface, not a poster. Provide compact controls for zooming, fitting the visible projection, and recentering current focus.
 
 Selection creates an attention neighborhood:
 
-- selected node or relationship remains strongest;
+- selected entity remains strongest;
 - directly connected nodes/edges retain normal prominence;
-- unrelated visible graph content recedes but is not removed;
+- unrelated graph content recedes but is not removed;
 - impact paths remain legible when impact mode is active.
 
-For dense projections, edge labels are progressively disclosed on hover/focus/selection instead of showing every relationship label at equal prominence. Accessible relationship names remain available regardless of visual label visibility.
+For dense projections, edge labels are progressively disclosed on hover/focus/selection. Accessible relationship names remain available regardless of visual label visibility.
 
-Layered layout must remain deterministic. Prefer relationship-aware ordering within layers to reduce crossings, center smaller layers vertically around the active graph body, and group unresolved/disconnected entities rather than creating unnecessary horizontal columns.
-
-Source peek should visually mark the source range represented by the selected entity while preserving surrounding context lines.
+Layered layout must remain deterministic and relationship-aware. Source peek should visibly mark the represented source range while preserving surrounding context.
 
 ## Context Bar
 
@@ -236,9 +225,7 @@ semantic search
 change repository
 ```
 
-Do not duplicate entry points or graph projection controls in a permanent side rail.
-
-Repository metadata stays subordinate to the current graph task.
+Repository metadata stays subordinate to the graph task.
 
 ## Projection Toolbar
 
@@ -250,13 +237,13 @@ The graph toolbar owns:
 - visible/available node count;
 - bounded dependents status when active.
 
-Semantic level is a compact three-option switch. Relationship lens is one compact selector. Do not surface eight equally weighted toolbar buttons when two controls communicate the hierarchy more clearly.
+Semantic level is a compact switch. Relationship lens is one compact selector. Do not surface many equally weighted controls when fewer controls communicate the hierarchy.
 
 ## Inspector
 
 The inspector answers: **what is selected, where is it defined, how is it connected, what can I trace next, and what proves the relationship?**
 
-Node selection prioritizes:
+Node priority:
 
 ```text
 identity + kind
@@ -270,7 +257,7 @@ relationships
 evidence
 ```
 
-Edge selection prioritizes:
+Edge priority:
 
 ```text
 source -> target
@@ -281,31 +268,31 @@ reason/provenance
 source location
 ```
 
-Relationship rows are selectable because evidence belongs to a specific relationship. Node-level evidence should also be shown when available.
-
 The inspector is a narrow reading surface, not a dashboard. Avoid metric cards, equal-weight action grids, and decorative section containers.
 
 ## Typography & Density
 
 Compact does not mean tiny.
 
-Default active-workspace targets:
+Targets:
 
 - body/control text: 11–12px;
 - code identifiers: 11–12px monospace;
 - meaningful metadata: 10–11px;
-- section labels: 10px when uppercase is necessary;
-- avoid 8–9px text for operational information.
+- secondary labels: 10px;
+- avoid 8–9px operational text.
 
-Hierarchy should come from weight, alignment, spacing, and contrast before font-size jumps.
+Use the system sans stack for product UI and the existing monospace stack for code/evidence. A system serif fallback may be used sparingly for the CodeFlow wordmark/acquisition heading to echo Anthropic's editorial warmth without introducing proprietary font assets.
+
+Hierarchy should come from weight, alignment, spacing, and contrast before large font-size jumps.
 
 ## Acquisition
 
-Repository visualization is the primary start action. Public GitHub repository input should be visually primary; local repository is secondary but direct.
+Repository visualization is the primary start action. Public GitHub repository input is visually primary; local repository is secondary but direct.
 
 Pull-request analysis is presented as **visualize changes on the code graph**, not as an equal product mode or review dashboard.
 
-The acquisition surface is setup, not marketing: no hero-sized typography, feature-card grid, or promotional whitespace.
+The acquisition surface is setup, not marketing. It may use a quiet rounded panel and restrained editorial heading, but no hero-sized typography, feature-card grid, or promotional whitespace.
 
 ## Information Hierarchy
 
@@ -314,24 +301,60 @@ Use, in order:
 1. typography;
 2. alignment;
 3. compact spacing;
-4. 1px dividers;
-5. neutral surface contrast;
-6. semantic accent/state only when needed.
+4. 1px dividers/borders;
+5. warm neutral surface contrast;
+6. terracotta semantic focus/state only when needed.
 
 Do not create hierarchy through stacks of cards, excessive pills, oversized headings, nested neutral cards, or decorative iconography.
 
-## Visual Language
+## Canonical Visual Tokens
 
-CodeFlow is technical, dense but calm, precise, spatial, and evidence-oriented.
+These are CodeFlow tokens adapted to the Anthropic/Claude visual language. They are not claimed to be Anthropic's internal or official token values.
 
-- dark/light neutral themes;
-- restrained steel-blue focus/accent;
-- flat first-level panes;
-- true overlays may use a shadow;
-- ordinary panes, nodes, rows, and controls do not use elevation;
-- no rainbow semantics;
-- no decorative gradients or glow;
-- no glass treatment on ordinary workspace chrome.
+### Light
+
+| Token | Value | Role |
+|---|---|---|
+| `cs-bg` | `#F3F1EA` | warm paper canvas |
+| `cs-panel` | `#FBFAF7` | primary pane |
+| `cs-surface` | `#EEECE4` | secondary surface |
+| `cs-raised` | `#E5E1D8` | raised/active neutral |
+| `cs-border` | `#D8D3C8` | 1px structure |
+| `cs-control` | `#FFFDF8` | inputs/controls |
+| `cs-text` | `#2B2925` | ink text |
+| `cs-muted` | `#6F6A62` | secondary text |
+| `cs-subtle` | `#969086` | tertiary metadata |
+| `cs-focus` | `#C96F4B` | terracotta focus/selection |
+| `cs-primary` | `#2B2925` | primary action |
+
+### Dark
+
+| Token | Value | Role |
+|---|---|---|
+| `cs-bg` | `#171613` | warm charcoal canvas |
+| `cs-panel` | `#1F1D1A` | primary pane |
+| `cs-surface` | `#27241F` | secondary surface |
+| `cs-raised` | `#302C26` | raised/active neutral |
+| `cs-border` | `#3A3630` | 1px structure |
+| `cs-control` | `#24211D` | inputs/controls |
+| `cs-text` | `#EEE9DF` | warm off-white text |
+| `cs-muted` | `#AAA397` | secondary text |
+| `cs-subtle` | `#7D766C` | tertiary metadata |
+| `cs-focus` | `#E08A68` | terracotta focus/selection |
+| `cs-primary` | `#EEE9DF` | primary action |
+
+Danger state remains semantically red and separate from the focus accent.
+
+## Shape & Elevation
+
+- control radius: ~8px;
+- node radius: ~9px;
+- panel/overlay radius: ~10px;
+- workspace radius: up to 12px where the workspace is visibly bounded;
+- ordinary panes, rows, nodes, and controls: no shadow;
+- dropdowns/drawers/true overlays may use one restrained soft shadow.
+
+Rounded geometry must not turn the interface into a card grid.
 
 ## Motion
 
@@ -341,7 +364,7 @@ Motion exists only to communicate state or spatial relationship:
 - bounded expansion/collapse;
 - inspector/pane transition when needed.
 
-Do not animate graph topology for decoration. Respect `prefers-reduced-motion`.
+Use short 90–160ms transitions for controls. Do not animate graph topology for decoration. Respect `prefers-reduced-motion`.
 
 ## Responsive Behavior
 
@@ -350,7 +373,7 @@ Narrow layouts preserve completion of the same task.
 - context controls may wrap vertically;
 - projection controls may wrap/stack;
 - graph remains the first and largest work surface;
-- inspector moves below the graph with bounded height and its own scroll;
+- inspector moves below the graph or into a bounded drawer;
 - never hide source/evidence inspection solely because viewport width is narrow.
 
 ## Anti-Slop Invariants
@@ -370,18 +393,20 @@ Do not use:
 - marketing-style whitespace;
 - fake metrics or activity widgets;
 - ornamental animation;
-- animation that moves graph topology without user intent.
+- animation that moves graph topology without user intent;
+- proprietary Anthropic assets or fonts copied into the repository.
 
 ## Accessibility
 
 - every graph node and edge is keyboard focusable or has an equivalent navigation path;
-- selection is not encoded by color alone;
+- focus and selection are not encoded by color alone;
 - relationship direction and kind are available as text/accessible names;
 - search works with keyboard navigation and Escape dismissal;
 - all graph-native actions remain available without drag or hover;
 - disabled projection/lens choices remain semantically disabled;
-- narrow layouts preserve source/evidence task completion.
+- narrow layouts preserve source/evidence task completion;
+- focus ring contrast must remain legible in both warm light and warm dark themes.
 
 ## Themes
 
-Both dark and light themes use the existing neutral token system and restrained steel-blue focus/accent. Theme changes must not change semantic meaning.
+Both themes use the canonical warm-neutral token system with restrained terracotta focus/accent. Theme changes must not change semantic meaning.
