@@ -283,7 +283,9 @@ describe('App', () => {
     render(<App />);
 
     expect(
-      screen.getByRole('heading', { name: 'Understand an unfamiliar codebase' }),
+      screen.getByRole('heading', {
+        name: 'Understand an unfamiliar codebase',
+      }),
     ).toBeInTheDocument();
     expect(screen.getByText(/Analyze a local repository/)).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
