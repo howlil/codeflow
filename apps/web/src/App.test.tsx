@@ -252,7 +252,7 @@ async function openRepository(flow: FlowProjection = sampleFlow) {
   render(<App />);
 
   fireEvent.click(
-    screen.getByRole('button', { name: 'Understand repository' }),
+    screen.getByRole('button', { name: /^Understand repository/ }),
   );
   fireEvent.change(screen.getByLabelText('Repository directory'), {
     target: { files: repositoryFiles },
@@ -585,6 +585,9 @@ describe('App', () => {
     );
 
     render(<App />);
+    fireEvent.click(
+      screen.getByRole('button', { name: /^Understand repository/ }),
+    );
     fireEvent.change(screen.getByLabelText('Repository directory'), {
       target: { files: [oversized] },
     });
@@ -599,6 +602,9 @@ describe('App', () => {
     stubFlowFailure('Exported entry point handleGreeting was not found.');
     render(<App />);
 
+    fireEvent.click(
+      screen.getByRole('button', { name: /^Understand repository/ }),
+    );
     fireEvent.change(screen.getByLabelText('Repository directory'), {
       target: { files: repositoryFiles },
     });
