@@ -1,50 +1,43 @@
 # Current Iteration
 
-Status: READY_FOR_MILESTONE
+Status: VERIFYING
+
+Active Milestone: M10 - Static Behavior Delta Explorer
 
 Last Completed Milestone: M9 - Diff-Aware Change Understanding
 
 ## Outcome
 
-CodeFlow can now take a public GitHub pull request, freeze its exact base/head repository revisions, map the actual diff onto supported TypeScript semantic entities, and reuse the existing evidence-backed impact engine to explain known downstream relationships and relationship deltas without claiming breakage, safety, risk, or runtime behavior.
+CodeFlow can now explain how supported static function behavior changes between a frozen pull-request BASE and HEAD revision, connecting actual diff hunks to function contract, static execution/data-flow deltas, downstream impact, and source evidence without claiming runtime equivalence, breakage, safety, or probability.
 
-All authorized M9 product slices are integrated on `master`:
+M10 is implemented on the milestone branch:
 
-- S1 public GitHub PR acquisition: exact public PR URLs are validated and read-only metadata, changed files, bounded patches, and immutable base/head SHAs are acquired.
-- S2 dual revision analysis: BASE and HEAD are acquired and analyzed independently with existing repository/source/metadata bounds; changed TypeScript paths are prioritized inside the bounded source projection.
-- S3 diff-to-semantic mapping: supported unified diff hunks map to analyzed TypeScript/TSX file/symbol locations, with explicit file-level fallback when precise semantic mapping is unavailable.
-- S4 automatic impact scope: changed semantic entities become bounded seeds for the existing M8 impact engine; added/current entities use HEAD, removed/previous entities use BASE, and modified entities preserve both revision identities.
-- S5 change workspace: the existing product entry flow can open a compact pull-request change workspace instead of introducing a generic PR dashboard.
-- S6 dependency-oriented grouping: changed semantic entities are grouped by configured package ownership when available, otherwise by repository directory context.
-- S7 diff/evidence/flow drill-down: actual patch text, changed semantic entities, downstream results, evidence paths, and existing function-flow exploration are connected in one user journey.
-- S8 relationship delta: supported `CALLS`, `REFERENCES`, `IMPORTS`, `DEPENDS_ON`, `EXTENDS`, and `IMPLEMENTS` relationships are compared across frozen BASE/HEAD snapshots and reported only as added/removed semantic facts.
-- S9 truthful partial handling: missing GitHub patches, unsupported changed files, bounded source/tree/diff coverage, and bounded automatic impact scope remain explicit rather than being treated as complete or safe.
+- S1 behavior-delta contract: `packages/analysis-core` owns a derived `FunctionBehaviorDelta` projection; no new canonical semantic relationship or evidence kind was introduced.
+- S2 function contract delta: declared parameters/types and explicit return expressions are compared across BASE and HEAD.
+- S3 static-step delta: supported branch, failure, declaration, alias, read/write, transform, mutation, call, argument, and related static steps are compared as semantic facts.
+- S4 data-flow delta: supported static relationships including `READS`, `WRITES`, `MUTATES`, `PASSES_ARGUMENT`, `FLOWS_TO`, and `RETURNS_TO` are compared with their source evidence.
+- S5 stable semantic comparison: source-line movement and stable-ID churn do not by themselves create behavior deltas; facts are compared as deterministic semantic multisets.
+- S6 added/removed functions: one-sided functions expose only facts from the revision where they exist rather than fabricating a counterpart.
+- S7 change workspace: the existing pull-request workspace shows the selected function's BASE → HEAD behavior delta before downstream impact, including evidence and revision-specific source location.
+- S8 truthful zero state: no supported static delta is explicitly distinguished from runtime equivalence; unsupported/missing analysis remains governed by existing partial coverage.
 
 ## Verification Evidence
 
-- PR #29 exact head `0992327525d3f2e515a538a499b137fc77fc6346` passed canonical GitHub Actions CI #199.
-- PR #29 was squash-merged as `dc927761bde4e96b9f4d64c9387b46b805e063d1`.
-- Post-merge `master` GitHub Actions CI #200 passed.
-- `pnpm format:check` passed.
-- `pnpm lint` passed.
-- `pnpm build` passed across analysis-core, web, and API.
-- analysis-core: 5 test files / 11 tests passed.
-- web: 7 test files / 24 tests passed, including the M9 change workspace and M4-M8 regressions.
-- API: 5 test files / 18 tests passed, including public PR acquisition/frozen-revision M9 coverage and M7-M8 regressions.
-- Deployment/Compose validation and smoke were correctly skipped because M9 did not modify deployment surfaces.
-- Temporary M9 wiring automation was removed before the canonical PR gate; only canonical `ci.yml` remains.
+- Temporary M10 integration run #3 (`33942107355`) passed formatting, lint, build, and full automated tests before helper cleanup.
+- analysis-core: 6 test files / 14 tests passed, including contract, static-flow, location-insensitive comparison, and one-sided function behavior-delta coverage.
+- web: 7 test files / 24 tests passed, including the M10 change workspace and M4-M9 regressions.
+- API regression suite remained part of the recursive repository test gate after web/core success.
+- Temporary M10 wiring helper and workflow were removed after the green integration pass.
 
 ## Boundaries Preserved
 
-- `apps/web -> apps/api -> packages/analysis-core` ownership remains intact; repository-change semantics and impact traversal stay in analysis-core.
-- Git diff state is a separate `RepositoryChangeProjection`, not a new semantic `EvidenceKind` and not a fabricated canonical relationship.
-- M9 reuses M8 impact semantics instead of creating a second impact engine.
-- Public PR acquisition is read-only, bounded, and frozen to immutable base/head SHAs for the analyzed result.
-- Repository source, metadata, diff, and both semantic snapshots remain request-scoped/in-memory.
-- Unsupported or missing evidence remains partial; no rename heuristic, breakage prediction, risk score, safety claim, runtime observation, or test/deployment prediction is fabricated.
-- Existing M4-M8 repository acquisition, topology, architecture, symbol navigation, function/data flow, static steps, source evidence, and hypothetical impact exploration remain intact.
-- No private GitHub auth, PR comments/approvals, CODEOWNERS, AI review/summary, Go/multi-language expansion, runtime tracing/execution, persistence, collaboration, vulnerability scanning, or new graph infrastructure was added.
+- `apps/web -> apps/api -> packages/analysis-core` remains authoritative; behavior-delta semantics live in analysis-core.
+- Behavior delta is a derived comparison of supported static facts from frozen revisions, not observed runtime behavior.
+- Location-only movement does not become a semantic behavior change.
+- An empty static behavior delta does not mean runtime-equivalent or safe.
+- Existing M4-M9 acquisition, topology, architecture, function/data flow, static steps, impact, diff mapping, and relationship delta behavior remain intact.
+- No private GitHub auth, AI review/summary, risk score, breakage prediction, runtime tracing/execution, test/deployment prediction, Go/multi-language expansion, persistence, collaboration, CODEOWNERS, vulnerability scanning, or new graph infrastructure was added.
 
 ## Next State
 
-Select the next milestone from the highest-value remaining gap in the core program-understanding journey. Do not auto-activate deferred directions merely because they are listed in `PROJECT.md`.
+Run canonical pull-request CI on the clean exact M10 branch. If green, squash-merge, verify `master`, then mark the repository `READY_FOR_MILESTONE`.
