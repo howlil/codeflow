@@ -22,6 +22,7 @@ import {
 } from './change-client';
 import { ArchitecturePanel } from './ArchitecturePanel';
 import { ChangeWorkspace } from './ChangeWorkspace';
+import { ImpactPanel } from './ImpactPanel';
 import { PackageTopologyPanel } from './PackageTopologyPanel';
 import { GitHubRepositoryPicker } from './GitHubRepositoryPicker';
 import { GitHubPullRequestPicker } from './GitHubPullRequestPicker';
@@ -39,6 +40,7 @@ import {
   Button,
   IconButton,
   Input,
+  Select,
   Tabs,
   TabsContent,
   TabsList,
@@ -50,6 +52,7 @@ type ProjectionStatus =
   | { kind: 'empty'; message: string }
   | { kind: 'partial'; reasons: string[] };
 type InspectorTab = 'overview' | 'data' | 'evidence' | 'steps';
+type WorkbenchView = 'explore' | 'flow' | 'impact';
 type Theme = 'dark' | 'light';
 
 const THEME_STORAGE_KEY = 'codeflow-theme';
@@ -68,6 +71,8 @@ export function App() {
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [relationshipLens, setRelationshipLens] =
     useState<RelationshipLens>('ALL');
+  const [workbenchView, setWorkbenchView] =
+    useState<WorkbenchView>('explore');
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
   const [error, setError] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -127,14 +132,19 @@ export function App() {
     function handleGlobalShortcut(event: globalThis.KeyboardEvent) {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
-        searchInputRef.current?.focus();
-        searchInputRef.current?.select();
+        if (flow !== null) {
+          setWorkbenchView('flow');
+        }
+        requestAnimationFrame(() => {
+          searchInputRef.current?.focus();
+          searchInputRef.current?.select();
+        });
       }
     }
 
     window.addEventListener('keydown', handleGlobalShortcut);
     return () => window.removeEventListener('keydown', handleGlobalShortcut);
-  }, []);
+  }, [flow]);
 
   async function analyzeRepository(
     request: RepositoryAnalysisRequest,
@@ -157,6 +167,7 @@ export function App() {
       const loadedFlow = await analyzeRepositoryFlow(request);
       setFlow(loadedFlow);
       setSelectedNodeId(loadedFlow.entryPointId);
+      setWorkbenchView(defaultWorkbenchView(loadedFlow));
     } catch (caughtError: unknown) {
       setFlow(null);
       setError(
@@ -172,6 +183,7 @@ export function App() {
   async function analyzeGitHub(
     repositoryUrl: string,
     entryPoint?: { filePath: string; name: string },
+    targetView?: WorkbenchView,
   ) {
     setAnalyzing(true);
     setError(null);
@@ -194,6 +206,7 @@ export function App() {
       );
       setFlow(loadedFlow);
       setSelectedNodeId(loadedFlow.entryPointId);
+      setWorkbenchView(targetView ?? defaultWorkbenchView(loadedFlow));
       setSelectionSummary({
         rootLabel: loadedFlow.repository?.name ?? repositoryUrl,
         selectedFileCount: loadedFlow.sources.length,
@@ -267,6 +280,7 @@ export function App() {
     setInspectorTab('overview');
     setInspectorOpen(true);
     setRelationshipLens('ALL');
+    setWorkbenchView('flow');
     setQuery('');
   }
 
@@ -281,6 +295,7 @@ export function App() {
     setInspectorTab('overview');
     setInspectorOpen(false);
     setRelationshipLens('ALL');
+    setWorkbenchView('explore');
     setQuery('');
     setError(null);
     setGithubRepositoryUrl(null);
@@ -309,6 +324,7 @@ export function App() {
     }
     const projectedNode = flow.nodes.find((node) => node.id === entity.id);
     if (projectedNode !== undefined) {
+      setWorkbenchView('flow');
       navigateToNode(projectedNode.id);
       return;
     }
@@ -317,10 +333,14 @@ export function App() {
         candidate.filePath === entity.path && candidate.name === entity.name,
     );
     if (entryPoint !== undefined && githubRepositoryUrl !== null) {
-      void analyzeGitHub(githubRepositoryUrl, {
-        filePath: entryPoint.filePath,
-        name: entryPoint.name,
-      });
+      void analyzeGitHub(
+        githubRepositoryUrl,
+        {
+          filePath: entryPoint.filePath,
+          name: entryPoint.name,
+        },
+        'flow',
+      );
     }
   }
 
@@ -391,14 +411,14 @@ export function App() {
 
       {flow === null && changeAnalysis === null && !analyzing ? (
         <>
-          <GitHubPullRequestPicker
-            busy={analyzing}
-            onAnalyze={analyzePullRequest}
-          />
           <GitHubRepositoryPicker
             busy={analyzing}
             error={null}
             onAnalyze={analyzeGitHub}
+          />
+          <GitHubPullRequestPicker
+            busy={analyzing}
+            onAnalyze={analyzePullRequest}
           />
           <details className="local-analysis-option">
             <summary>Analyze a local repository instead</summary>
@@ -429,39 +449,12 @@ export function App() {
         </section>
       ) : flow === null || projectionStatus === null ? (
         <section className="state-panel" role="status">
-          <strong>Select a local TypeScript repository</strong>
+          <strong>Select a TypeScript repository</strong>
           <span>
-            Choose an exported entry function to build an evidence-backed flow
-            without executing repository code.
+            Start from a repository to map structure, then trace a function or
+            inspect downstream impact when you need it.
           </span>
         </section>
-      ) : projectionStatus.kind === 'empty' ? (
-        <>
-          <WorkspaceContext
-            flow={flow}
-            selectionSummary={selectionSummary}
-            entryPoint={entryPoint ?? null}
-            onChangeRepository={resetRepository}
-            entryPoints={flow.entryPoints ?? []}
-            onSelectEntry={(nextEntryPoint) => {
-              if (githubRepositoryUrl !== null) {
-                void analyzeGitHub(githubRepositoryUrl, nextEntryPoint);
-              }
-            }}
-          />
-          <PackageTopologyPanel
-            flow={flow}
-            onOpenFunction={openArchitectureFunction}
-          />
-          <ArchitecturePanel
-            flow={flow}
-            onOpenFunction={openArchitectureFunction}
-          />
-          <section className="state-panel" role="status">
-            <strong>No functions projected</strong>
-            <span>{projectionStatus.message}</span>
-          </section>
-        </>
       ) : (
         <>
           <WorkspaceContext
@@ -469,167 +462,310 @@ export function App() {
             selectionSummary={selectionSummary}
             entryPoint={entryPoint ?? null}
             onChangeRepository={resetRepository}
-            entryPoints={flow.entryPoints ?? []}
-            onSelectEntry={(nextEntryPoint) => {
-              if (githubRepositoryUrl !== null) {
-                void analyzeGitHub(githubRepositoryUrl, nextEntryPoint);
-              }
-            }}
           />
-          <PackageTopologyPanel
-            flow={flow}
-            onOpenFunction={openArchitectureFunction}
-          />
-          <ArchitecturePanel
-            flow={flow}
-            onOpenFunction={openArchitectureFunction}
-          />
-          <div
-            className={`workspace-grid${
-              sourceSplitMode ? ' workspace-grid--source-split' : ''
-            }`}
+
+          <Tabs
+            className="repository-workbench"
+            value={workbenchView}
+            onValueChange={(value) =>
+              setWorkbenchView(value as WorkbenchView)
+            }
           >
-            <section className="canvas-panel" aria-label="Semantic flow canvas">
-              <AnalysisNotice status={projectionStatus} />
-              <div className="canvas-toolbar">
-                <div>
-                  <p className="panel-kicker">Semantic workspace</p>
-                  <h2>{entryPoint?.label ?? 'Selected entry'} request flow</h2>
-                </div>
-                <span>{flow.nodes.length} functions</span>
-              </div>
+            <div className="workbench-mode-bar">
+              <TabsList aria-label="Repository workbench">
+                <TabsTrigger value="explore">Explore</TabsTrigger>
+                <TabsTrigger value="flow">Flow</TabsTrigger>
+                <TabsTrigger value="impact">Impact</TabsTrigger>
+              </TabsList>
+              <span className="workbench-mode-hint">
+                {workbenchHint(workbenchView)}
+              </span>
+            </div>
 
-              <div className="comprehension-toolbar">
-                <div className="search-control">
-                  <Input
-                    ref={searchInputRef}
-                    aria-label="Search functions"
-                    type="search"
-                    value={query}
-                    placeholder="Search functions…"
-                    autoComplete="off"
-                    onChange={(event) => {
-                      setQuery(event.target.value);
-                      setActiveSearchIndex(0);
-                    }}
-                    onKeyDown={handleSearchKeyDown}
-                  />
-                  {query.trim() !== '' ? (
-                    <div
-                      className="search-results"
-                      aria-label="Function search results"
-                      role="listbox"
-                    >
-                      {searchResults.length === 0 ? (
-                        <p>No matching functions.</p>
-                      ) : (
-                        searchResults.map((node, index) => (
-                          <button
-                            key={node.id}
-                            type="button"
-                            role="option"
-                            aria-selected={activeSearchIndex === index}
-                            onMouseEnter={() => setActiveSearchIndex(index)}
-                            onClick={() => navigateToNode(node.id)}
-                          >
-                            <strong>{node.label}</strong>
-                            <span>
-                              {node.location.filePath}:L
-                              {node.location.startLine}
-                            </span>
-                          </button>
-                        ))
-                      )}
+            <TabsContent className="workbench-mode-content" value="explore">
+              <ExploreWorkspace
+                flow={flow}
+                onOpenFunction={openArchitectureFunction}
+              />
+            </TabsContent>
+
+            <TabsContent className="workbench-mode-content" value="flow">
+              {githubRepositoryUrl !== null ? (
+                <FlowEntrySelector
+                  flow={flow}
+                  onSelectEntry={(nextEntryPoint) =>
+                    void analyzeGitHub(
+                      githubRepositoryUrl,
+                      nextEntryPoint,
+                      'flow',
+                    )
+                  }
+                />
+              ) : null}
+
+              {projectionStatus.kind === 'empty' ? (
+                <section
+                  className="state-panel repository-mode-state"
+                  role="status"
+                >
+                  <strong>No functions projected</strong>
+                  <span>{projectionStatus.message}</span>
+                </section>
+              ) : (
+                <div
+                  className={`workspace-grid${
+                    sourceSplitMode ? ' workspace-grid--source-split' : ''
+                  }`}
+                >
+                  <section
+                    className="canvas-panel"
+                    aria-label="Semantic flow canvas"
+                  >
+                    <AnalysisNotice status={projectionStatus} />
+                    <div className="canvas-toolbar">
+                      <div>
+                        <p className="panel-kicker">Call flow</p>
+                        <h2>
+                          {entryPoint?.label ?? 'Selected entry'} request flow
+                        </h2>
+                      </div>
+                      <span>{flow.nodes.length} functions</span>
                     </div>
-                  ) : null}
-                </div>
 
-                <div className="toolbar-actions">
-                  <Button
-                    aria-pressed={focusMode}
-                    disabled={selectedNode === null}
-                    onClick={toggleFocusMode}
-                  >
-                    {focusMode ? 'Back to entry flow' : 'Focus selected'}
-                  </Button>
-                  <Button
-                    className="inspector-open-button"
-                    aria-label="Open inspector"
-                    onClick={() => setInspectorOpen(true)}
-                  >
-                    <PanelRightOpen size={13} aria-hidden="true" />
-                    Inspector
-                  </Button>
-                </div>
-              </div>
+                    <div className="comprehension-toolbar">
+                      <div className="search-control">
+                        <Input
+                          ref={searchInputRef}
+                          aria-label="Search functions"
+                          type="search"
+                          value={query}
+                          placeholder="Search functions…"
+                          autoComplete="off"
+                          onChange={(event) => {
+                            setQuery(event.target.value);
+                            setActiveSearchIndex(0);
+                          }}
+                          onKeyDown={handleSearchKeyDown}
+                        />
+                        {query.trim() !== '' ? (
+                          <div
+                            className="search-results"
+                            aria-label="Function search results"
+                            role="listbox"
+                          >
+                            {searchResults.length === 0 ? (
+                              <p>No matching functions.</p>
+                            ) : (
+                              searchResults.map((node, index) => (
+                                <button
+                                  key={node.id}
+                                  type="button"
+                                  role="option"
+                                  aria-selected={activeSearchIndex === index}
+                                  onMouseEnter={() =>
+                                    setActiveSearchIndex(index)
+                                  }
+                                  onClick={() => navigateToNode(node.id)}
+                                >
+                                  <strong>{node.label}</strong>
+                                  <span>
+                                    {node.location.filePath}:L
+                                    {node.location.startLine}
+                                  </span>
+                                </button>
+                              ))
+                            )}
+                          </div>
+                        ) : null}
+                      </div>
 
-              <div className="lens-toolbar" aria-label="Relationship lens">
-                <div className="lens-options">
-                  {availableLenses.map((kind) => (
-                    <Button
-                      key={kind}
-                      variant="ghost"
-                      aria-pressed={relationshipLens === kind}
-                      className="lens-button"
-                      onClick={() => {
-                        setRelationshipLens(kind);
-                        setInspectorTab('evidence');
-                      }}
+                      <div className="toolbar-actions">
+                        <Button
+                          aria-pressed={focusMode}
+                          disabled={selectedNode === null}
+                          onClick={toggleFocusMode}
+                        >
+                          {focusMode
+                            ? 'Back to entry flow'
+                            : 'Focus selected'}
+                        </Button>
+                        <Button
+                          className="inspector-open-button"
+                          aria-label="Open inspector"
+                          onClick={() => setInspectorOpen(true)}
+                        >
+                          <PanelRightOpen size={13} aria-hidden="true" />
+                          Inspector
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div
+                      className="lens-toolbar"
+                      aria-label="Relationship lens"
                     >
-                      {relationshipLabel(kind)}
-                    </Button>
-                  ))}
+                      <div className="lens-options">
+                        {availableLenses.map((kind) => (
+                          <Button
+                            key={kind}
+                            variant="ghost"
+                            aria-pressed={relationshipLens === kind}
+                            className="lens-button"
+                            onClick={() => {
+                              setRelationshipLens(kind);
+                              setInspectorTab('evidence');
+                            }}
+                          >
+                            {relationshipLabel(kind)}
+                          </Button>
+                        ))}
+                      </div>
+                      <EvidenceLegend />
+                    </div>
+
+                    <FlowCanvas
+                      flow={flow}
+                      selectedNodeId={selectedNodeId}
+                      selectedEdgeId={selectedEdgeId}
+                      focusMode={focusMode}
+                      onSelectNode={inspectNode}
+                      onKeyboardNavigate={(nodeId) => {
+                        selectNode(nodeId);
+                        setInspectorTab('overview');
+                      }}
+                      onSelectEdge={selectEdge}
+                    />
+                  </section>
+
+                  <aside
+                    className={`inspector-panel${
+                      inspectorOpen ? ' inspector-panel--open' : ''
+                    }`}
+                    aria-label="Source evidence inspector"
+                  >
+                    <Inspector
+                      flow={flow}
+                      selectedNode={selectedNode}
+                      selectedEdge={selectedEdge}
+                      relationshipLens={relationshipLens}
+                      activeTab={inspectorTab}
+                      sourceSplitMode={sourceSplitMode}
+                      onTabChange={setInspectorTab}
+                      onSelectNode={selectNode}
+                      onToggleSourceSplit={() =>
+                        setSourceSplitMode((current) => !current)
+                      }
+                      onClose={() => setInspectorOpen(false)}
+                    />
+                  </aside>
+                  <button
+                    className={`inspector-backdrop${
+                      inspectorOpen ? ' inspector-backdrop--open' : ''
+                    }`}
+                    type="button"
+                    aria-label="Close inspector"
+                    onClick={() => setInspectorOpen(false)}
+                  />
                 </div>
-                <EvidenceLegend />
-              </div>
+              )}
+            </TabsContent>
 
-              <FlowCanvas
+            <TabsContent className="workbench-mode-content" value="impact">
+              <ImpactPanel
                 flow={flow}
-                selectedNodeId={selectedNodeId}
-                selectedEdgeId={selectedEdgeId}
-                focusMode={focusMode}
-                onSelectNode={inspectNode}
-                onKeyboardNavigate={(nodeId) => {
-                  selectNode(nodeId);
-                  setInspectorTab('overview');
-                }}
-                onSelectEdge={selectEdge}
+                onOpenFunction={openArchitectureFunction}
               />
-            </section>
-
-            <aside
-              className={`inspector-panel${
-                inspectorOpen ? ' inspector-panel--open' : ''
-              }`}
-              aria-label="Source evidence inspector"
-            >
-              <Inspector
-                flow={flow}
-                selectedNode={selectedNode}
-                selectedEdge={selectedEdge}
-                relationshipLens={relationshipLens}
-                activeTab={inspectorTab}
-                sourceSplitMode={sourceSplitMode}
-                onTabChange={setInspectorTab}
-                onSelectNode={selectNode}
-                onToggleSourceSplit={() =>
-                  setSourceSplitMode((current) => !current)
-                }
-                onClose={() => setInspectorOpen(false)}
-              />
-            </aside>
-            <button
-              className={`inspector-backdrop${
-                inspectorOpen ? ' inspector-backdrop--open' : ''
-              }`}
-              type="button"
-              aria-label="Close inspector"
-              onClick={() => setInspectorOpen(false)}
-            />
-          </div>
+            </TabsContent>
+          </Tabs>
         </>
       )}
     </main>
+  );
+}
+
+function ExploreWorkspace({
+  flow,
+  onOpenFunction,
+}: {
+  flow: FlowProjection;
+  onOpenFunction: (entity: RepositoryEntity) => void;
+}) {
+  const hasPackageTopology = (flow.topology?.entities ?? []).some(
+    (entity) => entity.kind === 'Package',
+  );
+
+  return (
+    <Tabs className="explore-workspace" defaultValue="structure">
+      <div className="explore-mode-bar">
+        <TabsList aria-label="Explore repository">
+          <TabsTrigger value="structure">Code structure</TabsTrigger>
+          <TabsTrigger value="packages" disabled={!hasPackageTopology}>
+            Packages
+          </TabsTrigger>
+        </TabsList>
+      </div>
+
+      <TabsContent value="structure">
+        {flow.architecture === undefined ? (
+          <section
+            className="state-panel repository-mode-state"
+            role="status"
+          >
+            <strong>Repository structure unavailable</strong>
+            <span>
+              This analysis has function flow data but no repository-level
+              structure projection. Continue in Flow.
+            </span>
+          </section>
+        ) : (
+          <ArchitecturePanel flow={flow} onOpenFunction={onOpenFunction} />
+        )}
+      </TabsContent>
+
+      <TabsContent value="packages">
+        <PackageTopologyPanel flow={flow} onOpenFunction={onOpenFunction} />
+      </TabsContent>
+    </Tabs>
+  );
+}
+
+function FlowEntrySelector({
+  flow,
+  onSelectEntry,
+}: {
+  flow: FlowProjection;
+  onSelectEntry: (entryPoint: { filePath: string; name: string }) => void;
+}) {
+  const entryPoints = flow.entryPoints ?? [];
+  if (entryPoints.length <= 1) {
+    return null;
+  }
+
+  const current = entryPoints.find(
+    (candidate) => candidate.id === flow.entryPointId,
+  );
+
+  return (
+    <div className="flow-entry-selector">
+      <span className="panel-kicker">Entry point</span>
+      <Select
+        aria-label="Entry point"
+        value={current?.id ?? ''}
+        options={entryPoints.map((candidate) => ({
+          value: candidate.id,
+          label: `${candidate.name} — ${candidate.filePath}`,
+        }))}
+        onValueChange={(id) => {
+          const candidate = entryPoints.find((item) => item.id === id);
+          if (candidate !== undefined) {
+            onSelectEntry({
+              filePath: candidate.filePath,
+              name: candidate.name,
+            });
+          }
+        }}
+      />
+    </div>
   );
 }
 
@@ -638,15 +774,11 @@ function WorkspaceContext({
   selectionSummary,
   entryPoint,
   onChangeRepository,
-  entryPoints,
-  onSelectEntry,
 }: {
   flow: FlowProjection;
   selectionSummary: RepositorySelectionSummary | null;
   entryPoint: FlowNode | null;
   onChangeRepository: () => void;
-  entryPoints: NonNullable<FlowProjection['entryPoints']>;
-  onSelectEntry: (entryPoint: { filePath: string; name: string }) => void;
 }) {
   return (
     <div className="workspace-context-bar">
@@ -667,34 +799,6 @@ function WorkspaceContext({
           Change repository
         </Button>
       </div>
-      {entryPoints.length > 0 ? (
-        <div
-          className="workspace-entry-points"
-          aria-label="Suggested entry points"
-        >
-          <span className="panel-kicker">Suggested entry points</span>
-          <div>
-            {entryPoints.slice(0, 8).map((candidate) => (
-              <button
-                className={candidate.id === flow.entryPointId ? 'selected' : ''}
-                key={candidate.id}
-                type="button"
-                onClick={() =>
-                  onSelectEntry({
-                    filePath: candidate.filePath,
-                    name: candidate.name,
-                  })
-                }
-              >
-                <strong>{candidate.name}</strong>
-                <small>
-                  {candidate.filePath} · {candidate.confidence}
-                </small>
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -1148,6 +1252,21 @@ function getProjectionStatus(flow: FlowProjection): ProjectionStatus {
   }
 
   return reasons.length > 0 ? { kind: 'partial', reasons } : { kind: 'ready' };
+}
+
+function defaultWorkbenchView(flow: FlowProjection): WorkbenchView {
+  return flow.architecture === undefined ? 'flow' : 'explore';
+}
+
+function workbenchHint(view: WorkbenchView): string {
+  switch (view) {
+    case 'explore':
+      return 'Map the codebase first; open a function when you need execution detail.';
+    case 'flow':
+      return 'Follow callers and callees, then inspect source-backed data and evidence.';
+    case 'impact':
+      return 'Choose a hypothetical change scope and trace known downstream dependents.';
+  }
 }
 
 function compareFlowNodes(left: FlowNode, right: FlowNode): number {
