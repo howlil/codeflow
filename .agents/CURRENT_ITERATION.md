@@ -1,16 +1,14 @@
 # Current Iteration
 
-Status: VERIFYING
+Status: READY_FOR_MILESTONE
 
-Active Milestone: M10 - Static Behavior Delta Explorer
-
-Last Completed Milestone: M9 - Diff-Aware Change Understanding
+Last Completed Milestone: M10 - Static Behavior Delta Explorer
 
 ## Outcome
 
 CodeFlow can now explain how supported static function behavior changes between a frozen pull-request BASE and HEAD revision, connecting actual diff hunks to function contract, static execution/data-flow deltas, downstream impact, and source evidence without claiming runtime equivalence, breakage, safety, or probability.
 
-M10 is implemented on the milestone branch:
+M10 is integrated on `master`:
 
 - S1 behavior-delta contract: `packages/analysis-core` owns a derived `FunctionBehaviorDelta` projection; no new canonical semantic relationship or evidence kind was introduced.
 - S2 function contract delta: declared parameters/types and explicit return expressions are compared across BASE and HEAD.
@@ -23,11 +21,18 @@ M10 is implemented on the milestone branch:
 
 ## Verification Evidence
 
-- Temporary M10 integration run #3 (`33942107355`) passed formatting, lint, build, and full automated tests before helper cleanup.
+- PR #30 exact head `7ade6b76155bf5a42cef70794d5eb412ca089bd9` passed canonical GitHub Actions CI #202 (`33942236475`).
+- PR #30 was squash-merged to `master` as `46c37bf0ffe5f6946c7ea3678f14d1139cae88a2`.
+- Post-merge canonical GitHub Actions CI #203 (`33942307104`) passed on the exact merge SHA.
+- `pnpm format:check` passed.
+- `pnpm lint` passed.
+- `pnpm build` passed across analysis-core, web, and API.
 - analysis-core: 6 test files / 14 tests passed, including contract, static-flow, location-insensitive comparison, and one-sided function behavior-delta coverage.
 - web: 7 test files / 24 tests passed, including the M10 change workspace and M4-M9 regressions.
-- API regression suite remained part of the recursive repository test gate after web/core success.
-- Temporary M10 wiring helper and workflow were removed after the green integration pass.
+- API: 5 test files / 18 tests passed, including M7-M9 regressions.
+- Total automated regression surface: 56 tests passed.
+- Deployment/Compose validation and smoke were correctly skipped because M10 did not modify deployment surfaces.
+- Temporary M10 wiring helper and workflow were removed before the canonical PR gate; only canonical `ci.yml` remains.
 
 ## Boundaries Preserved
 
@@ -40,4 +45,4 @@ M10 is implemented on the milestone branch:
 
 ## Next State
 
-Run canonical pull-request CI on the clean exact M10 branch. If green, squash-merge, verify `master`, then mark the repository `READY_FOR_MILESTONE`.
+Select the next milestone from the highest-value remaining gap in the core program-understanding journey. Do not auto-activate deferred directions merely because they are listed in `PROJECT.md`.
