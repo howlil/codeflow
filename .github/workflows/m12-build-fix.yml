@@ -1,0 +1,42 @@
+name: Apply M12 build fix
+
+on:
+  push:
+    branches:
+      - refactor/m12-graph-first-codeflow
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Fix optional entry-point type
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          path = Path('apps/web/src/GraphWorkspace.tsx')
+          text = path.read_text()
+          old = "FlowProjection['entryPoints'][number]"
+          new = "NonNullable<FlowProjection['entryPoints']>[number]"
+          if old not in text:
+              raise SystemExit('missing entry-point type marker')
+          path.write_text(text.replace(old, new, 1))
+          PY
+          pnpm exec prettier --write apps/web/src/GraphWorkspace.tsx
+          rm .github/workflows/m12-build-fix.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "fix: narrow optional graph entry-point type"
+          git push
