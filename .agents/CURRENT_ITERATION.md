@@ -1,55 +1,59 @@
 # Current Iteration
 
-Status: IN_PROGRESS
+Status: READY_FOR_MILESTONE
 
-Active Milestone: M14 - Professional Graph Navigation
+Last Completed Milestone: M14 - Professional Graph Navigation
 
-## Product Outcome
+## Product Outcome Delivered
 
-Make the semantic graph behave like a professional code-navigation surface rather than a static diagram: users can keep spatial orientation as the graph grows, selected entities create a clear attention neighborhood, dense relationships remain legible, and source evidence can be inspected without losing graph context.
+The semantic graph now behaves as a bounded professional code-navigation surface rather than a static diagram. Users can keep spatial orientation as the graph grows, selected entities create a clear attention neighborhood, dense relationships remain legible, and source evidence can be inspected without losing graph context.
 
-Target loop:
+The resulting comprehension loop is:
 
 ```text
 FIND SYMBOL
 -> CENTER FOCUS
 -> EXPAND BOUNDED NEIGHBORHOOD
--> READ ONLY RELEVANT RELATIONSHIPS
+-> READ RELEVANT RELATIONSHIPS
 -> INSPECT SOURCE / EVIDENCE
 -> ZOOM / FIT / RECENTER AS NEEDED
 -> CONTINUE TRACE
 ```
 
-## Audit Findings
+## Completed Slices
 
-- The current graph viewport is still primarily `overflow: auto`; it lacks zoom, fit-to-view, and recenter controls.
-- Layer ordering is alphabetical rather than relationship-aware, which can create avoidable edge crossing.
-- Disconnected nodes are currently assigned one new depth each, producing unnecessary horizontal sprawl.
-- All edge labels have equal visibility even when the graph becomes dense.
-- Node/edge selection changes border state but does not reduce prominence of unrelated graph content.
-- Source snippets show line numbers but do not visually mark the selected entity's source range.
+- S1 added compact graph viewport controls for Zoom out, Zoom in, Fit graph, and Center focus with a bounded 60–140% zoom range.
+- S2 replaced alphabetical-only layer ordering with deterministic relationship-aware ordering, vertically centered smaller layers, and grouped unresolved/disconnected entities instead of assigning one horizontal column per entity.
+- S3 added selection-driven attention neighborhoods so selected entities, their direct relationships, and impact paths remain prominent while unrelated visible content recedes without being removed.
+- S4 added progressive edge-label disclosure for dense projections while retaining accessible relationship names and keyboard-selectable edges.
+- S5 converted the inspector source snippet into a line-aware source peek that visibly marks the selected entity's source range while preserving surrounding context.
+- S6 widened the desktop inspector to a source-readable 320–352px and moved it below the graph at a more appropriate constrained-layout breakpoint while retaining graph dominance.
+- S7 updated the durable graph design contract and added focused viewport-control regression coverage.
 
 ## Evidence Direction
 
-- VS Code Peek deliberately preserves context while inspecting definitions/references instead of forcing a full navigation switch.
-- Sourcegraph keeps symbol search, references, definitions, and precise-vs-search-based evidence contextual to the code-reading task.
-- JetBrains dependency diagrams support direct movement from diagram entities back to source.
-- Sourcetrail is used as a graph-specific shipped reference for central graph + adjacent source inspection and entity-centered exploration.
+- VS Code Peek informed preserving graph/code context while inspecting definitions and references.
+- Sourcegraph informed contextual symbol search, references/definitions, and evidence-oriented code navigation.
+- JetBrains dependency diagrams informed direct diagram-to-source continuity.
+- Sourcetrail informed entity-centered graph navigation with adjacent source inspection.
 
-## Slices
+References informed interaction behavior only; CodeFlow retains its own compact neutral visual language and static-analysis truth model.
 
-- S1 add compact graph viewport controls for zoom in/out, fit-to-view, and recenter on focus.
-- S2 replace naive layer ordering with stable relationship-aware layered ordering and group disconnected entities rather than creating one column per entity.
-- S3 add selection-driven neighborhood emphasis so unrelated nodes/edges recede without being removed.
-- S4 progressively disclose edge labels in dense graphs while retaining accessible relationship names.
-- S5 render source snippets as line-aware source peek with the selected source range visibly marked.
-- S6 tune inspector width/responsive breakpoint around readable source inspection while retaining graph dominance.
-- S7 update the durable graph design contract, add focused regression coverage for viewport controls, run canonical gates, and merge.
+## Boundaries Preserved
 
-## Boundaries
+- No analysis, API, or persistence contract changed.
+- No graph database, physics simulation, minimap, free-form editing, AI feature, or new graph library was added.
+- Layout remains deterministic and graph expansion remains bounded and user-directed.
+- Selection and relationship meaning are not encoded by color alone.
+- Existing neutral theme tokens and restrained steel-blue focus state remain authoritative.
 
-- No analysis/API/persistence contract changes.
-- No graph database, physics simulation, minimap, free-form editing, AI features, or new graph library.
-- Preserve deterministic layout and bounded progressive disclosure.
-- Do not encode semantic meaning by color alone.
-- Continue using existing neutral theme tokens and restrained steel-blue focus state.
+## Verification
+
+Canonical CI #260 on runtime head `4c6cbe1de55281e295eeab5129ccb740584a1dda` passed:
+
+- formatting;
+- lint;
+- production build;
+- web behavior tests, including focused viewport-control coverage.
+
+Production Compose validation and smoke were correctly skipped because M14 changes only the frontend interaction/design layer and agent knowledge.
