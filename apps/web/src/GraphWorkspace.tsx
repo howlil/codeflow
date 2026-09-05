@@ -66,7 +66,7 @@ export function GraphWorkspace({
     [flow, changeAnalysis],
   );
   const [level, setLevel] = useState<GraphLevel>('code');
-  const [lens, setLens] = useState<GraphLens>('ALL');
+  const [requestedLens, setRequestedLens] = useState<GraphLens>('ALL');
   const [focusId, setFocusId] = useState(flow.entryPointId);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(
     flow.entryPointId,
@@ -84,19 +84,6 @@ export function GraphWorkspace({
   const [impactLoading, setImpactLoading] = useState(false);
   const [impactError, setImpactError] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    setLevel('code');
-    setLens('ALL');
-    setFocusId(flow.entryPointId);
-    setSelectedNodeId(flow.entryPointId);
-    setSelectedEdgeId(null);
-    setExpandedIncoming(new Set());
-    setExpandedOutgoing(new Set([flow.entryPointId]));
-    setQuery('');
-    setImpact(null);
-    setImpactError(null);
-  }, [flow.id, flow.entryPointId]);
 
   useEffect(() => {
     function handleSearchShortcut(event: globalThis.KeyboardEvent) {
@@ -143,11 +130,9 @@ export function GraphWorkspace({
     [levelGraph],
   );
 
-  useEffect(() => {
-    if (!availableLenses.includes(lens)) {
-      setLens('ALL');
-    }
-  }, [availableLenses, lens]);
+  const lens: GraphLens = availableLenses.includes(requestedLens)
+    ? requestedLens
+    : 'ALL';
 
   const filteredEdges = useMemo(
     () => levelEdges.filter((edge) => graphEdgeMatchesLens(edge, lens)),
@@ -300,7 +285,7 @@ export function GraphWorkspace({
       selectedNodeId ?? focusId,
     );
     setLevel(nextLevel);
-    setLens('ALL');
+    setRequestedLens('ALL');
     setSelectedEdgeId(null);
     setImpact(null);
     if (nextFocus !== null) {
@@ -406,7 +391,7 @@ export function GraphWorkspace({
           availableLenses={availableLenses}
           focusId={resolvedFocusId}
           onLevelChange={changeLevel}
-          onLensChange={setLens}
+          onLensChange={setRequestedLens}
           onFocusNode={focusGraph}
           onSelectEntry={onSelectEntry}
         />

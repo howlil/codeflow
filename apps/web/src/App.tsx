@@ -230,6 +230,7 @@ export function App() {
         </section>
       ) : flow !== null ? (
         <GraphWorkspace
+          key={`${flow.id}:${flow.entryPointId}:${changeAnalysis?.change.source.headRevision ?? ''}`}
           flow={flow}
           changeAnalysis={changeAnalysis}
           selectionSummary={selectionSummary}
