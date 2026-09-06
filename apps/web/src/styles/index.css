@@ -1,39 +1,38 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-cs-bg: #0b0b0c;
-  --color-cs-panel: #101012;
-  --color-cs-surface: #151517;
-  --color-cs-raised: #1b1b1e;
-  --color-cs-border: #29292d;
-  --color-cs-control: #171719;
-  --color-cs-hover: #19202a;
-  --color-cs-active: #1b2636;
-  --color-cs-focus: #7fa6c9;
-  --color-cs-primary: #eeeeef;
-  --color-cs-primary-contrast: #111113;
-  --color-cs-text: #eeeeef;
-  --color-cs-muted: #a9a9b1;
-  --color-cs-subtle: #74747d;
-  --color-cs-danger: #efaaaa;
-  --color-cs-danger-surface: #231416;
-  --color-cs-danger-border: #5b2c33;
+  --color-cs-bg: #101112;
+  --color-cs-panel: #151718;
+  --color-cs-surface: #1b1e20;
+  --color-cs-raised: #222629;
+  --color-cs-border: #2d3134;
+  --color-cs-control: #191c1e;
+  --color-cs-hover: #202427;
+  --color-cs-active: #292e31;
+  --color-cs-focus: #d07a59;
+  --color-cs-primary: #e9e7e2;
+  --color-cs-primary-contrast: #161719;
+  --color-cs-text: #e5e3df;
+  --color-cs-muted: #a09d97;
+  --color-cs-subtle: #73716c;
+  --color-cs-danger: #e08d7e;
+  --color-cs-danger-surface: #2b1a17;
+  --color-cs-danger-border: #6f4038;
   --font-sans:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    'Segoe UI', sans-serif;
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    sans-serif;
   --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
 }
 
 :root {
-  --shadow-node: 0 4px 16px rgb(0 0 0 / 10%);
-  --shadow-overlay: 0 16px 48px rgb(0 0 0 / 24%);
-  --shadow-selected: inset 0 0 0 1px var(--color-cs-focus);
-  --radius-workspace: 10px;
-  --radius-panel: 8px;
-  --radius-node: 7px;
-  --radius-control: 6px;
-  --radius-overlay: 8px;
-  --radius-pill: 999px;
+  --shadow-node: none;
+  --shadow-overlay: 0 14px 36px rgb(0 0 0 / 28%);
+  --shadow-selected: 0 0 0 1px var(--color-cs-focus);
+  --radius-workspace: 0;
+  --radius-panel: 4px;
+  --radius-node: 4px;
+  --radius-control: 5px;
+  --radius-overlay: 6px;
   color: var(--color-cs-text);
   background: var(--color-cs-bg);
   font-family: var(--font-sans);
@@ -48,23 +47,24 @@ html {
 
 html[data-theme='light'] {
   color-scheme: light;
-  --color-cs-bg: #f7f7f8;
-  --color-cs-panel: #ffffff;
-  --color-cs-surface: #f1f1f3;
-  --color-cs-raised: #e9e9ec;
-  --color-cs-border: #d8d8dd;
+  --color-cs-bg: #f4f4f2;
+  --color-cs-panel: #fbfbf9;
+  --color-cs-surface: #eeeeeb;
+  --color-cs-raised: #e4e4e0;
+  --color-cs-border: #d1d2ce;
   --color-cs-control: #ffffff;
-  --color-cs-hover: #f0f4f8;
-  --color-cs-active: #e8eef6;
-  --color-cs-focus: #4f7396;
-  --color-cs-primary: #18181b;
-  --color-cs-primary-contrast: #fafafa;
-  --color-cs-text: #18181b;
-  --color-cs-muted: #55555f;
-  --color-cs-subtle: #767680;
-  --color-cs-danger: #b42318;
-  --color-cs-danger-surface: #fff1f0;
-  --color-cs-danger-border: #e6b6b0;
+  --color-cs-hover: #eceeeb;
+  --color-cs-active: #e3e6e2;
+  --color-cs-focus: #ad5f43;
+  --color-cs-primary: #242526;
+  --color-cs-primary-contrast: #fafaf7;
+  --color-cs-text: #292a2b;
+  --color-cs-muted: #666863;
+  --color-cs-subtle: #898b85;
+  --color-cs-danger: #a94436;
+  --color-cs-danger-surface: #f6e9e5;
+  --color-cs-danger-border: #d3a097;
+  --shadow-overlay: 0 14px 34px rgb(32 34 30 / 14%);
 }
 
 *,
@@ -120,22 +120,18 @@ summary:focus-visible {
 .workspace-shell {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
   width: 100%;
   height: 100dvh;
   min-height: 0;
-  padding: 10px;
+  padding: 0;
   overflow: auto;
   background: var(--color-cs-bg);
   color: var(--color-cs-text);
 }
 
-.workspace-header,
-.workspace-context-bar,
-.repository-input,
-.workspace-grid {
-  width: min(100%, 1680px);
-  margin-inline: auto;
+.workspace-header {
+  width: 100%;
 }
 
 .workspace-header {
@@ -143,8 +139,10 @@ summary:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 30px;
-  padding: 0 2px;
+  min-height: 40px;
+  padding: 0 10px;
+  background: var(--color-cs-panel);
+  border-bottom: 1px solid var(--color-cs-border);
 }
 
 .workspace-brand {
@@ -162,7 +160,7 @@ p {
 
 .workspace-brand h1 {
   margin-bottom: 0;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 650;
   letter-spacing: -0.02em;
 }
@@ -185,10 +183,10 @@ h2 {
 .panel-kicker {
   margin: 0 0 3px;
   color: var(--color-cs-muted);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .panel-copy,

@@ -422,10 +422,9 @@ export function GraphWorkspace({
         <div className="graph-primary-pane">
           <div className="graph-primary-toolbar">
             <div className="graph-primary-heading">
-              <strong>{focusNode?.label ?? 'Semantic graph'}</strong>
+              <strong>Focus · {focusNode?.label ?? 'Semantic graph'}</strong>
               <span>
-                {levelLabel(level)} · {lensLabel(lens)} · {visibleNodes.length}/
-                {levelNodes.length} visible · static projection
+                {levelLabel(level)} · {lensLabel(lens)}
               </span>
             </div>
 
@@ -615,9 +614,9 @@ function GraphContextBar({
               className="graph-search-results"
               role="listbox"
               aria-label="Graph search results"
-              initial={{ opacity: 0, y: -4, scale: 0.99 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -4, scale: 0.99 }}
+              initial={{ opacity: 0, y: -2 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -2 }}
               transition={{ duration: 0.12 }}
             >
               {searchResults.length === 0 ? (
@@ -694,7 +693,6 @@ function GraphProjectionControls({
               onClick={() => onLevelChange(candidate)}
             >
               <span>{levelLabel(candidate)}</span>
-              <small>{count}</small>
             </Button>
           );
         })}
@@ -1035,7 +1033,16 @@ function GraphCanvas({
                   >
                     <span className="semantic-graph-node-meta">
                       <span>{node.kind}</span>
-                      {node.entryPoint ? <span>ENTRY</span> : null}
+                      {node.entryPoint ? (
+                        <span className="semantic-graph-node-state semantic-graph-node-state--entry">
+                          ENTRY
+                        </span>
+                      ) : null}
+                      {focusId === node.id ? (
+                        <span className="semantic-graph-node-state semantic-graph-node-state--focus">
+                          FOCUS
+                        </span>
+                      ) : null}
                       {node.changeKind !== undefined ? (
                         <span>{node.changeKind.toUpperCase()}</span>
                       ) : null}
@@ -1130,16 +1137,13 @@ function GraphInspector({
       (candidate) => candidate.id === edge.targetId,
     );
     return (
-      <motion.aside
+      <aside
         key={`edge:${edge.id}`}
         className="graph-inspector"
         aria-label="Graph inspector"
-        initial={{ opacity: 0, x: 5 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.12 }}
       >
         <div className="graph-inspector-header">
-          <span className="panel-kicker">Relationship</span>
+          <span className="panel-kicker">Selected relationship</span>
           <strong>{edge.kind}</strong>
           <span>
             {source?.label ?? edge.sourceId} → {target?.label ?? edge.targetId}
@@ -1151,25 +1155,22 @@ function GraphInspector({
           </div>
         ) : null}
         <EvidenceList evidence={edge.evidence} />
-      </motion.aside>
+      </aside>
     );
   }
 
   if (node === null) {
     return (
-      <motion.aside
+      <aside
         key="empty"
         className="graph-inspector"
         aria-label="Graph inspector"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.1 }}
       >
         <div className="graph-inspector-empty">
           <strong>Select a node or relationship</strong>
           <span>Inspect source, evidence, and graph-native actions here.</span>
         </div>
-      </motion.aside>
+      </aside>
     );
   }
 
@@ -1198,16 +1199,13 @@ function GraphInspector({
   );
 
   return (
-    <motion.aside
+    <aside
       key={`node:${node.id}`}
       className="graph-inspector"
       aria-label="Graph inspector"
-      initial={{ opacity: 0, x: 5 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.12 }}
     >
       <div className="graph-inspector-header">
-        <span className="panel-kicker">{node.kind}</span>
+        <span className="panel-kicker">Selected · {node.kind}</span>
         <strong>{node.label}</strong>
         <span>{formatLocation(node.path, node.location)}</span>
       </div>
@@ -1230,9 +1228,6 @@ function GraphInspector({
         <span>
           <strong>{outgoing.length}</strong> outgoing
         </span>
-        <span>
-          <strong>{relatedEdges.length}</strong> total
-        </span>
       </div>
 
       <section className="graph-inspector-section">
@@ -1241,33 +1236,40 @@ function GraphInspector({
           <span>from selected entity</span>
         </div>
         <div className="graph-node-primary-actions">
-          <Button
-            aria-pressed={expandedOutgoing.has(node.id)}
-            onClick={() => onExpandOutgoing(node.id)}
-          >
-            Expand outgoing
-          </Button>
-          <Button
-            aria-pressed={expandedIncoming.has(node.id)}
-            onClick={() => onExpandIncoming(node.id)}
-          >
-            Expand incoming
-          </Button>
+          {!expandedOutgoing.has(node.id) && outgoing.length > 0 ? (
+            <Button onClick={() => onExpandOutgoing(node.id)}>
+              Expand outgoing
+            </Button>
+          ) : null}
+          {!expandedIncoming.has(node.id) && incoming.length > 0 ? (
+            <Button onClick={() => onExpandIncoming(node.id)}>
+              Expand incoming
+            </Button>
+          ) : null}
+          {expandedOutgoing.has(node.id) && expandedIncoming.has(node.id) ? (
+            <Button onClick={() => onCollapse(node.id)}>Collapse branch</Button>
+          ) : null}
         </div>
         <div className="graph-node-secondary-actions">
-          <Button variant="ghost" onClick={() => onShowBoth(node.id)}>
-            Show both
-          </Button>
-          <Button
-            variant="ghost"
-            aria-pressed={focusId === node.id}
-            onClick={() => onFocus(node)}
-          >
-            {focusId === node.id ? 'Focused' : 'Focus here'}
-          </Button>
-          <Button variant="ghost" onClick={() => onCollapse(node.id)}>
-            Collapse branch
-          </Button>
+          {!expandedOutgoing.has(node.id) &&
+          !expandedIncoming.has(node.id) &&
+          outgoing.length > 0 &&
+          incoming.length > 0 ? (
+            <Button variant="ghost" onClick={() => onShowBoth(node.id)}>
+              Expand both
+            </Button>
+          ) : null}
+          {focusId !== node.id ? (
+            <Button variant="ghost" onClick={() => onFocus(node)}>
+              Focus here
+            </Button>
+          ) : null}
+          {(expandedOutgoing.has(node.id) || expandedIncoming.has(node.id)) &&
+          !(expandedOutgoing.has(node.id) && expandedIncoming.has(node.id)) ? (
+            <Button variant="ghost" onClick={() => onCollapse(node.id)}>
+              Collapse branch
+            </Button>
+          ) : null}
           {node.kind !== 'Repository' && node.kind !== 'Workspace' ? (
             <Button
               variant="ghost"
@@ -1379,7 +1381,7 @@ function GraphInspector({
       {node.evidence.length > 0 ? (
         <EvidenceList evidence={node.evidence} />
       ) : null}
-    </motion.aside>
+    </aside>
   );
 }
 

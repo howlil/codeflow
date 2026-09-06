@@ -120,19 +120,7 @@ Controls should be placed where they answer the next question in that loop.
 
 Never render the entire repository graph by default.
 
-A selected node supports graph-native actions where applicable:
-
-```text
-Expand outgoing
-Expand incoming
-Show both
-Collapse branch
-Focus here
-Trace calls from here
-Show dependents
-```
-
-`Expand outgoing` and `Expand incoming` are primary trace actions. `Show both`, `Collapse branch`, focus, impact, and re-tracing are quieter contextual operations.
+A selected node exposes only graph-native actions that can change the current state. `Expand outgoing` and `Expand incoming` are primary when those directions are not already expanded. `Expand both`, `Collapse branch`, `Focus here`, impact, and re-tracing appear contextually instead of forming a permanent action buffet.
 
 Expanding a node reveals only bounded neighboring relationships. Focus resets the local mental model around the selected entity without changing canonical truth.
 
@@ -184,11 +172,11 @@ Prefer:
 - code identifier as the strongest text;
 - kind and repository-relative path as secondary metadata;
 - no ordinary shadow;
-- restrained selected/focus treatment using the steel-blue accent;
+- one restrained semantic accent reserved for focus, selection, and actionable attention;
 - visible entry-point marker;
 - subtle added/modified/removed marker when a change overlay is active.
 
-Focus and selection may use a steel-blue border/inset rule. Impact may use a quiet active neutral surface. Avoid double borders, glow, and saturated category colors.
+Entry, focus, and selection are different states and must not share the same visual treatment. Entry is an origin marker, focus is the graph's spatial anchor using an inset rule/label, and selection is an inspection outline. Impact may use a quiet active neutral surface. Avoid glow and saturated category colors.
 
 ## Edge Language
 
@@ -247,7 +235,7 @@ The graph toolbar owns:
 - current focus identity;
 - current semantic level;
 - current relationship lens;
-- visible/available node count;
+- optional projection counts only when they materially aid orientation;
 - bounded dependents status when active.
 
 Semantic level is a compact three-option switch. Relationship lens is one compact selector. Do not surface eight equally weighted toolbar buttons when two controls communicate the hierarchy more clearly.
@@ -262,8 +250,8 @@ Node selection prioritizes:
 identity + kind
 path/location
 incoming/outgoing counts
-primary trace actions
-secondary focus/impact operations
+next applicable trace action
+contextual focus/impact operations
 source snippet
 behavior delta when applicable
 relationships

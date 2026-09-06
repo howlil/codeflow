@@ -206,9 +206,9 @@ export function App() {
         <header className="workspace-header graph-app-header">
           <div className="workspace-brand">
             <h1>CodeFlow</h1>
-            <span>
-              See where code starts, where it goes, and what it depends on.
-            </span>
+            {flow === null && !analyzing ? (
+              <span>Trace code relationships from source-backed evidence.</span>
+            ) : null}
           </div>
           <IconButton
             aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
@@ -231,9 +231,9 @@ export function App() {
               key="analyzing"
               className="graph-loading-state"
               role="status"
-              initial={{ opacity: 0, y: 6 }}
+              initial={{ opacity: 0, y: 2 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
+              exit={{ opacity: 0, y: -2 }}
             >
               <strong>Building semantic graph…</strong>
               <span>
@@ -287,17 +287,15 @@ function AcquisitionWorkspace({
     <motion.section
       className="graph-acquisition"
       aria-labelledby="graph-acquisition-title"
-      initial={{ opacity: 0, y: 6 }}
+      initial={{ opacity: 0, y: 2 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -4 }}
+      exit={{ opacity: 0, y: -2 }}
     >
       <div className="graph-acquisition-intro">
-        <span className="panel-kicker">Code graph</span>
-        <h2 id="graph-acquisition-title">Visualize how a codebase connects</h2>
+        <h2 id="graph-acquisition-title">Open a codebase</h2>
         <p>
-          Open a repository, start from an entry point or symbol, then follow
-          calls, references, dependencies, and type relationships through one
-          semantic graph.
+          Trace calls, references, dependencies, and types from a repository or
+          pull request.
         </p>
       </div>
 
@@ -309,7 +307,7 @@ function AcquisitionWorkspace({
             role="alert"
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
+            exit={{ opacity: 0, y: -2 }}
             transition={{ duration: 0.12 }}
           >
             <span>{error}</span>

@@ -3,9 +3,7 @@ import { createRoot } from 'react-dom/client';
 
 import { App } from './App';
 import './styles/index.css';
-import './styles/workbench.css';
 import './styles/graph-workspace.css';
-import './styles/anthropic-theme.css';
 
 const root = document.getElementById('root');
 

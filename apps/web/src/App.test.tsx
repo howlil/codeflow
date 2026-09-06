@@ -437,7 +437,7 @@ function stubApi() {
 async function openRepository() {
   const fetchMock = stubApi();
   render(<App />);
-  fireEvent.change(screen.getByLabelText('Public GitHub repository URL'), {
+  fireEvent.change(screen.getByLabelText('Repository URL'), {
     target: { value: 'https://github.com/owner/demo' },
   });
   fireEvent.click(screen.getByRole('button', { name: 'Open code graph' }));
@@ -459,12 +459,10 @@ describe('App graph-first product', () => {
 
     expect(
       screen.getByRole('heading', {
-        name: 'Visualize how a codebase connects',
+        name: 'Open a codebase',
       }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByLabelText('Public GitHub repository URL'),
-    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Repository URL')).toBeInTheDocument();
     expect(
       screen.getByText('Visualize pull request changes on the graph'),
     ).toBeInTheDocument();
