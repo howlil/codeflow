@@ -17,7 +17,9 @@ describe('App acquisition experience', () => {
     render(<App />);
 
     expect(
-      screen.getByRole('heading', { name: 'Follow the code, not the file tree.' }),
+      screen.getByRole('heading', {
+        name: 'Follow the code, not the file tree.',
+      }),
     ).toBeInTheDocument();
     expect(
       screen.getByLabelText('Public GitHub repository URL'),
@@ -56,7 +58,9 @@ describe('App acquisition experience', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Scanning source structure')).toBeInTheDocument();
     expect(
-      screen.getByText(/activity indicator rather than a fake completion estimate/i),
+      screen.getByText(
+        /activity indicator rather than a fake completion estimate/i,
+      ),
     ).toBeInTheDocument();
   });
 
