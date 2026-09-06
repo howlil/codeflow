@@ -1,0 +1,47 @@
+name: M17 format helper
+
+on:
+  push:
+    branches:
+      - m17-system-map-data-flow
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: m17-system-map-data-flow
+      - run: corepack enable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Format M17 files
+        run: |
+          pnpm exec prettier --write \
+            apps/web/src/domain/graph/system-map-model.ts \
+            apps/web/src/domain/graph/system-map-model.test.ts \
+            apps/web/src/features/workspace/SystemMapWorkspace.tsx \
+            apps/web/src/features/workspace/SystemMapWorkspace.test.tsx \
+            apps/web/src/styles/system-map.css
+      - name: Commit formatter output
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            apps/web/src/domain/graph/system-map-model.ts \
+            apps/web/src/domain/graph/system-map-model.test.ts \
+            apps/web/src/features/workspace/SystemMapWorkspace.tsx \
+            apps/web/src/features/workspace/SystemMapWorkspace.test.tsx \
+            apps/web/src/styles/system-map.css
+          git commit -m "style(web): format M17 system map"
+          git push origin HEAD:m17-system-map-data-flow
