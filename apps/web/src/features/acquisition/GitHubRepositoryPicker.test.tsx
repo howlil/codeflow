@@ -13,12 +13,10 @@ describe('GitHubRepositoryPicker', () => {
 
     expect(
       screen.getByRole('heading', {
-        name: 'Open a public GitHub repository',
+        name: 'GitHub repository',
       }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByLabelText('Public GitHub repository URL'),
-    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Repository URL')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Open code graph' }),
     ).toBeInTheDocument();
@@ -34,7 +32,7 @@ describe('GitHubRepositoryPicker', () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText('Public GitHub repository URL'), {
+    fireEvent.change(screen.getByLabelText('Repository URL'), {
       target: { value: 'https://github.com/howlil/codeflow/src/index.ts' },
     });
     fireEvent.submit(screen.getByRole('button', { name: 'Open code graph' }));
@@ -55,7 +53,7 @@ describe('GitHubRepositoryPicker', () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText('Public GitHub repository URL'), {
+    fireEvent.change(screen.getByLabelText('Repository URL'), {
       target: { value: 'https://github.com/howlil/codeflow' },
     });
     fireEvent.submit(screen.getByRole('button', { name: 'Open code graph' }));
