@@ -6,14 +6,14 @@ import {
   type KeyboardEvent,
 } from 'react';
 
-import type { PullRequestAnalysis } from './change-client';
+import type { PullRequestAnalysis } from '../../integrations/api/change-client';
 import {
   analyzeImpact,
   type FlowEvidence,
   type FlowProjection,
   type ImpactProjection,
   type SourceLocation,
-} from './flow-client';
+} from '../../integrations/api/flow-client';
 import {
   availableGraphLenses,
   buildSemanticGraph,
@@ -25,9 +25,14 @@ import {
   type SemanticGraph,
   type SemanticGraphEdge,
   type SemanticGraphNode,
-} from './graph-model';
-import type { RepositorySelectionSummary } from './RepositoryPicker';
-import { Button, IconButton, Input, Select } from './ui/primitives';
+} from '../../domain/graph/graph-model';
+import type { RepositorySelectionSummary } from '../acquisition/RepositoryPicker';
+import {
+  Button,
+  IconButton,
+  Input,
+  Select,
+} from '../../components/ui/primitives';
 
 interface GraphWorkspaceProps {
   flow: FlowProjection;

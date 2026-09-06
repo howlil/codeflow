@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { FlowProjection } from './flow-client';
+import type { FlowProjection } from '../../integrations/api/flow-client';
 import {
   FunctionDataPanel,
   RelationshipEvidencePanel,

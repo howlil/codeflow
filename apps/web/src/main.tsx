@@ -2,10 +2,10 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { App } from './App';
-import './index.css';
-import './workbench.css';
-import './graph-workspace.css';
-import './anthropic-theme.css';
+import './styles/index.css';
+import './styles/workbench.css';
+import './styles/graph-workspace.css';
+import './styles/anthropic-theme.css';
 
 const root = document.getElementById('root');
 

@@ -2,8 +2,11 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { App } from './App';
-import type { PullRequestAnalysis } from './change-client';
-import type { FlowProjection, ImpactProjection } from './flow-client';
+import type { PullRequestAnalysis } from './integrations/api/change-client';
+import type {
+  FlowProjection,
+  ImpactProjection,
+} from './integrations/api/flow-client';
 
 const ordersSource = `export function createOrder() {\n  return saveOrder();\n}\n\nexport function saveOrder() {\n  return persistOrder();\n}\n\nexport function persistOrder() {\n  return true;\n}\n\nexport class OrderService {}\n`;
 const dbSource = `export function query() {\n  return true;\n}\n`;

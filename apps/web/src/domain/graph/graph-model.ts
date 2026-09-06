@@ -1,10 +1,13 @@
-import type { PullRequestAnalysis, SemanticChangeKind } from './change-client';
+import type {
+  PullRequestAnalysis,
+  SemanticChangeKind,
+} from '../../integrations/api/change-client';
 import type {
   FlowEvidence,
   FlowProjection,
   RepositoryEntityKind,
   SourceLocation,
-} from './flow-client';
+} from '../../integrations/api/flow-client';
 
 export type GraphLevel = 'code' | 'structure' | 'packages';
 export type GraphLens =
