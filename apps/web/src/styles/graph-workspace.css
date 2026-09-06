@@ -375,7 +375,7 @@
   color: var(--color-cs-text);
   background: var(--color-cs-panel);
   border: 1px solid var(--color-cs-border);
-  border-radius: 4px;
+  border-radius: var(--radius-node);
   box-shadow: none;
   cursor: pointer;
   transition:
@@ -387,13 +387,26 @@
   background: var(--color-cs-hover);
 }
 
-.semantic-graph-node--selected,
-.semantic-graph-node--focus {
+.semantic-graph-node--selected {
   border-color: var(--color-cs-focus);
+  box-shadow: var(--shadow-selected);
 }
 
 .semantic-graph-node--focus {
-  box-shadow: inset 2px 0 0 var(--color-cs-focus);
+  border-color: var(--color-cs-border);
+  background: color-mix(
+    in srgb,
+    var(--color-cs-panel) 86%,
+    var(--color-cs-focus)
+  );
+  box-shadow: inset 3px 0 0 var(--color-cs-focus);
+}
+
+.semantic-graph-node--focus.semantic-graph-node--selected {
+  border-color: var(--color-cs-focus);
+  box-shadow:
+    inset 3px 0 0 var(--color-cs-focus),
+    var(--shadow-selected);
 }
 
 .semantic-graph-node--impact {
@@ -423,6 +436,20 @@
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.025em;
+}
+
+.semantic-graph-node-state {
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+}
+
+.semantic-graph-node-state--entry {
+  color: var(--color-cs-subtle);
+}
+
+.semantic-graph-node-state--focus {
+  color: var(--color-cs-focus);
 }
 
 .semantic-graph-node strong {
