@@ -57,7 +57,10 @@ const flow: FlowProjection = {
       id: 'function:gateway',
       kind: 'Function',
       label: 'PaymentGateway',
-      location: { ...location, filePath: 'apps/api/src/integrations/payment.ts' },
+      location: {
+        ...location,
+        filePath: 'apps/api/src/integrations/payment.ts',
+      },
       entryPoint: false,
     },
     {
@@ -152,18 +155,24 @@ describe('system map model', () => {
     const graph = buildSemanticGraph(flow);
     const byId = new Map(graph.nodes.map((node) => [node.id, node]));
 
-    expect(classifySystemConcern(byId.get('function:page')!).concern).toBe('ui');
+    expect(classifySystemConcern(byId.get('function:page')!).concern).toBe(
+      'ui',
+    );
     expect(classifySystemConcern(byId.get('function:component')!).concern).toBe(
       'component',
     );
     expect(classifySystemConcern(byId.get('function:service')!).concern).toBe(
       'application',
     );
-    expect(classifySystemConcern(byId.get('function:core')!).concern).toBe('core');
+    expect(classifySystemConcern(byId.get('function:core')!).concern).toBe(
+      'core',
+    );
     expect(classifySystemConcern(byId.get('function:gateway')!).concern).toBe(
       'infrastructure',
     );
-    expect(classifySystemConcern(byId.get('function:test')!).concern).toBe('test');
+    expect(classifySystemConcern(byId.get('function:test')!).concern).toBe(
+      'test',
+    );
   });
 
   it('keeps tests visible but separate from runtime flow and groups configured dependencies', () => {

@@ -87,13 +87,15 @@ const CONCERN: Record<
   infrastructure: {
     label: 'Infrastructure',
     short: 'Infra',
-    description: 'Adapters, clients, repositories, persistence, and external boundaries.',
+    description:
+      'Adapters, clients, repositories, persistence, and external boundaries.',
     icon: ServerCog,
   },
   test: {
     label: 'Testing',
     short: 'Test',
-    description: 'Test, spec, and e2e code kept outside the primary runtime lane.',
+    description:
+      'Test, spec, and e2e code kept outside the primary runtime lane.',
     icon: FlaskConical,
   },
 };
@@ -125,7 +127,8 @@ export function SystemMapWorkspace({
   const graphMode: 'system' | 'runtime' | 'tests' | null =
     mode === 'system' || mode === 'runtime' || mode === 'tests' ? mode : null;
   const nodes = useMemo(
-    () => (graphMode === null ? [] : selectSystemMapNodes(projection, graphMode)),
+    () =>
+      graphMode === null ? [] : selectSystemMapNodes(projection, graphMode),
     [graphMode, projection],
   );
   const edges = useMemo(
@@ -139,7 +142,8 @@ export function SystemMapWorkspace({
     projection.nodes.find((node) => node.id === selectedId) ?? null;
   const dataNode = resolveDataNode(flow, projection, selectedId);
   const primary =
-    projection.nodes.find((node) => node.id === projection.primaryEntryId) ?? null;
+    projection.nodes.find((node) => node.id === projection.primaryEntryId) ??
+    null;
   const results = useMemo(() => {
     const value = query.trim().toLowerCase();
     if (value === '') return [];
@@ -193,7 +197,9 @@ export function SystemMapWorkspace({
   }
 
   const repository =
-    selectionSummary?.rootLabel ?? flow.repository?.name ?? flow.source.filePath;
+    selectionSummary?.rootLabel ??
+    flow.repository?.name ??
+    flow.source.filePath;
   const secondaryEntries = Math.max(0, (flow.entryPoints?.length ?? 0) - 1);
 
   return (
@@ -215,13 +221,18 @@ export function SystemMapWorkspace({
             </span>
           </div>
         </div>
-        <div className="system-map-entry-summary" aria-label="Primary entry point">
+        <div
+          className="system-map-entry-summary"
+          aria-label="Primary entry point"
+        >
           <ProductIcon icon={CircleDot} size={11} />
           <div>
             <span>Primary entry</span>
             <strong>{primary?.label ?? 'No detected entry'}</strong>
           </div>
-          {secondaryEntries > 0 ? <small>{secondaryEntries} more mapped</small> : null}
+          {secondaryEntries > 0 ? (
+            <small>{secondaryEntries} more mapped</small>
+          ) : null}
         </div>
         <div className="system-map-search">
           <ProductIcon icon={Search} size={12} />
@@ -265,7 +276,11 @@ export function SystemMapWorkspace({
       </header>
 
       <div className="system-map-toolbar">
-        <div className="system-map-mode-switcher" role="group" aria-label="Map view">
+        <div
+          className="system-map-mode-switcher"
+          role="group"
+          aria-label="Map view"
+        >
           {MODES.map((item) => (
             <Button
               key={item.id}
@@ -279,8 +294,8 @@ export function SystemMapWorkspace({
           ))}
         </div>
         <span>
-          Concern labels are inferred from source structure; relationships remain
-          source-backed.
+          Concern labels are inferred from source structure; relationships
+          remain source-backed.
         </span>
       </div>
 
@@ -316,7 +331,10 @@ export function SystemMapWorkspace({
 
 function ConcernSummary({ projection }: { projection: SystemMapProjection }) {
   return (
-    <div className="system-map-concern-summary" aria-label="Separation of concerns">
+    <div
+      className="system-map-concern-summary"
+      aria-label="Separation of concerns"
+    >
       {[...RUNTIME_CONCERNS, 'test' as const].map((concern) => (
         <div key={concern} data-concern={concern}>
           <span>
@@ -360,7 +378,8 @@ function MapCanvas({
   const layout = useMemo(() => layoutNodes(nodes), [nodes]);
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
 
-  if (nodes.length === 0) return <Empty text="No source-backed entities in this view." />;
+  if (nodes.length === 0)
+    return <Empty text="No source-backed entities in this view." />;
 
   return (
     <div className="system-map-canvas-shell">
@@ -377,7 +396,11 @@ function MapCanvas({
         </div>
         <span>{nodes.length} visible entities</span>
       </div>
-      <div className="system-map-canvas" role="region" aria-label="System architecture map">
+      <div
+        className="system-map-canvas"
+        role="region"
+        aria-label="System architecture map"
+      >
         <div
           className="system-map-stage"
           style={{ width: layout.width, height: layout.height }}
@@ -397,7 +420,10 @@ function MapCanvas({
             </div>
           ))}
           {layout.testY !== null ? (
-            <div className="system-map-test-divider" style={{ top: layout.testY - 54 }}>
+            <div
+              className="system-map-test-divider"
+              style={{ top: layout.testY - 54 }}
+            >
               <span>
                 <ProductIcon icon={FlaskConical} size={11} />
                 TESTING — supporting verification, not runtime execution
@@ -439,7 +465,10 @@ function MapCanvas({
                     testEdge ? ' system-map-edge--test' : ''
                   }`}
                 >
-                  <path d={edgePath(source, target)} markerEnd="url(#system-map-arrow)" />
+                  <path
+                    d={edgePath(source, target)}
+                    markerEnd="url(#system-map-arrow)"
+                  />
                   <text
                     x={(source.x + target.x + NODE_WIDTH) / 2}
                     y={(source.y + target.y + NODE_HEIGHT) / 2 - 5}
@@ -474,10 +503,16 @@ function MapCanvas({
                   <span>
                     <ProductIcon icon={meta.icon} size={10} /> {meta.short}
                   </span>
-                  {primary ? <strong>PRIMARY ENTRY</strong> : node.entryPoint ? <strong>ENTRY</strong> : null}
+                  {primary ? (
+                    <strong>PRIMARY ENTRY</strong>
+                  ) : node.entryPoint ? (
+                    <strong>ENTRY</strong>
+                  ) : null}
                 </span>
                 <strong className="system-map-node-title">{node.label}</strong>
-                <span className="system-map-node-path">{compactPath(node.path)}</span>
+                <span className="system-map-node-path">
+                  {compactPath(node.path)}
+                </span>
               </motion.button>
             );
           })}
@@ -487,12 +522,24 @@ function MapCanvas({
   );
 }
 
-function DataPanel({ flow, node }: { flow: FlowProjection; node: SystemMapNode | null }) {
-  if (node === null) return <Empty text="No supported static data flow found." />;
-  const steps = flow.staticFlow?.steps.filter((step) => step.functionId === node.id) ?? [];
+function DataPanel({
+  flow,
+  node,
+}: {
+  flow: FlowProjection;
+  node: SystemMapNode | null;
+}) {
+  if (node === null)
+    return <Empty text="No supported static data flow found." />;
+  const steps =
+    flow.staticFlow?.steps.filter((step) => step.functionId === node.id) ?? [];
   const relationships =
-    flow.staticFlow?.relationships.filter((item) => item.functionId === node.id) ?? [];
-  const functionData = flow.functionData?.find((item) => item.functionId === node.id);
+    flow.staticFlow?.relationships.filter(
+      (item) => item.functionId === node.id,
+    ) ?? [];
+  const functionData = flow.functionData?.find(
+    (item) => item.functionId === node.id,
+  );
   const stepById = new Map(steps.map((step) => [step.id, step]));
 
   return (
@@ -510,8 +557,8 @@ function DataPanel({ flow, node }: { flow: FlowProjection; node: SystemMapNode |
         </div>
       </div>
       <p className="system-data-flow-warning">
-        Static source relationships only. This does not claim observed runtime branch
-        choice, values, timing, or frequency.
+        Static source relationships only. This does not claim observed runtime
+        branch choice, values, timing, or frequency.
       </p>
       {steps.length === 0 ? (
         <Empty text="No supported static steps for this function." />
@@ -535,7 +582,8 @@ function DataPanel({ flow, node }: { flow: FlowProjection; node: SystemMapNode |
                         <strong>
                           {item.targetStepId === null
                             ? item.label
-                            : (stepById.get(item.targetStepId)?.label ?? item.label)}
+                            : (stepById.get(item.targetStepId)?.label ??
+                              item.label)}
                         </strong>
                       </div>
                     ))
@@ -574,25 +622,37 @@ function DependencyPanel({
     flow.topology?.entities.filter((entity) => entity.kind === 'Package') ?? [];
   const packageById = new Map(packages.map((item) => [item.id, item]));
   const internal =
-    flow.topology?.relationships.filter((item) => item.kind === 'DEPENDS_ON') ?? [];
+    flow.topology?.relationships.filter((item) => item.kind === 'DEPENDS_ON') ??
+    [];
   if (projection.externalDependencies.length === 0 && internal.length === 0) {
     return <Empty text="No configured package dependency topology." />;
   }
   return (
-    <div className="system-dependency-topology" aria-label="Dependency topology">
+    <div
+      className="system-dependency-topology"
+      aria-label="Dependency topology"
+    >
       <div className="system-dependency-header">
         <span className="panel-kicker">DEPENDENCY BOUNDARIES</span>
-        <strong>Dependencies stay separate from application and domain logic.</strong>
-        <span>Configured package metadata and source-backed relationships.</span>
+        <strong>
+          Dependencies stay separate from application and domain logic.
+        </strong>
+        <span>
+          Configured package metadata and source-backed relationships.
+        </span>
       </div>
       {internal.length > 0 ? (
         <section>
           <h3>Internal packages</h3>
           {internal.map((item) => (
             <div key={item.id} className="system-package-relation">
-              <span>{packageById.get(item.sourceId)?.name ?? item.sourceId}</span>
+              <span>
+                {packageById.get(item.sourceId)?.name ?? item.sourceId}
+              </span>
               <ProductIcon icon={Cable} size={11} />
-              <strong>{packageById.get(item.targetId)?.name ?? item.targetId}</strong>
+              <strong>
+                {packageById.get(item.targetId)?.name ?? item.targetId}
+              </strong>
             </div>
           ))}
         </section>
@@ -629,7 +689,11 @@ function Inspector({
   onSelect: (id: string) => void;
 }) {
   if (node === null) {
-    return <aside className="system-map-inspector"><Empty text="Select a mapped entity." /></aside>;
+    return (
+      <aside className="system-map-inspector">
+        <Empty text="Select a mapped entity." />
+      </aside>
+    );
   }
   const related = projection.edges.filter(
     (edge) => edge.sourceId === node.id || edge.targetId === node.id,
@@ -640,20 +704,29 @@ function Inspector({
     .map((edge) =>
       projection.nodes.find(
         (candidate) =>
-          candidate.id === (edge.sourceId === node.id ? edge.targetId : edge.sourceId),
+          candidate.id ===
+          (edge.sourceId === node.id ? edge.targetId : edge.sourceId),
       ),
     )
     .filter(
       (candidate): candidate is SystemMapNode =>
         candidate !== undefined && candidate.concern === 'test',
     );
-  const steps = flow.staticFlow?.steps.filter((step) => step.functionId === node.id) ?? [];
-  const functionData = flow.functionData?.find((item) => item.functionId === node.id);
-  const packageId = node.path === null ? undefined : flow.topology?.fileOwners[node.path];
+  const steps =
+    flow.staticFlow?.steps.filter((step) => step.functionId === node.id) ?? [];
+  const functionData = flow.functionData?.find(
+    (item) => item.functionId === node.id,
+  );
+  const packageId =
+    node.path === null ? undefined : flow.topology?.fileOwners[node.path];
   const dependencyGroup = projection.externalDependencies.find(
     (group) => group.packageId === packageId,
   );
-  const snippet = sourceSnippet(flow, node.path, node.location?.startLine ?? null);
+  const snippet = sourceSnippet(
+    flow,
+    node.path,
+    node.location?.startLine ?? null,
+  );
   const meta = CONCERN[node.concern];
 
   return (
@@ -661,7 +734,9 @@ function Inspector({
       <header>
         <span className="panel-kicker">{meta.label.toUpperCase()}</span>
         <strong>{node.label}</strong>
-        <span>{formatLocation(node.path, node.location?.startLine ?? null)}</span>
+        <span>
+          {formatLocation(node.path, node.location?.startLine ?? null)}
+        </span>
       </header>
       {node.id === projection.primaryEntryId ? (
         <p className="system-map-primary-entry-note">
@@ -669,22 +744,37 @@ function Inspector({
         </p>
       ) : null}
       <section>
-        <h3>Responsibility <small>inferred</small></h3>
+        <h3>
+          Responsibility <small>inferred</small>
+        </h3>
         <p>{meta.description}</p>
         <small>{node.concernReason}</small>
       </section>
       <div className="system-map-stats">
-        <span><strong>{incoming.length}</strong> incoming</span>
-        <span><strong>{outgoing.length}</strong> outgoing</span>
-        <span><strong>{relatedTests.length}</strong> tests</span>
-        <span><strong>{steps.length}</strong> data steps</span>
+        <span>
+          <strong>{incoming.length}</strong> incoming
+        </span>
+        <span>
+          <strong>{outgoing.length}</strong> outgoing
+        </span>
+        <span>
+          <strong>{relatedTests.length}</strong> tests
+        </span>
+        <span>
+          <strong>{steps.length}</strong> data steps
+        </span>
       </div>
       <section>
-        <h3>Relationships <small>exact graph edges</small></h3>
+        <h3>
+          Relationships <small>exact graph edges</small>
+        </h3>
         <div className="system-map-related-list">
           {related.slice(0, 12).map((edge) => {
-            const otherId = edge.sourceId === node.id ? edge.targetId : edge.sourceId;
-            const other = projection.nodes.find((candidate) => candidate.id === otherId);
+            const otherId =
+              edge.sourceId === node.id ? edge.targetId : edge.sourceId;
+            const other = projection.nodes.find(
+              (candidate) => candidate.id === otherId,
+            );
             return (
               <button
                 key={edge.id}
@@ -701,19 +791,28 @@ function Inspector({
       </section>
       {functionData !== undefined || steps.length > 0 ? (
         <section>
-          <h3>Data <small>static facts</small></h3>
+          <h3>
+            Data <small>static facts</small>
+          </h3>
           <p>
             {functionData?.parameters.length ?? 0} parameters ·{' '}
-            {functionData?.returns.length ?? 0} returns · {steps.length} flow steps
+            {functionData?.returns.length ?? 0} returns · {steps.length} flow
+            steps
           </p>
         </section>
       ) : null}
       {relatedTests.length > 0 ? (
         <section>
-          <h3>Tests <small>outside runtime flow</small></h3>
+          <h3>
+            Tests <small>outside runtime flow</small>
+          </h3>
           <div className="system-map-test-links">
             {relatedTests.slice(0, 8).map((test) => (
-              <button key={test.id} type="button" onClick={() => onSelect(test.id)}>
+              <button
+                key={test.id}
+                type="button"
+                onClick={() => onSelect(test.id)}
+              >
                 {test.label}
               </button>
             ))}
@@ -722,20 +821,28 @@ function Inspector({
       ) : null}
       {dependencyGroup !== undefined ? (
         <section>
-          <h3>Package dependencies <small>{dependencyGroup.packageName}</small></h3>
+          <h3>
+            Package dependencies <small>{dependencyGroup.packageName}</small>
+          </h3>
           <p>{dependencyGroup.dependencies.slice(0, 10).join(' · ')}</p>
         </section>
       ) : null}
       {snippet.length > 0 ? (
         <section>
           <h3>Source</h3>
-          <pre className="system-map-source-snippet"><code>
-            {snippet.map((line) => (
-              <span key={line.lineNumber} data-active={line.active ? 'true' : undefined}>
-                <small>{line.lineNumber}</small><span>{line.text || ' '}</span>
-              </span>
-            ))}
-          </code></pre>
+          <pre className="system-map-source-snippet">
+            <code>
+              {snippet.map((line) => (
+                <span
+                  key={line.lineNumber}
+                  data-active={line.active ? 'true' : undefined}
+                >
+                  <small>{line.lineNumber}</small>
+                  <span>{line.text || ' '}</span>
+                </span>
+              ))}
+            </code>
+          </pre>
         </section>
       ) : null}
     </aside>
@@ -743,7 +850,11 @@ function Inspector({
 }
 
 function Empty({ text }: { text: string }) {
-  return <div className="system-map-empty" role="status"><strong>{text}</strong></div>;
+  return (
+    <div className="system-map-empty" role="status">
+      <strong>{text}</strong>
+    </div>
+  );
 }
 
 function layoutNodes(nodes: SystemMapNode[]) {
@@ -765,7 +876,9 @@ function layoutNodes(nodes: SystemMapNode[]) {
   tests.forEach((node, index) =>
     positions.set(node.id, {
       x: PADDING + (index % 5) * (NODE_WIDTH + COLUMN_GAP),
-      y: (testY ?? runtimeHeight) + Math.floor(index / 5) * (NODE_HEIGHT + ROW_GAP),
+      y:
+        (testY ?? runtimeHeight) +
+        Math.floor(index / 5) * (NODE_HEIGHT + ROW_GAP),
     }),
   );
   return {
@@ -796,12 +909,23 @@ function resolveDataNode(
   projection: SystemMapProjection,
   preferredId: string | null,
 ) {
-  const ids = new Set((flow.staticFlow?.steps ?? []).map((step) => step.functionId));
+  const ids = new Set(
+    (flow.staticFlow?.steps ?? []).map((step) => step.functionId),
+  );
   if (preferredId !== null && ids.has(preferredId)) {
-    return projection.symbolNodes.find((node) => node.id === preferredId) ?? null;
+    return (
+      projection.symbolNodes.find((node) => node.id === preferredId) ?? null
+    );
   }
-  if (projection.primaryEntryId !== null && ids.has(projection.primaryEntryId)) {
-    return projection.symbolNodes.find((node) => node.id === projection.primaryEntryId) ?? null;
+  if (
+    projection.primaryEntryId !== null &&
+    ids.has(projection.primaryEntryId)
+  ) {
+    return (
+      projection.symbolNodes.find(
+        (node) => node.id === projection.primaryEntryId,
+      ) ?? null
+    );
   }
   return projection.symbolNodes.find((node) => ids.has(node.id)) ?? null;
 }
@@ -816,7 +940,11 @@ function formatLocation(path: string | null, line: number | null) {
   return line === null ? compactPath(path) : `${compactPath(path)}:${line}`;
 }
 
-function sourceSnippet(flow: FlowProjection, path: string | null, line: number | null) {
+function sourceSnippet(
+  flow: FlowProjection,
+  path: string | null,
+  line: number | null,
+) {
   if (path === null) return [];
   const source = flow.sources.find((item) => item.filePath === path);
   if (!source) return [];

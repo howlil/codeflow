@@ -6,26 +6,13 @@ import type {
 } from './graph-model';
 
 export type SystemConcern =
-  | 'ui'
-  | 'component'
-  | 'application'
-  | 'core'
-  | 'infrastructure'
-  | 'test';
+  'ui' | 'component' | 'application' | 'core' | 'infrastructure' | 'test';
 
 export type SystemMapMode =
-  | 'system'
-  | 'runtime'
-  | 'data'
-  | 'tests'
-  | 'dependencies';
+  'system' | 'runtime' | 'data' | 'tests' | 'dependencies';
 
 export type SystemEdgeKind =
-  | 'CALL'
-  | 'REFERENCE'
-  | 'DEPENDENCY'
-  | 'TYPE'
-  | 'STRUCTURE';
+  'CALL' | 'REFERENCE' | 'DEPENDENCY' | 'TYPE' | 'STRUCTURE';
 
 export interface ConcernClassification {
   concern: SystemConcern;
@@ -119,10 +106,7 @@ export function classifySystemConcern(
     };
   }
 
-  if (
-    INFRASTRUCTURE_PATH.test(path) ||
-    INFRASTRUCTURE_NAME.test(node.label)
-  ) {
+  if (INFRASTRUCTURE_PATH.test(path) || INFRASTRUCTURE_NAME.test(node.label)) {
     return {
       concern: 'infrastructure',
       reason: 'integration/adapter/persistence boundary',
@@ -183,10 +167,9 @@ export function buildSystemMapProjection(
       ...edge,
       semanticKind: systemEdgeKind(edge.kind),
     })),
-    primaryEntryId:
-      nodes.some((node) => node.id === flow.entryPointId)
-        ? flow.entryPointId
-        : (symbolNodes.find((node) => node.entryPoint)?.id ?? null),
+    primaryEntryId: nodes.some((node) => node.id === flow.entryPointId)
+      ? flow.entryPointId
+      : (symbolNodes.find((node) => node.entryPoint)?.id ?? null),
     concernCounts,
     externalDependencies: groupExternalDependencies(flow),
   };
@@ -231,7 +214,9 @@ export function selectSystemMapNodes(
     selected.push(
       ...projection.symbolNodes
         .filter((node) => node.concern === concern)
-        .sort((left, right) => rankNodes(left, right, projection.primaryEntryId))
+        .sort((left, right) =>
+          rankNodes(left, right, projection.primaryEntryId),
+        )
         .slice(0, perConcernLimit),
     );
   }
@@ -288,7 +273,9 @@ function groupExternalDependencies(
         packageId,
         packageName: packageEntity?.name ?? packageId,
         packagePath: packageEntity?.path ?? null,
-        dependencies: Array.from(dependencies).sort((a, b) => a.localeCompare(b)),
+        dependencies: Array.from(dependencies).sort((a, b) =>
+          a.localeCompare(b),
+        ),
       };
     })
     .sort((left, right) => left.packageName.localeCompare(right.packageName));
@@ -315,7 +302,8 @@ function rankNodes(
   primaryEntryId: string | null,
 ): number {
   const leftPrimary = left.id === primaryEntryId ? 0 : left.entryPoint ? 1 : 2;
-  const rightPrimary = right.id === primaryEntryId ? 0 : right.entryPoint ? 1 : 2;
+  const rightPrimary =
+    right.id === primaryEntryId ? 0 : right.entryPoint ? 1 : 2;
   return (
     leftPrimary - rightPrimary ||
     (left.path ?? '').localeCompare(right.path ?? '') ||

@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { FlowProjection } from '../../integrations/api/flow-client';
@@ -259,7 +265,9 @@ describe('SystemMapWorkspace', () => {
     );
 
     expect(screen.getByLabelText('CodeFlow system map')).toBeInTheDocument();
-    expect(screen.getByLabelText('Primary entry point')).toHaveTextContent('App');
+    expect(screen.getByLabelText('Primary entry point')).toHaveTextContent(
+      'App',
+    );
     expect(screen.queryByLabelText('Entry point')).not.toBeInTheDocument();
 
     const map = screen.getByLabelText('System architecture map');

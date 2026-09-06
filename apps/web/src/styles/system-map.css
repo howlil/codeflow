@@ -12,7 +12,10 @@
   display: grid;
   position: relative;
   z-index: 30;
-  grid-template-columns: minmax(170px, 1.1fr) minmax(170px, 0.8fr) minmax(220px, 1fr) auto;
+  grid-template-columns: minmax(170px, 1.1fr) minmax(170px, 0.8fr) minmax(
+      220px,
+      1fr
+    ) auto;
   align-items: center;
   gap: 8px;
   min-height: 48px;
@@ -301,8 +304,16 @@
   min-height: 0;
   overflow: auto;
   background-image:
-    linear-gradient(to right, color-mix(in srgb, var(--color-cs-border) 25%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in srgb, var(--color-cs-border) 25%, transparent) 1px, transparent 1px);
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--color-cs-border) 25%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--color-cs-border) 25%, transparent) 1px,
+      transparent 1px
+    );
   background-size: 24px 24px;
 }
 
