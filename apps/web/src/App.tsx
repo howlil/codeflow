@@ -8,9 +8,8 @@ import {
 } from './integrations/api/flow-client';
 import { AnalysisLoading } from './features/acquisition/AnalysisLoading';
 import { LandingExperience } from './features/acquisition/LandingExperience';
-import { GraphWorkspace } from './features/workspace/GraphWorkspace';
+import { SystemMapWorkspace } from './features/workspace/SystemMapWorkspace';
 import type { RepositorySelectionSummary } from './features/acquisition/RepositoryPicker';
-import type { SemanticGraphNode } from './domain/graph/graph-model';
 import { IconButton, ProductIcon } from './components/ui/primitives';
 
 type Theme = 'dark' | 'light';
@@ -21,9 +20,6 @@ export function App() {
   const [flow, setFlow] = useState<FlowProjection | null>(null);
   const [selectionSummary, setSelectionSummary] =
     useState<RepositorySelectionSummary | null>(null);
-  const [githubRepositoryUrl, setGithubRepositoryUrl] = useState<string | null>(
-    null,
-  );
   const [analysisTarget, setAnalysisTarget] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,16 +34,12 @@ export function App() {
     }
   }, [theme]);
 
-  async function analyzeGitHub(
-    repositoryUrl: string,
-    entryPoint?: { filePath: string; name: string },
-  ) {
+  async function analyzeGitHub(repositoryUrl: string) {
     setAnalyzing(true);
     setError(null);
-    setGithubRepositoryUrl(repositoryUrl);
     setAnalysisTarget(repositoryUrl);
     try {
-      const loaded = await analyzeGitHubRepository(repositoryUrl, entryPoint);
+      const loaded = await analyzeGitHubRepository(repositoryUrl);
       setFlow(loaded);
       setSelectionSummary({
         rootLabel: loaded.repository?.name ?? repositoryUrl,
@@ -67,30 +59,9 @@ export function App() {
     }
   }
 
-  function selectEntry(entryPoint: { filePath: string; name: string }) {
-    if (githubRepositoryUrl !== null) {
-      void analyzeGitHub(githubRepositoryUrl, entryPoint);
-    }
-  }
-
-  function traceFunction(node: SemanticGraphNode) {
-    if (node.kind !== 'Function' || githubRepositoryUrl === null) {
-      return;
-    }
-    const filePath = node.path ?? node.location?.filePath;
-    if (filePath === undefined || filePath === null) {
-      return;
-    }
-    void analyzeGitHub(githubRepositoryUrl, {
-      filePath,
-      name: node.label,
-    });
-  }
-
   function resetRepository() {
     setFlow(null);
     setSelectionSummary(null);
-    setGithubRepositoryUrl(null);
     setAnalysisTarget(null);
     setError(null);
   }
@@ -123,13 +94,10 @@ export function App() {
           {analyzing ? (
             <AnalysisLoading key="analyzing" target={analysisTarget} />
           ) : flow !== null ? (
-            <GraphWorkspace
-              key={`${flow.id}:${flow.entryPointId}`}
+            <SystemMapWorkspace
+              key={flow.id}
               flow={flow}
-              changeAnalysis={null}
               selectionSummary={selectionSummary}
-              onSelectEntry={selectEntry}
-              onTraceFunction={traceFunction}
               onChangeRepository={resetRepository}
             />
           ) : (
