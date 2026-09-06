@@ -1,0 +1,62 @@
+name: Apply product-native UX cleanup on current master
+
+'on':
+  push:
+    branches:
+      - refactor/product-native-ux-cleanup-current
+    paths:
+      - .github/workflows/apply-product-native-current.yml
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out current-master branch
+        uses: actions/checkout@v4
+        with:
+          ref: refactor/product-native-ux-cleanup-current
+          fetch-depth: 0
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Reuse verified graph interaction cleanup
+        shell: bash
+        run: |
+          git fetch origin refactor/product-native-ux-cleanup
+          git show FETCH_HEAD:.agents/DESIGN.md > .agents/DESIGN.md
+          git show FETCH_HEAD:apps/web/src/components/ui/primitives.tsx > apps/web/src/components/ui/primitives.tsx
+          git show FETCH_HEAD:apps/web/src/features/workspace/GraphWorkspace.tsx > apps/web/src/features/workspace/GraphWorkspace.tsx
+          git show FETCH_HEAD:apps/web/src/styles/graph-workspace.css > apps/web/src/styles/graph-workspace.css
+
+      - name: Apply cleanup to current landing and shell
+        run: python .github/scripts/apply-product-native-current.py
+
+      - name: Format
+        run: pnpm format
+
+      - name: Verify
+        run: pnpm check
+
+      - name: Commit implementation
+        shell: bash
+        run: |
+          rm .github/workflows/apply-product-native-current.yml
+          rm .github/scripts/apply-product-native-current.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'refactor: make CodeFlow UX product-native'
+          git push origin HEAD:refactor/product-native-ux-cleanup-current
