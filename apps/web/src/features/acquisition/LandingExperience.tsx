@@ -99,10 +99,7 @@ export function LandingExperience({
           </AnimatePresence>
         </div>
 
-        <div
-          className="landing-demo"
-          aria-label="Interactive CodeFlow preview"
-        >
+        <div className="landing-demo" aria-label="Interactive CodeFlow preview">
           <div className="landing-demo-toolbar">
             <div>
               <span className="landing-window-dot" />
@@ -193,7 +190,8 @@ export function LandingExperience({
         <div>
           <strong>Reduce codebase archaeology</strong>
           <span>
-            Move from “where is this?” to “what does this reach?” in one surface.
+            Move from “where is this?” to “what does this reach?” in one
+            surface.
           </span>
         </div>
       </div>
