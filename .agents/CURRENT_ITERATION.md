@@ -2,39 +2,50 @@
 
 Status: READY_FOR_MILESTONE
 
-Last Completed Milestone: M15 - Product-Native UX Cleanup
+Last Completed Milestone: M16 - Detailed Interactive Codeflow Entry
 
 ## Product Outcome Delivered
 
-CodeFlow now behaves and reads as one code-navigation instrument instead of a sequence of aesthetic/demo layers. The landing is a compact repository launcher, Entry/Focus/Selected are independent states, inspector actions are progressive and contextual, and motion is reserved for orientation/state continuity.
+CodeFlow's entry surface now explains the existing source-analysis model through one compact interactive flow before repository analysis starts. The repository action remains primary while the preview makes the path from source intake to evidence inspection understandable without adding another product mode.
 
-The resulting comprehension loop is:
+The entry journey is:
 
 ```text
-OPEN CODEBASE
--> FIND / CHOOSE SYMBOL
--> FOLLOW CURRENT FOCUS
--> EXPAND ONLY THE NEEDED DIRECTION
--> SELECT NODE OR RELATIONSHIP
+UNDERSTAND WHAT CODEFLOW TRACES
+-> PASTE PUBLIC GITHUB REPOSITORY
+-> START ANALYSIS
+-> SEE HONEST ANALYSIS ACTIVITY
+-> ENTER SEMANTIC GRAPH
+```
+
+The interactive preview now represents:
+
+```text
+PUBLIC REPOSITORY
+-> SOURCE DISCOVERY
+-> ENTRY POINTS + SYMBOL INDEX
+-> RELATIONSHIP MAPPING
+-> CALLS + DEPENDENCIES + TYPES / REFERENCES
+-> SEMANTIC GRAPH
 -> INSPECT SOURCE + EVIDENCE
--> REFOCUS / TRACE DEPENDENTS WHEN NEEDED
 ```
 
 ## Completed Slices
 
-- S1 removed stacked workbench/Anthropic skin ownership from runtime, reduced global CSS to canonical tokens/shell responsibilities, and tightened technical geometry.
-- S2 made Entry, Focus, and Selected explicit independent graph states with separate markers/treatments.
-- S3 replaced marketing/demo acquisition with a compact launcher, removed redundant graph metadata, and changed inspector actions from a permanent buffet to contextual progressive actions.
-- S4 removed high-frequency inspector/search polish while preserving graph spatial transitions and the honest analysis activity state; superseded skin files were removed.
+- S1 tightened the landing information architecture around the public GitHub repository action and added a compact relationship capability strip without feature-card marketing UI.
+- S2 replaced the three-node demo with a ten-node source-analysis flow. Every node is selectable, connected relationships are emphasized, and the inspector explains the selected stage and its outputs.
+- S3 kept the surface compact and flat with 1px strokes, existing restrained steel-blue semantics, Lucide icons, and Motion limited to path drawing, active relationship emphasis, selection feedback, and inspector continuity.
+- S4 added behavior coverage for the detailed preview and its animated inspector transition while preserving the absence of local-repository and pull-request acquisition from the initial surface.
 
 ## Boundaries Preserved
 
-- Public-repository analysis behavior and API contracts are unchanged.
-- No graph truth, persistence, analysis engine, or repository-selection contract changed.
-- No graph database, physics layout, AI feature, or new product capability was added.
-- Deterministic bounded graph expansion remains the core interaction.
-- The visual system is CodeFlow-native: compact, code-oriented, direct, spatially stable, evidence-first, quiet, and precise.
+- Public GitHub repository analysis remains the only primary acquisition action.
+- Repository-analysis APIs, analysis engine, graph truth, persistence, and repository-selection contracts are unchanged.
+- No new runtime dependency was introduced; the implementation reuses `lucide-react` and `motion` already present in the web app.
+- No fake numeric analysis progress was introduced.
+- Local repository acquisition and pull-request visualization remain absent from the initial surface.
+- No new product capability was added beyond explaining and starting the existing repository-analysis flow.
 
 ## Verification
 
-Formatting, lint, production build, and web behavior tests are required before integration. Production Compose validation is not required for this frontend-only milestone.
+Final integration requires formatting, lint, production build, and web behavior tests to pass on the PR head. Production Compose validation is intentionally skipped because this milestone does not change deployment/runtime infrastructure contracts.

@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { App } from './App';
@@ -11,14 +17,14 @@ describe('App acquisition experience', () => {
     delete document.documentElement.dataset.theme;
   });
 
-  it('starts from an interactive public-repository landing', () => {
+  it('starts from a detailed interactive public-repository landing', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
     render(<App />);
 
     expect(
       screen.getByRole('heading', {
-        name: 'Follow the code, not the file tree.',
+        name: 'Understand how the code actually flows.',
       }),
     ).toBeInTheDocument();
     expect(screen.getByLabelText('Repository URL')).toBeInTheDocument();
@@ -28,13 +34,50 @@ describe('App acquisition experience', () => {
     expect(
       screen.queryByText('Visualize pull request changes on the graph'),
     ).not.toBeInTheDocument();
+
+    const preview = screen.getByLabelText('Interactive CodeFlow preview');
     expect(
-      screen.getByLabelText('Interactive CodeFlow preview'),
+      within(preview).getByRole('button', { name: /Public repository/ }),
+    ).toBeInTheDocument();
+    expect(
+      within(preview).getByRole('button', { name: /Source discovery/ }),
+    ).toBeInTheDocument();
+    expect(
+      within(preview).getByRole('button', { name: /Entry points/ }),
+    ).toBeInTheDocument();
+    expect(
+      within(preview).getByRole('button', { name: /Symbol index/ }),
+    ).toBeInTheDocument();
+    expect(
+      within(preview).getByRole('button', { name: /Relationship map/ }),
+    ).toBeInTheDocument();
+    expect(
+      within(preview).getByRole('button', { name: /^Calls/ }),
+    ).toBeInTheDocument();
+    expect(
+      within(preview).getByRole('button', { name: /Dependencies/ }),
+    ).toBeInTheDocument();
+    expect(
+      within(preview).getByRole('button', { name: /Types & references/ }),
+    ).toBeInTheDocument();
+    expect(
+      within(preview).getByRole('button', { name: /Semantic graph/ }),
+    ).toBeInTheDocument();
+    expect(
+      within(preview).getByRole('button', { name: /Source & evidence/ }),
     ).toBeInTheDocument();
 
-    const entryNode = screen.getByRole('button', { name: /createOrder/ });
+    const entryNode = within(preview).getByRole('button', {
+      name: /Entry points/,
+    });
     fireEvent.click(entryNode);
     expect(entryNode).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      await within(preview).findByText('Starting symbols'),
+    ).toBeInTheDocument();
+    expect(
+      within(preview).getByText('Initial trace targets'),
+    ).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
