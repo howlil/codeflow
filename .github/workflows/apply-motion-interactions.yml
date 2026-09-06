@@ -1,0 +1,182 @@
+name: Apply motion interactions
+
+on:
+  push:
+    branches:
+      - feat/motion-interactions
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/motion-interactions
+          fetch-depth: 0
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Add Motion for React
+        run: pnpm --filter @codeflow/web add motion@13.2.0 --save-exact
+
+      - name: Apply purposeful motion interactions
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+
+          def replace_once(text: str, old: str, new: str, label: str) -> str:
+              if old not in text:
+                  raise SystemExit(f'missing expected source for {label}')
+              return text.replace(old, new, 1)
+
+          app_path = Path('apps/web/src/App.tsx')
+          app = app_path.read_text()
+          app = replace_once(
+              app,
+              "import { Moon, Sun } from 'lucide-react';\nimport { useEffect, useState } from 'react';",
+              "import { Moon, Sun } from 'lucide-react';\nimport { AnimatePresence, MotionConfig, motion } from 'motion/react';\nimport { useEffect, useState } from 'react';",
+              'App motion import',
+          )
+          app = replace_once(
+              app,
+              '''  return (\n    <main className="workspace-shell graph-app-shell">''',
+              '''  return (\n    <MotionConfig\n      reducedMotion="user"\n      transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}\n    >\n      <main className="workspace-shell graph-app-shell">''',
+              'MotionConfig root',
+          )
+          old_state = '''      {analyzing ? (\n        <section className="graph-loading-state" role="status">\n          <strong>Building semantic graph…</strong>\n          <span>\n            Finding entry points and source-backed relationships without\n            executing repository code.\n          </span>\n        </section>\n      ) : flow !== null ? (\n        <GraphWorkspace\n          key={`${flow.id}:${flow.entryPointId}:${changeAnalysis?.change.source.headRevision ?? ''}`}\n          flow={flow}\n          changeAnalysis={changeAnalysis}\n          selectionSummary={selectionSummary}\n          onSelectEntry={selectEntry}\n          onTraceFunction={traceFunction}\n          onChangeRepository={resetRepository}\n        />\n      ) : (\n        <AcquisitionWorkspace\n          error={error}\n          onAnalyzeGitHub={analyzeGitHub}\n          onAnalyzeLocal={analyzeRepository}\n          onAnalyzePullRequest={analyzePullRequest}\n          onClearError={() => setError(null)}\n        />\n      )}'''
+          new_state = '''      <AnimatePresence mode="wait" initial={false}>\n        {analyzing ? (\n          <motion.section\n            key="analyzing"\n            className="graph-loading-state"\n            role="status"\n            initial={{ opacity: 0, y: 6 }}\n            animate={{ opacity: 1, y: 0 }}\n            exit={{ opacity: 0, y: -4 }}\n          >\n            <strong>Building semantic graph…</strong>\n            <span>\n              Finding entry points and source-backed relationships without\n              executing repository code.\n            </span>\n          </motion.section>\n        ) : flow !== null ? (\n          <GraphWorkspace\n            key={`${flow.id}:${flow.entryPointId}:${changeAnalysis?.change.source.headRevision ?? ''}`}\n            flow={flow}\n            changeAnalysis={changeAnalysis}\n            selectionSummary={selectionSummary}\n            onSelectEntry={selectEntry}\n            onTraceFunction={traceFunction}\n            onChangeRepository={resetRepository}\n          />\n        ) : (\n          <AcquisitionWorkspace\n            key="acquisition"\n            error={error}\n            onAnalyzeGitHub={analyzeGitHub}\n            onAnalyzeLocal={analyzeRepository}\n            onAnalyzePullRequest={analyzePullRequest}\n            onClearError={() => setError(null)}\n          />\n        )}\n      </AnimatePresence>'''
+          app = replace_once(app, old_state, new_state, 'primary state presence')
+          app = replace_once(
+              app,
+              '''    </main>\n  );\n}\n\nfunction AcquisitionWorkspace''',
+              '''      </main>\n    </MotionConfig>\n  );\n}\n\nfunction AcquisitionWorkspace''',
+              'MotionConfig close',
+          )
+          app = replace_once(
+              app,
+              '''    <section\n      className="graph-acquisition"\n      aria-labelledby="graph-acquisition-title"\n    >''',
+              '''    <motion.section\n      className="graph-acquisition"\n      aria-labelledby="graph-acquisition-title"\n      initial={{ opacity: 0, y: 6 }}\n      animate={{ opacity: 1, y: 0 }}\n      exit={{ opacity: 0, y: -4 }}\n    >''',
+              'acquisition entrance',
+          )
+          app = replace_once(
+              app,
+              '''      {error !== null ? (\n        <div className="graph-acquisition-error" role="alert">\n          <span>{error}</span>\n          <Button variant="ghost" onClick={onClearError}>\n            Dismiss\n          </Button>\n        </div>\n      ) : null}''',
+              '''      <AnimatePresence initial={false}>\n        {error !== null ? (\n          <motion.div\n            key="acquisition-error"\n            className="graph-acquisition-error"\n            role="alert"\n            initial={{ opacity: 0, y: -4 }}\n            animate={{ opacity: 1, y: 0 }}\n            exit={{ opacity: 0, y: -4 }}\n            transition={{ duration: 0.12 }}\n          >\n            <span>{error}</span>\n            <Button variant="ghost" onClick={onClearError}>\n              Dismiss\n            </Button>\n          </motion.div>\n        ) : null}\n      </AnimatePresence>''',
+              'acquisition error presence',
+          )
+          app = replace_once(app, '    </section>\n  );\n}\n\nfunction getInitialTheme', '    </motion.section>\n  );\n}\n\nfunction getInitialTheme', 'acquisition close')
+          app_path.write_text(app)
+
+          graph_path = Path('apps/web/src/features/workspace/GraphWorkspace.tsx')
+          graph = graph_path.read_text()
+          graph = replace_once(
+              graph,
+              "} from 'react';\n\nimport type { PullRequestAnalysis }",
+              "} from 'react';\nimport { AnimatePresence, motion, useReducedMotion } from 'motion/react';\n\nimport type { PullRequestAnalysis }",
+              'GraphWorkspace motion import',
+          )
+          graph = replace_once(
+              graph,
+              '''    <section className="graph-workspace" aria-label="Code graph explorer">''',
+              '''    <motion.section\n      className="graph-workspace"\n      aria-label="Code graph explorer"\n      initial={{ opacity: 0, y: 5 }}\n      animate={{ opacity: 1, y: 0 }}\n      exit={{ opacity: 0, y: -4 }}\n    >''',
+              'workspace entrance',
+          )
+          graph = replace_once(
+              graph,
+              '''      {changeAnalysis !== null ? (\n        <ChangeOverlayBar analysis={changeAnalysis} />\n      ) : null}''',
+              '''      <AnimatePresence initial={false}>\n        {changeAnalysis !== null ? (\n          <motion.div\n            key="change-overlay"\n            initial={{ opacity: 0, y: -4 }}\n            animate={{ opacity: 1, y: 0 }}\n            exit={{ opacity: 0, y: -4 }}\n            transition={{ duration: 0.12 }}\n          >\n            <ChangeOverlayBar analysis={changeAnalysis} />\n          </motion.div>\n        ) : null}\n      </AnimatePresence>''',
+              'change overlay presence',
+          )
+          graph = replace_once(
+              graph,
+              '''            {impact !== null ? (\n              <div className="graph-impact-status" role="status">\n                <span>\n                  Dependents: {impact.summary.directCount} direct ·{' '}\n                  {impact.summary.transitiveCount} transitive\n                </span>\n                <Button variant="ghost" onClick={() => setImpact(null)}>\n                  Clear dependents\n                </Button>\n              </div>\n            ) : null}''',
+              '''            <AnimatePresence initial={false}>\n              {impact !== null ? (\n                <motion.div\n                  key="impact-status"\n                  className="graph-impact-status"\n                  role="status"\n                  initial={{ opacity: 0, y: -3 }}\n                  animate={{ opacity: 1, y: 0 }}\n                  exit={{ opacity: 0, y: -3 }}\n                  transition={{ duration: 0.12 }}\n                >\n                  <span>\n                    Dependents: {impact.summary.directCount} direct ·{' '}\n                    {impact.summary.transitiveCount} transitive\n                  </span>\n                  <Button variant="ghost" onClick={() => setImpact(null)}>\n                    Clear dependents\n                  </Button>\n                </motion.div>\n              ) : null}\n            </AnimatePresence>''',
+              'impact status presence',
+          )
+          graph = replace_once(
+              graph,
+              '''          {impactError !== null ? (\n            <div className="graph-inline-error" role="alert">\n              {impactError}\n            </div>\n          ) : null}''',
+              '''          <AnimatePresence initial={false}>\n            {impactError !== null ? (\n              <motion.div\n                key="impact-error"\n                className="graph-inline-error"\n                role="alert"\n                initial={{ opacity: 0, y: -3 }}\n                animate={{ opacity: 1, y: 0 }}\n                exit={{ opacity: 0, y: -3 }}\n                transition={{ duration: 0.12 }}\n              >\n                {impactError}\n              </motion.div>\n            ) : null}\n          </AnimatePresence>''',
+              'impact error presence',
+          )
+          graph = replace_once(graph, '    </section>\n  );\n}\n\nfunction GraphContextBar', '    </motion.section>\n  );\n}\n\nfunction GraphContextBar', 'workspace close')
+          graph = replace_once(
+              graph,
+              '''        {query.trim() !== '' ? (\n          <div\n            className="graph-search-results"\n            role="listbox"\n            aria-label="Graph search results"\n          >''',
+              '''        <AnimatePresence initial={false}>\n          {query.trim() !== '' ? (\n            <motion.div\n              key="graph-search-results"\n              className="graph-search-results"\n              role="listbox"\n              aria-label="Graph search results"\n              initial={{ opacity: 0, y: -4, scale: 0.99 }}\n              animate={{ opacity: 1, y: 0, scale: 1 }}\n              exit={{ opacity: 0, y: -4, scale: 0.99 }}\n              transition={{ duration: 0.12 }}\n            >''',
+              'search results enter',
+          )
+          graph = replace_once(
+              graph,
+              '''          </div>\n        ) : null}\n      </div>\n\n      <Button variant="ghost" onClick={onChangeRepository}>''',
+              '''            </motion.div>\n          ) : null}\n        </AnimatePresence>\n      </div>\n\n      <Button variant="ghost" onClick={onChangeRepository}>''',
+              'search results exit',
+          )
+          graph = replace_once(
+              graph,
+              '''  const canvasRef = useRef<HTMLDivElement>(null);\n  const [zoom, setZoom] = useState(1);''',
+              '''  const canvasRef = useRef<HTMLDivElement>(null);\n  const shouldReduceMotion = useReducedMotion();\n  const [zoom, setZoom] = useState(1);''',
+              'reduced motion hook',
+          )
+          old_nodes = '''            {nodes.map((node) => {\n              const position = layout.positions.get(node.id);\n              if (position === undefined) {\n                return null;\n              }\n              const muted = emphasis.active && !emphasis.nodeIds.has(node.id);\n              return (\n                <button\n                  key={node.id}\n                  type="button"\n                  className={`semantic-graph-node${\n                    focusId === node.id ? ' semantic-graph-node--focus' : ''\n                  }${\n                    selectedNodeId === node.id\n                      ? ' semantic-graph-node--selected'\n                      : ''\n                  }${node.entryPoint ? ' semantic-graph-node--entry' : ''}${\n                    impactIds.has(node.id) ? ' semantic-graph-node--impact' : ''\n                  }${\n                    node.changeKind === undefined\n                      ? ''\n                      : ` semantic-graph-node--change-${node.changeKind}`\n                  }${muted ? ' semantic-graph-node--muted' : ''}`}\n                  style={{ left: position.x, top: position.y }}\n                  aria-pressed={selectedNodeId === node.id}\n                  aria-label={`${node.kind} ${node.label}${\n                    node.changeKind === undefined ? '' : ` ${node.changeKind}`\n                  }`}\n                  onClick={() => onSelectNode(node.id)}\n                >\n                  <span className="semantic-graph-node-meta">\n                    <span>{node.kind}</span>\n                    {node.entryPoint ? <span>ENTRY</span> : null}\n                    {node.changeKind !== undefined ? (\n                      <span>{node.changeKind.toUpperCase()}</span>\n                    ) : null}\n                  </span>\n                  <strong>{node.label}</strong>\n                  <span className="semantic-graph-node-path">\n                    {compactPath(node.path)}\n                  </span>\n                </button>\n              );\n            })}'''
+          new_nodes = '''            <AnimatePresence initial={false}>\n              {nodes.map((node) => {\n                const position = layout.positions.get(node.id);\n                if (position === undefined) {\n                  return null;\n                }\n                const muted =\n                  emphasis.active && !emphasis.nodeIds.has(node.id);\n                return (\n                  <motion.button\n                    key={node.id}\n                    type="button"\n                    className={`semantic-graph-node${\n                      focusId === node.id ? ' semantic-graph-node--focus' : ''\n                    }${\n                      selectedNodeId === node.id\n                        ? ' semantic-graph-node--selected'\n                        : ''\n                    }${node.entryPoint ? ' semantic-graph-node--entry' : ''}${\n                      impactIds.has(node.id)\n                        ? ' semantic-graph-node--impact'\n                        : ''\n                    }${\n                      node.changeKind === undefined\n                        ? ''\n                        : ` semantic-graph-node--change-${node.changeKind}`\n                    }${muted ? ' semantic-graph-node--muted' : ''}`}\n                    initial={{ left: position.x, top: position.y, scale: 0.96 }}\n                    animate={{ left: position.x, top: position.y, scale: 1 }}\n                    exit={{ scale: 0.96 }}\n                    transition={{\n                      left: {\n                        duration: shouldReduceMotion ? 0 : 0.18,\n                        ease: [0.22, 1, 0.36, 1],\n                      },\n                      top: {\n                        duration: shouldReduceMotion ? 0 : 0.18,\n                        ease: [0.22, 1, 0.36, 1],\n                      },\n                      scale: { duration: shouldReduceMotion ? 0 : 0.12 },\n                    }}\n                    aria-pressed={selectedNodeId === node.id}\n                    aria-label={`${node.kind} ${node.label}${\n                      node.changeKind === undefined ? '' : ` ${node.changeKind}`\n                    }`}\n                    onClick={() => onSelectNode(node.id)}\n                  >\n                    <span className="semantic-graph-node-meta">\n                      <span>{node.kind}</span>\n                      {node.entryPoint ? <span>ENTRY</span> : null}\n                      {node.changeKind !== undefined ? (\n                        <span>{node.changeKind.toUpperCase()}</span>\n                      ) : null}\n                    </span>\n                    <strong>{node.label}</strong>\n                    <span className="semantic-graph-node-path">\n                      {compactPath(node.path)}\n                    </span>\n                  </motion.button>\n                );\n              })}\n            </AnimatePresence>'''
+          graph = replace_once(graph, old_nodes, new_nodes, 'graph node spatial motion')
+
+          graph = replace_once(
+              graph,
+              '''      <aside className="graph-inspector" aria-label="Graph inspector">''',
+              '''      <motion.aside\n        key={`edge:${edge.id}`}\n        className="graph-inspector"\n        aria-label="Graph inspector"\n        initial={{ opacity: 0, x: 5 }}\n        animate={{ opacity: 1, x: 0 }}\n        transition={{ duration: 0.12 }}\n      >''',
+              'edge inspector motion',
+          )
+          graph = replace_once(graph, '      </aside>', '      </motion.aside>', 'edge inspector close')
+          graph = replace_once(
+              graph,
+              '''      <aside className="graph-inspector" aria-label="Graph inspector">''',
+              '''      <motion.aside\n        key="empty"\n        className="graph-inspector"\n        aria-label="Graph inspector"\n        initial={{ opacity: 0 }}\n        animate={{ opacity: 1 }}\n        transition={{ duration: 0.1 }}\n      >''',
+              'empty inspector motion',
+          )
+          graph = replace_once(graph, '      </aside>', '      </motion.aside>', 'empty inspector close')
+          graph = replace_once(
+              graph,
+              '''    <aside className="graph-inspector" aria-label="Graph inspector">''',
+              '''    <motion.aside\n      key={`node:${node.id}`}\n      className="graph-inspector"\n      aria-label="Graph inspector"\n      initial={{ opacity: 0, x: 5 }}\n      animate={{ opacity: 1, x: 0 }}\n      transition={{ duration: 0.12 }}\n    >''',
+              'node inspector motion',
+          )
+          graph = replace_once(graph, '    </aside>\n  );\n}\n\nfunction ChangeOverlayBar', '    </motion.aside>\n  );\n}\n\nfunction ChangeOverlayBar', 'node inspector close')
+          graph_path.write_text(graph)
+          PY
+
+      - name: Format
+        run: pnpm format
+
+      - name: Verify
+        run: pnpm check
+
+      - name: Commit implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/apply-motion-interactions.yml
+          git add -A
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "feat: add purposeful motion interactions"
+          git push origin HEAD:feat/motion-interactions
