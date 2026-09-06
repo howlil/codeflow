@@ -17,7 +17,7 @@ describe('App acquisition experience', () => {
     delete document.documentElement.dataset.theme;
   });
 
-  it('starts from a detailed interactive public-repository landing', () => {
+  it('starts from a detailed interactive public-repository landing', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
     render(<App />);
@@ -72,7 +72,9 @@ describe('App acquisition experience', () => {
     });
     fireEvent.click(entryNode);
     expect(entryNode).toHaveAttribute('aria-pressed', 'true');
-    expect(within(preview).getByText('Starting symbols')).toBeInTheDocument();
+    expect(
+      await within(preview).findByText('Starting symbols'),
+    ).toBeInTheDocument();
     expect(
       within(preview).getByText('Initial trace targets'),
     ).toBeInTheDocument();
