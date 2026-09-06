@@ -6,6 +6,7 @@ import './styles/index.css';
 import './styles/workbench.css';
 import './styles/graph-workspace.css';
 import './styles/anthropic-theme.css';
+import './styles/landing.css';
 
 const root = document.getElementById('root');
 
