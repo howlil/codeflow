@@ -11,13 +11,15 @@ describe('App acquisition experience', () => {
     delete document.documentElement.dataset.theme;
   });
 
-  it('starts from a compact public-repository launcher', () => {
+  it('starts from an interactive public-repository landing', () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
     render(<App />);
 
     expect(
-      screen.getByRole('heading', { name: 'Open a codebase' }),
+      screen.getByRole('heading', {
+        name: 'Follow the code, not the file tree.',
+      }),
     ).toBeInTheDocument();
     expect(screen.getByLabelText('Repository URL')).toBeInTheDocument();
     expect(
@@ -26,13 +28,13 @@ describe('App acquisition experience', () => {
     expect(
       screen.queryByText('Visualize pull request changes on the graph'),
     ).not.toBeInTheDocument();
-
     expect(
-      screen.getByText(/static analysis · source-backed relationships/i),
+      screen.getByLabelText('Interactive CodeFlow preview'),
     ).toBeInTheDocument();
-    expect(
-      screen.queryByLabelText('Interactive CodeFlow preview'),
-    ).not.toBeInTheDocument();
+
+    const entryNode = screen.getByRole('button', { name: /createOrder/ });
+    fireEvent.click(entryNode);
+    expect(entryNode).toHaveAttribute('aria-pressed', 'true');
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
