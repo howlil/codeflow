@@ -35,6 +35,9 @@ jobs:
       - name: Apply milestone slices
         run: python .github/scripts/apply-product-native-ux-cleanup.py
 
+      - name: Remove stale inspector motion props
+        run: python -c "from pathlib import Path; p=Path('apps/web/src/features/workspace/GraphWorkspace.tsx'); t=p.read_text(); t=t.replace('\\n        initial={{ opacity: 0 }}\\n        animate={{ opacity: 1 }}\\n        transition={{ duration: 0.1 }}', ''); p.write_text(t)"
+
       - name: Format
         run: pnpm format
 
@@ -51,5 +54,3 @@ jobs:
           git add -A
           git commit -m 'refactor: make CodeFlow UX product-native'
           git push origin HEAD:refactor/product-native-ux-cleanup
-
-# executor v2
