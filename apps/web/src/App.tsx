@@ -1,4 +1,5 @@
 import { Moon, Sun } from 'lucide-react';
+import { AnimatePresence, MotionConfig, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 
 import {
@@ -197,57 +198,72 @@ export function App() {
   }
 
   return (
-    <main className="workspace-shell graph-app-shell">
-      <header className="workspace-header graph-app-header">
-        <div className="workspace-brand">
-          <h1>CodeFlow</h1>
-          <span>
-            See where code starts, where it goes, and what it depends on.
-          </span>
-        </div>
-        <IconButton
-          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-          onClick={() =>
-            setTheme((current) => (current === 'dark' ? 'light' : 'dark'))
-          }
-        >
-          {theme === 'dark' ? (
-            <Sun size={14} aria-hidden="true" />
-          ) : (
-            <Moon size={14} aria-hidden="true" />
-          )}
-        </IconButton>
-      </header>
+    <MotionConfig
+      reducedMotion="user"
+      transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <main className="workspace-shell graph-app-shell">
+        <header className="workspace-header graph-app-header">
+          <div className="workspace-brand">
+            <h1>CodeFlow</h1>
+            <span>
+              See where code starts, where it goes, and what it depends on.
+            </span>
+          </div>
+          <IconButton
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+            onClick={() =>
+              setTheme((current) => (current === 'dark' ? 'light' : 'dark'))
+            }
+          >
+            {theme === 'dark' ? (
+              <Sun size={14} aria-hidden="true" />
+            ) : (
+              <Moon size={14} aria-hidden="true" />
+            )}
+          </IconButton>
+        </header>
 
-      {analyzing ? (
-        <section className="graph-loading-state" role="status">
-          <strong>Building semantic graph…</strong>
-          <span>
-            Finding entry points and source-backed relationships without
-            executing repository code.
-          </span>
-        </section>
-      ) : flow !== null ? (
-        <GraphWorkspace
-          key={`${flow.id}:${flow.entryPointId}:${changeAnalysis?.change.source.headRevision ?? ''}`}
-          flow={flow}
-          changeAnalysis={changeAnalysis}
-          selectionSummary={selectionSummary}
-          onSelectEntry={selectEntry}
-          onTraceFunction={traceFunction}
-          onChangeRepository={resetRepository}
-        />
-      ) : (
-        <AcquisitionWorkspace
-          error={error}
-          onAnalyzeGitHub={analyzeGitHub}
-          onAnalyzeLocal={analyzeRepository}
-          onAnalyzePullRequest={analyzePullRequest}
-          onClearError={() => setError(null)}
-        />
-      )}
-    </main>
+        <AnimatePresence mode="wait" initial={false}>
+          {analyzing ? (
+            <motion.section
+              key="analyzing"
+              className="graph-loading-state"
+              role="status"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+            >
+              <strong>Building semantic graph…</strong>
+              <span>
+                Finding entry points and source-backed relationships without
+                executing repository code.
+              </span>
+            </motion.section>
+          ) : flow !== null ? (
+            <GraphWorkspace
+              key={`${flow.id}:${flow.entryPointId}:${changeAnalysis?.change.source.headRevision ?? ''}`}
+              flow={flow}
+              changeAnalysis={changeAnalysis}
+              selectionSummary={selectionSummary}
+              onSelectEntry={selectEntry}
+              onTraceFunction={traceFunction}
+              onChangeRepository={resetRepository}
+            />
+          ) : (
+            <AcquisitionWorkspace
+              key="acquisition"
+              error={error}
+              onAnalyzeGitHub={analyzeGitHub}
+              onAnalyzeLocal={analyzeRepository}
+              onAnalyzePullRequest={analyzePullRequest}
+              onClearError={() => setError(null)}
+            />
+          )}
+        </AnimatePresence>
+      </main>
+    </MotionConfig>
   );
 }
 
@@ -268,9 +284,12 @@ function AcquisitionWorkspace({
   onClearError: () => void;
 }) {
   return (
-    <section
+    <motion.section
       className="graph-acquisition"
       aria-labelledby="graph-acquisition-title"
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -4 }}
     >
       <div className="graph-acquisition-intro">
         <span className="panel-kicker">Code graph</span>
@@ -282,14 +301,24 @@ function AcquisitionWorkspace({
         </p>
       </div>
 
-      {error !== null ? (
-        <div className="graph-acquisition-error" role="alert">
-          <span>{error}</span>
-          <Button variant="ghost" onClick={onClearError}>
-            Dismiss
-          </Button>
-        </div>
-      ) : null}
+      <AnimatePresence initial={false}>
+        {error !== null ? (
+          <motion.div
+            key="acquisition-error"
+            className="graph-acquisition-error"
+            role="alert"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.12 }}
+          >
+            <span>{error}</span>
+            <Button variant="ghost" onClick={onClearError}>
+              Dismiss
+            </Button>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
       <GitHubRepositoryPicker
         busy={false}
@@ -310,7 +339,7 @@ function AcquisitionWorkspace({
           />
         </details>
       </div>
-    </section>
+    </motion.section>
   );
 }
 
