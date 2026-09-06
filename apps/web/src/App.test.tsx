@@ -56,7 +56,9 @@ describe('App acquisition experience', () => {
         name: 'Mapping the codebase into something you can follow.',
       }),
     ).toBeInTheDocument();
-    expect(screen.getByText('https://github.com/owner/demo')).toBeInTheDocument();
+    expect(
+      screen.getByText('https://github.com/owner/demo'),
+    ).toBeInTheDocument();
     expect(screen.getByText('Scanning source structure')).toBeInTheDocument();
     expect(
       screen.getByText(
