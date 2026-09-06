@@ -36,22 +36,46 @@ describe('App acquisition experience', () => {
     ).not.toBeInTheDocument();
 
     const preview = screen.getByLabelText('Interactive CodeFlow preview');
-    expect(within(preview).getByRole('button', { name: /Public repository/ })).toBeInTheDocument();
-    expect(within(preview).getByRole('button', { name: /Source discovery/ })).toBeInTheDocument();
-    expect(within(preview).getByRole('button', { name: /Entry points/ })).toBeInTheDocument();
-    expect(within(preview).getByRole('button', { name: /Symbol index/ })).toBeInTheDocument();
-    expect(within(preview).getByRole('button', { name: /Relationship map/ })).toBeInTheDocument();
-    expect(within(preview).getByRole('button', { name: /^Calls/ })).toBeInTheDocument();
-    expect(within(preview).getByRole('button', { name: /Dependencies/ })).toBeInTheDocument();
-    expect(within(preview).getByRole('button', { name: /Types & references/ })).toBeInTheDocument();
-    expect(within(preview).getByRole('button', { name: /Semantic graph/ })).toBeInTheDocument();
-    expect(within(preview).getByRole('button', { name: /Source & evidence/ })).toBeInTheDocument();
+    expect(
+      within(preview).getByRole('button', { name: /Public repository/ }),
+    ).toBeInTheDocument();
+    expect(
+      within(preview).getByRole('button', { name: /Source discovery/ }),
+    ).toBeInTheDocument();
+    expect(
+      within(preview).getByRole('button', { name: /Entry points/ }),
+    ).toBeInTheDocument();
+    expect(
+      within(preview).getByRole('button', { name: /Symbol index/ }),
+    ).toBeInTheDocument();
+    expect(
+      within(preview).getByRole('button', { name: /Relationship map/ }),
+    ).toBeInTheDocument();
+    expect(
+      within(preview).getByRole('button', { name: /^Calls/ }),
+    ).toBeInTheDocument();
+    expect(
+      within(preview).getByRole('button', { name: /Dependencies/ }),
+    ).toBeInTheDocument();
+    expect(
+      within(preview).getByRole('button', { name: /Types & references/ }),
+    ).toBeInTheDocument();
+    expect(
+      within(preview).getByRole('button', { name: /Semantic graph/ }),
+    ).toBeInTheDocument();
+    expect(
+      within(preview).getByRole('button', { name: /Source & evidence/ }),
+    ).toBeInTheDocument();
 
-    const entryNode = within(preview).getByRole('button', { name: /Entry points/ });
+    const entryNode = within(preview).getByRole('button', {
+      name: /Entry points/,
+    });
     fireEvent.click(entryNode);
     expect(entryNode).toHaveAttribute('aria-pressed', 'true');
     expect(within(preview).getByText('Starting symbols')).toBeInTheDocument();
-    expect(within(preview).getByText('Initial trace targets')).toBeInTheDocument();
+    expect(
+      within(preview).getByText('Initial trace targets'),
+    ).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
