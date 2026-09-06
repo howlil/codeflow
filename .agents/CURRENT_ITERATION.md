@@ -1,51 +1,83 @@
 # Current Iteration
 
-Status: READY_FOR_MILESTONE
+Status: IN_PROGRESS
 
-Last Completed Milestone: M16 - Detailed Interactive Codeflow Entry
+Current Milestone: M17 - System Map as Default Mental Model
 
-## Product Outcome Delivered
+## Product Outcome
 
-CodeFlow's entry surface now explains the existing source-analysis model through one compact interactive flow before repository analysis starts. The repository action remains primary while the preview makes the path from source intake to evidence inspection understandable without adding another product mode.
+After repository analysis, a developer should immediately see a connected whole-system map rather than having to choose among many entry points or reconstruct the architecture file by file.
 
-The entry journey is:
-
-```text
-UNDERSTAND WHAT CODEFLOW TRACES
--> PASTE PUBLIC GITHUB REPOSITORY
--> START ANALYSIS
--> SEE HONEST ANALYSIS ACTIVITY
--> ENTER SEMANTIC GRAPH
-```
-
-The interactive preview now represents:
+The default post-analysis journey becomes:
 
 ```text
-PUBLIC REPOSITORY
--> SOURCE DISCOVERY
--> ENTRY POINTS + SYMBOL INDEX
--> RELATIONSHIP MAPPING
--> CALLS + DEPENDENCIES + TYPES / REFERENCES
--> SEMANTIC GRAPH
--> INSPECT SOURCE + EVIDENCE
+OPEN REPOSITORY
+  -> ANALYZE
+  -> SYSTEM MAP
+  -> PRIMARY ENTRY + RESPONSIBILITY LANES
+  -> FOLLOW SOURCE-BACKED RELATIONSHIPS
+  -> SWITCH TO DATA / TEST / DEPENDENCY LENS AS NEEDED
+  -> INSPECT SOURCE + EVIDENCE
 ```
 
-## Completed Slices
+The map must make separation of concerns visible:
 
-- S1 tightened the landing information architecture around the public GitHub repository action and added a compact relationship capability strip without feature-card marketing UI.
-- S2 replaced the three-node demo with a ten-node source-analysis flow. Every node is selectable, connected relationships are emphasized, and the inspector explains the selected stage and its outputs.
-- S3 kept the surface compact and flat with 1px strokes, existing restrained steel-blue semantics, Lucide icons, and Motion limited to path drawing, active relationship emphasis, selection feedback, and inspector continuity.
-- S4 added behavior coverage for the detailed preview and its animated inspector transition while preserving the absence of local-repository and pull-request acquisition from the initial surface.
+```text
+UI / INTERFACE
+  -> COMPONENTS
+  -> APPLICATION LOGIC
+  -> CORE / DOMAIN
+  -> INFRASTRUCTURE
 
-## Boundaries Preserved
+TESTING -------------------------------- supporting verification
+DEPENDENCIES ---------------------------- package / external boundary
+```
 
-- Public GitHub repository analysis remains the only primary acquisition action.
-- Repository-analysis APIs, analysis engine, graph truth, persistence, and repository-selection contracts are unchanged.
-- No new runtime dependency was introduced; the implementation reuses `lucide-react` and `motion` already present in the web app.
-- No fake numeric analysis progress was introduced.
-- Local repository acquisition and pull-request visualization remain absent from the initial surface.
-- No new product capability was added beyond explaining and starting the existing repository-analysis flow.
+Concern labels are deterministic navigation inference; exact semantic relationships and data facts remain source-backed.
 
-## Verification
+## Vertical Slices
 
-Final integration requires formatting, lint, production build, and web behavior tests to pass on the PR head. Production Compose validation is intentionally skipped because this milestone does not change deployment/runtime infrastructure contracts.
+### S1 - Semantic concern projection
+
+- Classify graph entities into UI, component, application, core, infrastructure, or test using deterministic source/name signals.
+- Keep entry-point identity orthogonal to concern classification.
+- Preserve evidence and canonical graph IDs.
+- Keep external dependencies in topology rather than pretending they are application nodes.
+
+### S2 - Automatic system-map entry
+
+- Replace the post-analysis entry picker journey with an immediate System Map.
+- Use the analyzed primary entry point as the initial runtime anchor.
+- Show alternate entry-point count without requiring a blocking choice.
+- Preserve graph search as direct navigation.
+
+### S3 - Task lenses over one graph truth
+
+- System Map: concern-oriented overview with bounded progressive detail.
+- Runtime Path: production concerns without test/dependency noise.
+- Data Flow: supported static function steps and relationships with explicit non-runtime semantics.
+- Tests: test/spec/e2e entities separated from runtime and connected back to production code where source relationships exist.
+- Dependencies: configured package and external dependency topology.
+
+### S4 - Inspector and visual grammar
+
+- Distinguish concerns by labels, structure, and stroke treatment rather than color alone.
+- Keep testing in a visually separate lane.
+- Show inferred responsibility reason, incoming/outgoing relationships, related tests, data facts, package dependencies, and source snippet in one inspector.
+- Keep Motion limited to continuity/selection and honor reduced-motion preference.
+
+### S5 - Verification and integration
+
+- Unit-test concern classification, map projection, test separation, dependency grouping, and edge semantics.
+- Component-test default System Map, absence of blocking entry selection, and Data/Test/Dependency lenses.
+- Run formatting, lint, build, and relevant tests on the PR head.
+- Update canonical product/iteration docs and squash-merge to `master` only after the integration gate is green.
+
+## Boundaries
+
+- No server/API analysis contract change.
+- No repository persistence, LLM classification, or runtime code execution.
+- No claim that concern inference is verified architectural intent.
+- No claim that static data flow is observed runtime behavior.
+- No new runtime dependency.
+- Pull-request/impact analysis semantics remain unchanged.
