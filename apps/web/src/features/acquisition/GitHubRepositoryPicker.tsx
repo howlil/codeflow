@@ -31,17 +31,10 @@ export function GitHubRepositoryPicker({
       aria-labelledby="github-acquisition-title"
     >
       <div>
-        <p className="panel-kicker">Repository</p>
-        <h2 id="github-acquisition-title">Open a public GitHub repository</h2>
-        <p>
-          CodeFlow finds entry points and builds a bounded semantic graph of
-          source-backed code relationships.
-        </p>
+        <h2 id="github-acquisition-title">GitHub repository</h2>
       </div>
       <form onSubmit={handleSubmit}>
-        <label htmlFor="github-repository-url">
-          Public GitHub repository URL
-        </label>
+        <label htmlFor="github-repository-url">Repository URL</label>
         <div className="github-input-row">
           <input
             id="github-repository-url"
@@ -56,10 +49,6 @@ export function GitHubRepositoryPicker({
             {busy ? 'Analyzing…' : 'Open code graph'}
           </button>
         </div>
-        <p className="github-note">
-          Public repositories · bounded TypeScript source · request-scoped ·
-          static analysis only
-        </p>
       </form>
       {localError !== null || error !== null ? (
         <p className="repository-input-error" role="alert">
