@@ -22,26 +22,53 @@ export function AnalysisLoading({ target }: { target: string | null }) {
           <motion.path
             className="analysis-loading-edge"
             d="M 210 58 C 210 88, 148 88, 148 122"
-            animate={{ pathLength: [0.18, 1, 0.18], opacity: [0.35, 1, 0.35] }}
+            animate={{
+              pathLength: [0.18, 1, 0.18],
+              opacity: [0.35, 1, 0.35],
+            }}
             transition={{ duration: 2.1, repeat: Infinity, ease: 'easeInOut' }}
           />
           <motion.path
             className="analysis-loading-edge"
             d="M 210 58 C 210 88, 274 88, 274 122"
-            animate={{ pathLength: [0.12, 1, 0.12], opacity: [0.25, 0.9, 0.25] }}
-            transition={{ duration: 2.1, repeat: Infinity, delay: 0.2, ease: 'easeInOut' }}
+            animate={{
+              pathLength: [0.12, 1, 0.12],
+              opacity: [0.25, 0.9, 0.25],
+            }}
+            transition={{
+              duration: 2.1,
+              repeat: Infinity,
+              delay: 0.2,
+              ease: 'easeInOut',
+            }}
           />
           <motion.path
             className="analysis-loading-edge"
             d="M 148 154 C 148 184, 210 184, 210 204"
-            animate={{ pathLength: [0.1, 1, 0.1], opacity: [0.2, 0.85, 0.2] }}
-            transition={{ duration: 2.1, repeat: Infinity, delay: 0.4, ease: 'easeInOut' }}
+            animate={{
+              pathLength: [0.1, 1, 0.1],
+              opacity: [0.2, 0.85, 0.2],
+            }}
+            transition={{
+              duration: 2.1,
+              repeat: Infinity,
+              delay: 0.4,
+              ease: 'easeInOut',
+            }}
           />
           <motion.path
             className="analysis-loading-edge"
             d="M 274 154 C 274 184, 210 184, 210 204"
-            animate={{ pathLength: [0.1, 1, 0.1], opacity: [0.2, 0.85, 0.2] }}
-            transition={{ duration: 2.1, repeat: Infinity, delay: 0.55, ease: 'easeInOut' }}
+            animate={{
+              pathLength: [0.1, 1, 0.1],
+              opacity: [0.2, 0.85, 0.2],
+            }}
+            transition={{
+              duration: 2.1,
+              repeat: Infinity,
+              delay: 0.55,
+              ease: 'easeInOut',
+            }}
           />
         </svg>
 
@@ -56,7 +83,12 @@ export function AnalysisLoading({ target }: { target: string | null }) {
         <motion.div
           className="analysis-loading-node analysis-loading-node--left"
           animate={{ y: [0, 3, 0] }}
-          transition={{ duration: 2.4, repeat: Infinity, delay: 0.15, ease: 'easeInOut' }}
+          transition={{
+            duration: 2.4,
+            repeat: Infinity,
+            delay: 0.15,
+            ease: 'easeInOut',
+          }}
         >
           <Braces size={15} />
           <span>symbols</span>
@@ -64,7 +96,12 @@ export function AnalysisLoading({ target }: { target: string | null }) {
         <motion.div
           className="analysis-loading-node analysis-loading-node--right"
           animate={{ y: [0, -2, 0] }}
-          transition={{ duration: 2.5, repeat: Infinity, delay: 0.28, ease: 'easeInOut' }}
+          transition={{
+            duration: 2.5,
+            repeat: Infinity,
+            delay: 0.28,
+            ease: 'easeInOut',
+          }}
         >
           <GitBranch size={15} />
           <span>calls</span>
@@ -82,9 +119,7 @@ export function AnalysisLoading({ target }: { target: string | null }) {
       <div className="analysis-loading-copy">
         <span className="panel-kicker">Building semantic graph</span>
         <h2>Mapping the codebase into something you can follow.</h2>
-        <p>
-          {target !== null ? target : 'Public GitHub repository'}
-        </p>
+        <p>{target !== null ? target : 'Public GitHub repository'}</p>
 
         <div className="analysis-loading-progress" aria-hidden="true">
           <motion.span
