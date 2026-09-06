@@ -12,7 +12,7 @@
     "dev:api": "pnpm --filter @codeflow/api dev",
     "dev:web": "pnpm --filter @codeflow/web dev",
     "format": "prettier --write .",
-    "format:check": "prettier --write apps/web/src/features/acquisition/LandingExperience.tsx && git diff -- apps/web/src/features/acquisition/LandingExperience.tsx && exit 1",
+    "format:check": "prettier --check .",
     "lint": "eslint .",
     "typecheck": "pnpm --recursive --if-present typecheck",
     "test": "pnpm --recursive --if-present test",
