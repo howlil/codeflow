@@ -289,11 +289,24 @@ Hierarchy should come from weight, alignment, spacing, and contrast before font-
 
 ## Acquisition
 
-Repository visualization is the primary start action. Public GitHub repository input should be visually primary; local repository is secondary but direct.
+The initial surface is an **interactive product landing that leads directly into the core code-comprehension task**. It may use stronger landing-page hierarchy than the operational workspace, but every element must help the user understand CodeFlow or open a repository.
 
-Pull-request analysis is presented as **visualize changes on the code graph**, not as an equal product mode or review dashboard.
+The acquisition contract is:
 
-The acquisition surface is setup, not marketing: no hero-sized typography, feature-card grid, or promotional whitespace.
+```text
+UNDERSTAND THE PRODUCT
+-> PASTE PUBLIC GITHUB REPOSITORY
+-> START ANALYSIS
+-> SEE ANALYSIS ACTIVITY
+-> ENTER SEMANTIC GRAPH
+```
+
+- public GitHub repository input is the only primary acquisition action;
+- do not expose local-repository acquisition on the initial surface;
+- do not expose pull-request visualization as an initial or equal product mode;
+- demonstrate the product with a small interactive semantic-graph preview instead of generic feature cards or fake metrics;
+- keep the repository input visible in the hero so the landing page remains actionable;
+- promotional copy must explain the code-comprehension outcome, not generic SaaS claims.
 
 ## Information Hierarchy
 
@@ -306,7 +319,7 @@ Use, in order:
 5. neutral surface contrast;
 6. semantic accent/state only when needed.
 
-Do not create hierarchy through stacks of cards, excessive pills, oversized headings, nested neutral cards, or decorative iconography.
+Do not create hierarchy through stacks of cards, excessive pills, oversized headings inside the operational workspace, nested neutral cards, or decorative iconography.
 
 ## Visual Language
 
@@ -323,11 +336,15 @@ CodeFlow is technical, dense but calm, precise, spatial, and evidence-oriented.
 
 ## Motion
 
-Motion exists only to communicate state or spatial relationship:
+Motion communicates state, spatial relationship, or bounded waiting feedback:
 
 - selection/focus transition;
 - bounded expansion/collapse;
-- inspector/pane transition when needed.
+- inspector/pane transition when needed;
+- interactive landing-preview feedback;
+- repository-analysis activity while the backend request is pending.
+
+Analysis waiting UI should use CodeFlow-native graph/symbol motion rather than a decorative spinner when possible. Never display a numeric percentage or determinate progress unless the backend supplies real progress data. An indeterminate activity indicator may name plausible analysis activities without implying that each label is a completed backend stage.
 
 Do not animate graph topology for decoration. Respect `prefers-reduced-motion`.
 
@@ -355,8 +372,9 @@ Do not use:
 - decorative canvas patterns;
 - shadows on ordinary nodes/panes/rows;
 - saturated taxonomy colors;
-- marketing-style whitespace;
+- promotional whitespace detached from the primary repository action;
 - fake metrics or activity widgets;
+- fake determinate progress;
 - ornamental animation;
 - animation that moves graph topology without user intent.
 
@@ -368,7 +386,9 @@ Do not use:
 - search works with keyboard navigation and Escape dismissal;
 - all graph-native actions remain available without drag or hover;
 - disabled projection/lens choices remain semantically disabled;
-- narrow layouts preserve source/evidence task completion.
+- narrow layouts preserve source/evidence task completion;
+- landing interactions and analysis status remain keyboard/screen-reader accessible;
+- reduced-motion preferences are respected.
 
 ## Themes
 
