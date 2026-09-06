@@ -62,7 +62,8 @@ const PREVIEW_NODES: PreviewNode[] = [
     id: 'sources',
     label: 'Source discovery',
     meta: 'files · modules',
-    detail: 'Finds analyzable source structure and the files that can participate in navigation.',
+    detail:
+      'Finds analyzable source structure and the files that can participate in navigation.',
     outputs: ['Source files', 'Module boundaries'],
     group: 'intake',
     icon: Files,
@@ -73,7 +74,8 @@ const PREVIEW_NODES: PreviewNode[] = [
     id: 'entries',
     label: 'Entry points',
     meta: 'starts · exports',
-    detail: 'Surfaces plausible starting symbols so the user can begin from behavior instead of browsing folders.',
+    detail:
+      'Surfaces plausible starting symbols so the user can begin from behavior instead of browsing folders.',
     outputs: ['Starting symbols', 'Initial trace targets'],
     group: 'analysis',
     icon: Play,
@@ -84,7 +86,8 @@ const PREVIEW_NODES: PreviewNode[] = [
     id: 'symbols',
     label: 'Symbol index',
     meta: 'functions · types',
-    detail: 'Indexes source-backed symbols that relationships can resolve to stable navigation targets.',
+    detail:
+      'Indexes source-backed symbols that relationships can resolve to stable navigation targets.',
     outputs: ['Functions', 'Types and declarations'],
     group: 'analysis',
     icon: Braces,
@@ -95,7 +98,8 @@ const PREVIEW_NODES: PreviewNode[] = [
     id: 'relationships',
     label: 'Relationship map',
     meta: 'resolve edges',
-    detail: 'Connects indexed symbols into the relationship model used by the interactive workspace.',
+    detail:
+      'Connects indexed symbols into the relationship model used by the interactive workspace.',
     outputs: ['Resolved edges', 'Relationship evidence'],
     group: 'analysis',
     icon: Route,
@@ -106,7 +110,8 @@ const PREVIEW_NODES: PreviewNode[] = [
     id: 'calls',
     label: 'Calls',
     meta: 'caller → callee',
-    detail: 'Shows executable call direction so a behavior path can be followed through functions and methods.',
+    detail:
+      'Shows executable call direction so a behavior path can be followed through functions and methods.',
     outputs: ['Outgoing calls', 'Incoming callers'],
     group: 'analysis',
     icon: GitBranch,
@@ -117,7 +122,8 @@ const PREVIEW_NODES: PreviewNode[] = [
     id: 'dependencies',
     label: 'Dependencies',
     meta: 'imports · boundaries',
-    detail: 'Exposes dependency edges that explain which modules or services a path relies on.',
+    detail:
+      'Exposes dependency edges that explain which modules or services a path relies on.',
     outputs: ['Imports', 'Dependency boundaries'],
     group: 'analysis',
     icon: Package,
@@ -128,7 +134,8 @@ const PREVIEW_NODES: PreviewNode[] = [
     id: 'types',
     label: 'Types & references',
     meta: 'usage · definition',
-    detail: 'Connects definitions to references so data shapes and symbol usage remain inspectable beside call flow.',
+    detail:
+      'Connects definitions to references so data shapes and symbol usage remain inspectable beside call flow.',
     outputs: ['Definition links', 'Reference sites'],
     group: 'analysis',
     icon: ScanSearch,
@@ -139,7 +146,8 @@ const PREVIEW_NODES: PreviewNode[] = [
     id: 'graph',
     label: 'Semantic graph',
     meta: 'navigable projection',
-    detail: 'Projects the resolved relationships into the bounded graph the user can explore without losing context.',
+    detail:
+      'Projects the resolved relationships into the bounded graph the user can explore without losing context.',
     outputs: ['Focused graph', 'Traceable neighborhoods'],
     group: 'output',
     icon: Network,
@@ -150,7 +158,8 @@ const PREVIEW_NODES: PreviewNode[] = [
     id: 'evidence',
     label: 'Source & evidence',
     meta: 'inspect · verify',
-    detail: 'Keeps selected relationships grounded in source context so graph navigation remains evidence-first.',
+    detail:
+      'Keeps selected relationships grounded in source context so graph navigation remains evidence-first.',
     outputs: ['Source context', 'Relationship detail'],
     group: 'output',
     icon: PanelRight,
