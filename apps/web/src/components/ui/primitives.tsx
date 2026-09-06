@@ -55,7 +55,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) {
     const classes = cn(
-      'inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[8px] border font-medium transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cs-focus/70 disabled:pointer-events-none disabled:opacity-45',
+      'inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[5px] border font-medium transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cs-focus/70 disabled:pointer-events-none disabled:opacity-45',
       buttonVariantClasses[variant],
       buttonSizeClasses[size],
       className,
@@ -92,7 +92,7 @@ export const IconButton = forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 const controlClass =
-  'h-8 min-w-0 rounded-[8px] border border-cs-border bg-cs-control px-2.5 text-[11px] text-cs-text outline-none transition-colors duration-100 placeholder:text-cs-subtle focus:border-cs-focus focus:ring-2 focus:ring-cs-focus/25 disabled:cursor-not-allowed disabled:opacity-50';
+  'h-8 min-w-0 rounded-[3px] border border-cs-border bg-cs-control px-2.5 text-[11px] text-cs-text outline-none transition-colors duration-100 placeholder:text-cs-subtle focus:border-cs-focus focus:ring-2 focus:ring-cs-focus/25 disabled:cursor-not-allowed disabled:opacity-50';
 
 export const Input = forwardRef<
   HTMLInputElement,
@@ -109,7 +109,7 @@ export const Textarea = forwardRef<
     <textarea
       ref={ref}
       className={cn(
-        'min-w-0 rounded-[8px] border border-cs-border bg-cs-control px-2.5 py-2 text-[11px] leading-5 text-cs-text outline-none transition-colors duration-100 placeholder:text-cs-subtle focus:border-cs-focus focus:ring-2 focus:ring-cs-focus/25 disabled:cursor-not-allowed disabled:opacity-50',
+        'min-w-0 rounded-[3px] border border-cs-border bg-cs-control px-2.5 py-2 text-[11px] leading-5 text-cs-text outline-none transition-colors duration-100 placeholder:text-cs-subtle focus:border-cs-focus focus:ring-2 focus:ring-cs-focus/25 disabled:cursor-not-allowed disabled:opacity-50',
         className,
       )}
       {...props}
@@ -170,7 +170,7 @@ export const Select = ({
       <RadixSelect.Content
         position="popper"
         sideOffset={4}
-        className="z-[80] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-[10px] border border-cs-border bg-cs-panel p-1.5 text-cs-text shadow-[var(--shadow-overlay)]"
+        className="z-[80] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-[6px] border border-cs-border bg-cs-panel p-1.5 text-cs-text shadow-[var(--shadow-overlay)]"
       >
         <RadixSelect.Viewport>
           {options.map((option) => (
@@ -178,7 +178,7 @@ export const Select = ({
               key={option.value}
               value={radixValue(option.value)}
               disabled={option.disabled ?? false}
-              className="relative flex h-8 cursor-default select-none items-center rounded-[7px] px-7 pr-2.5 text-[11px] text-cs-muted outline-none data-[highlighted]:bg-cs-hover data-[highlighted]:text-cs-text data-[disabled]:pointer-events-none data-[disabled]:opacity-40"
+              className="relative flex h-8 cursor-default select-none items-center rounded-[4px] px-7 pr-2.5 text-[11px] text-cs-muted outline-none data-[highlighted]:bg-cs-hover data-[highlighted]:text-cs-text data-[disabled]:pointer-events-none data-[disabled]:opacity-40"
             >
               <RadixSelect.ItemIndicator className="absolute left-2.5 grid place-items-center text-cs-text">
                 <Check size={11} aria-hidden="true" />
@@ -213,7 +213,7 @@ export function Checkbox({
       disabled={disabled}
       aria-label={ariaLabel}
       className={cn(
-        'grid size-4 shrink-0 place-items-center rounded-[5px] border border-cs-border bg-cs-control text-cs-text outline-none transition-colors duration-100 hover:bg-cs-hover focus-visible:ring-2 focus-visible:ring-cs-focus/70 data-[state=checked]:border-cs-primary data-[state=checked]:bg-cs-primary data-[state=checked]:text-cs-primary-contrast disabled:opacity-45',
+        'grid size-4 shrink-0 place-items-center rounded-[3px] border border-cs-border bg-cs-control text-cs-text outline-none transition-colors duration-100 hover:bg-cs-hover focus-visible:ring-2 focus-visible:ring-cs-focus/70 data-[state=checked]:border-cs-primary data-[state=checked]:bg-cs-primary data-[state=checked]:text-cs-primary-contrast disabled:opacity-45',
         className,
       )}
       onCheckedChange={(next) => onCheckedChange(next === true)}
@@ -229,7 +229,7 @@ export function Panel({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
-        'rounded-[10px] border border-cs-border bg-cs-panel',
+        'rounded-[6px] border border-cs-border bg-cs-panel',
         className,
       )}
       {...props}

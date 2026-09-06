@@ -104,9 +104,9 @@ export function App() {
         <header className="workspace-header graph-app-header">
           <div className="workspace-brand">
             <h1>CodeFlow</h1>
-            <span>
-              See where code starts, where it goes, and what it depends on.
-            </span>
+            {flow === null && !analyzing ? (
+              <span>Source-backed code navigation</span>
+            ) : null}
           </div>
           <IconButton
             aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
