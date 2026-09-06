@@ -38,6 +38,9 @@ jobs:
       - name: Finalize inspector cleanup
         run: python .github/scripts/fix-product-native-inspector.py
 
+      - name: Align tests with intentional copy changes
+        run: python .github/scripts/fix-product-native-tests.py
+
       - name: Format
         run: pnpm format
 
@@ -50,6 +53,7 @@ jobs:
           rm .github/workflows/apply-product-native-ux-cleanup.yml
           rm .github/scripts/apply-product-native-ux-cleanup.py
           rm .github/scripts/fix-product-native-inspector.py
+          rm .github/scripts/fix-product-native-tests.py
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
