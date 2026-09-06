@@ -6,24 +6,27 @@
 
 CodeFlow is an **interactive code graph explorer** that transforms a software repository into a navigable semantic map.
 
-A developer starts from an entry point, class, function, file, or package and visually follows calls, references, inheritance, imports, data relationships, and dependencies through the codebase.
+A developer opens a repository and first receives a system-level mental model of the analyzed codebase. From that map they can follow entry points, responsibilities, calls, references, dependencies, types, and supported static data relationships down to exact source evidence.
 
-The graph is the primary product surface. Repository architecture, call hierarchy, dependency analysis, impact exploration, source evidence, static data flow, and pull-request change visualization are **views or operations over the same semantic graph**, not separate products or top-level workspaces.
+The graph is the primary product surface. System architecture, call hierarchy, dependency analysis, test relationships, impact exploration, source evidence, static data flow, and pull-request change visualization are **views or operations over the same semantic graph**, not separate products or top-level workspaces.
 
 ```text
 source code
   -> deterministic semantic analysis
   -> repository semantic graph = product truth
-  -> interactive graph projection = primary UX
+  -> concern + task projection = navigation aid
+  -> interactive graph = primary UX
   -> evidence/source inspection = verification
 ```
 
-CodeFlow's primary job is to answer four questions:
+CodeFlow's primary job is to answer five questions:
 
 ```text
 WHERE DOES IT START?
         ->
-WHERE CAN IT GO?
+HOW IS THE SYSTEM SEPARATED?
+        ->
+WHERE CAN DATA / CONTROL GO?
         ->
 WHAT DOES IT DEPEND ON?
         ->
@@ -40,25 +43,31 @@ A developer entering an unfamiliar or complex codebase who wants to build a ment
 
 ```text
 OPEN REPOSITORY
-  -> DISCOVER OR SEARCH ENTRY POINT / SYMBOL
-  -> CENTER GRAPH ON THAT ENTITY
+  -> ANALYZE
+  -> SEE SYSTEM MAP WITH PRIMARY ENTRY + RESPONSIBILITY LANES
   -> FOLLOW CALLS / TYPES / REFERENCES / DEPENDENCIES
-  -> EXPAND OR COLLAPSE NEIGHBORHOODS
+  -> SWITCH TO DATA / TEST / DEPENDENCY LENS WHEN NEEDED
   -> INSPECT SOURCE + EVIDENCE
-  -> MOVE FOCUS
+  -> MOVE FOCUS / SEARCH
   -> BUILD A MENTAL MODEL OF THE CODEBASE
 ```
 
-Repository acquisition is setup, not the product. After analysis succeeds, the graph owns the work surface.
+Repository acquisition is setup, not the product. Entry-point discovery is analysis output, not a required user decision before the graph becomes useful. After analysis succeeds, the graph owns the work surface.
 
 ## Product Interaction Invariants
 
-- The graph is the default post-analysis surface.
+- The system map is the default post-analysis projection of the semantic graph.
+- CodeFlow chooses the analyzed primary entry point as the initial runtime anchor; alternate detected entry points remain navigable rather than becoming a blocking picker.
 - Entry points are first-class navigation anchors.
 - Search navigates the graph; it does not open a detached result page.
-- Large repositories are explored progressively. Do not render the entire repository graph by default.
-- Incoming, outgoing, both-direction expansion, focus, collapse, and dependent traversal are graph-native operations.
-- Architecture is semantic zoom over the graph, not a separate architecture dashboard.
+- The default map separates runtime concerns from supporting test code and package dependencies.
+- UI/interface, reusable component, application logic, core/domain, infrastructure, and test labels are deterministic **navigation classifications**. They must expose their inference basis and must not be represented as verified architectural intent unless source evidence supports that stronger claim.
+- Exact graph relationships remain source-backed semantic facts. Concern classification never fabricates a relationship.
+- Tests are supporting verification relationships, not part of the primary runtime execution lane.
+- External dependencies remain package/topology evidence and do not masquerade as business/domain nodes.
+- Large repositories are explored progressively. A system projection may bound visible entities per concern; search, focus, and semantic zoom reach the underlying graph without claiming the projection is repository-complete.
+- Incoming, outgoing, both-direction expansion, focus, collapse, and dependent traversal remain graph-native operations where exposed.
+- Architecture is semantic zoom/projection over the graph, not a separate architecture dashboard.
 - Package topology is a zoomed-out graph projection, not a separate package dashboard.
 - Impact is inverse/transitive graph traversal, not a top-level workspace.
 - Pull-request analysis is a change overlay on the graph. Added, modified, and removed semantic entities/relationships remain grounded in frozen BASE/HEAD revisions.
@@ -66,6 +75,23 @@ Repository acquisition is setup, not the product. After analysis succeeds, the g
 - Static data flow and deterministic static steps are contextual lenses/inspection modes; they are not runtime execution.
 
 ## Canonical Semantic Surfaces
+
+### System concern projection
+
+The default system map makes responsibility boundaries legible without replacing canonical semantic identity:
+
+```text
+UI / INTERFACE
+  -> COMPONENTS
+  -> APPLICATION LOGIC
+  -> CORE / DOMAIN
+  -> INFRASTRUCTURE
+
+TESTING -------------------------------- supporting verification
+DEPENDENCIES ---------------------------- package / external boundary
+```
+
+A repository does not need every lane. Missing evidence remains absent rather than being filled for visual symmetry.
 
 ### Semantic zoom
 
@@ -89,10 +115,21 @@ Calls        -> CALLS
 References   -> REFERENCES
 Dependencies -> IMPORTS / DEPENDS_ON
 Types        -> EXTENDS / IMPLEMENTS
-Data         -> supported source-backed data-flow relationships
+Data         -> supported source-backed static data-flow relationships
+Tests        -> source-backed relationships involving detected test/spec/e2e code
 ```
 
 A lens filters what is visible; it must never fabricate missing relationships.
+
+### Static data-flow lens
+
+When function-level data facts are available, CodeFlow may project parameters, argument mappings, reads, writes, mutations, transforms, returns, branches, and failures. This projection must remain explicitly static:
+
+```text
+SOURCE FACTS != OBSERVED RUNTIME EXECUTION
+```
+
+No runtime branch choice, concrete value, timing, frequency, or probability may be inferred from static steps alone.
 
 ### Change overlay
 
@@ -158,6 +195,7 @@ These capabilities support the graph. They do not each require a separate top-le
 
 ## Material Open Questions
 
+- how concern classification should evolve when framework-specific semantic evidence becomes available;
 - private repository authentication and retention;
 - runtime trace acquisition and sandboxing;
 - AI/private-source handling;
