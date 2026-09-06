@@ -160,21 +160,76 @@ const PREVIEW_NODES: PreviewNode[] = [
 ];
 
 const PREVIEW_EDGES: PreviewEdge[] = [
-  { from: 'repository', to: 'sources', path: 'M 360 40 C 360 58, 360 72, 360 94' },
-  { from: 'sources', to: 'entries', path: 'M 360 105 C 330 125, 265 130, 209 166' },
-  { from: 'sources', to: 'symbols', path: 'M 360 105 C 390 125, 455 130, 511 166' },
-  { from: 'entries', to: 'relationships', path: 'M 209 179 C 250 205, 315 210, 360 244' },
-  { from: 'symbols', to: 'relationships', path: 'M 511 179 C 470 205, 405 210, 360 244' },
-  { from: 'relationships', to: 'calls', path: 'M 360 255 C 305 275, 205 278, 130 320' },
-  { from: 'relationships', to: 'dependencies', path: 'M 360 255 C 360 278, 360 292, 360 320' },
-  { from: 'relationships', to: 'types', path: 'M 360 255 C 415 275, 515 278, 590 320' },
-  { from: 'calls', to: 'graph', path: 'M 130 334 C 165 365, 215 382, 260 414' },
-  { from: 'dependencies', to: 'graph', path: 'M 360 334 C 340 365, 310 386, 260 414' },
-  { from: 'types', to: 'graph', path: 'M 590 334 C 500 370, 375 385, 260 414' },
-  { from: 'graph', to: 'evidence', path: 'M 276 420 C 340 420, 410 420, 504 420' },
+  {
+    from: 'repository',
+    to: 'sources',
+    path: 'M 360 40 C 360 58, 360 72, 360 94',
+  },
+  {
+    from: 'sources',
+    to: 'entries',
+    path: 'M 360 105 C 330 125, 265 130, 209 166',
+  },
+  {
+    from: 'sources',
+    to: 'symbols',
+    path: 'M 360 105 C 390 125, 455 130, 511 166',
+  },
+  {
+    from: 'entries',
+    to: 'relationships',
+    path: 'M 209 179 C 250 205, 315 210, 360 244',
+  },
+  {
+    from: 'symbols',
+    to: 'relationships',
+    path: 'M 511 179 C 470 205, 405 210, 360 244',
+  },
+  {
+    from: 'relationships',
+    to: 'calls',
+    path: 'M 360 255 C 305 275, 205 278, 130 320',
+  },
+  {
+    from: 'relationships',
+    to: 'dependencies',
+    path: 'M 360 255 C 360 278, 360 292, 360 320',
+  },
+  {
+    from: 'relationships',
+    to: 'types',
+    path: 'M 360 255 C 415 275, 515 278, 590 320',
+  },
+  {
+    from: 'calls',
+    to: 'graph',
+    path: 'M 130 334 C 165 365, 215 382, 260 414',
+  },
+  {
+    from: 'dependencies',
+    to: 'graph',
+    path: 'M 360 334 C 340 365, 310 386, 260 414',
+  },
+  {
+    from: 'types',
+    to: 'graph',
+    path: 'M 590 334 C 500 370, 375 385, 260 414',
+  },
+  {
+    from: 'graph',
+    to: 'evidence',
+    path: 'M 276 420 C 340 420, 410 420, 504 420',
+  },
 ];
 
-const CAPABILITIES = ['Entry points', 'Calls', 'References', 'Dependencies', 'Types', 'Evidence'];
+const CAPABILITIES = [
+  'Entry points',
+  'Calls',
+  'References',
+  'Dependencies',
+  'Types',
+  'Evidence',
+];
 
 export function LandingExperience({
   error,
@@ -222,7 +277,10 @@ export function LandingExperience({
             execution
           </p>
 
-          <div className="landing-capabilities" aria-label="CodeFlow relationships">
+          <div
+            className="landing-capabilities"
+            aria-label="CodeFlow relationships"
+          >
             {CAPABILITIES.map((capability) => (
               <span key={capability}>{capability}</span>
             ))}
@@ -247,7 +305,10 @@ export function LandingExperience({
           </AnimatePresence>
         </div>
 
-        <div className="landing-preview" aria-label="Interactive CodeFlow preview">
+        <div
+          className="landing-preview"
+          aria-label="Interactive CodeFlow preview"
+        >
           <div className="landing-preview-bar">
             <span>repository analysis</span>
             <span>Source → evidence</span>
@@ -261,7 +322,8 @@ export function LandingExperience({
               aria-hidden="true"
             >
               {PREVIEW_EDGES.map((edge, index) => {
-                const connected = edge.from === activeNode || edge.to === activeNode;
+                const connected =
+                  edge.from === activeNode || edge.to === activeNode;
 
                 return (
                   <motion.path
@@ -274,7 +336,10 @@ export function LandingExperience({
                       opacity: connected ? 1 : 0.28,
                     }}
                     transition={{
-                      pathLength: { duration: 0.45, delay: 0.03 + index * 0.025 },
+                      pathLength: {
+                        duration: 0.45,
+                        delay: 0.03 + index * 0.025,
+                      },
                       opacity: { duration: 0.16 },
                     }}
                   />
@@ -327,7 +392,10 @@ export function LandingExperience({
                 <strong>{selectedNode.label}</strong>
               </div>
               <p>{selectedNode.detail}</p>
-              <div className="landing-preview-outputs" aria-label={`${selectedNode.label} outputs`}>
+              <div
+                className="landing-preview-outputs"
+                aria-label={`${selectedNode.label} outputs`}
+              >
                 {selectedNode.outputs.map((output) => (
                   <span key={output}>{output}</span>
                 ))}
