@@ -38,7 +38,7 @@ describe('App acquisition experience', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('shows an honest animated activity state while analysis is pending', () => {
+  it('shows an honest animated activity state while analysis is pending', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(() => new Promise<Response>(() => undefined)),
@@ -50,7 +50,7 @@ describe('App acquisition experience', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Open code graph' }));
 
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(await screen.findByRole('status')).toBeInTheDocument();
     expect(
       screen.getByRole('heading', {
         name: 'Mapping the codebase into something you can follow.',
