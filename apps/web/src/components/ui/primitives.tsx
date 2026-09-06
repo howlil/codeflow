@@ -1,4 +1,4 @@
-import { Check, ChevronDown } from 'lucide-react';
+import { Check, ChevronDown, type LucideIcon } from 'lucide-react';
 import {
   Checkbox as RadixCheckbox,
   Select as RadixSelect,
@@ -32,8 +32,31 @@ const buttonVariantClasses: Record<ButtonVariant, string> = {
 const buttonSizeClasses: Record<ButtonSize, string> = {
   sm: 'h-8 px-2.5 text-[11px]',
   md: 'h-9 px-3 text-[11px]',
-  icon: 'size-8 p-0',
+  icon: 'size-7 p-0',
 };
+
+export interface ProductIconProps {
+  icon: LucideIcon;
+  size?: number;
+  strokeWidth?: number;
+  className?: string;
+}
+
+export function ProductIcon({
+  icon: Icon,
+  size = 14,
+  strokeWidth = 1.75,
+  className,
+}: ProductIconProps) {
+  return (
+    <Icon
+      size={size}
+      strokeWidth={strokeWidth}
+      className={cn('shrink-0', className)}
+      aria-hidden="true"
+    />
+  );
+}
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -55,7 +78,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref,
   ) {
     const classes = cn(
-      'inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[5px] border font-medium transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cs-focus/70 disabled:pointer-events-none disabled:opacity-45',
+      'inline-flex shrink-0 items-center justify-center gap-1.5 rounded-[4px] border font-medium transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cs-focus/70 disabled:pointer-events-none disabled:opacity-45',
       buttonVariantClasses[variant],
       buttonSizeClasses[size],
       className,
@@ -92,7 +115,7 @@ export const IconButton = forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 const controlClass =
-  'h-8 min-w-0 rounded-[3px] border border-cs-border bg-cs-control px-2.5 text-[11px] text-cs-text outline-none transition-colors duration-100 placeholder:text-cs-subtle focus:border-cs-focus focus:ring-2 focus:ring-cs-focus/25 disabled:cursor-not-allowed disabled:opacity-50';
+  'h-8 min-w-0 rounded-[4px] border border-cs-border bg-cs-control px-2.5 text-[11px] text-cs-text outline-none transition-colors duration-100 placeholder:text-cs-subtle focus:border-cs-focus focus:ring-2 focus:ring-cs-focus/25 disabled:cursor-not-allowed disabled:opacity-50';
 
 export const Input = forwardRef<
   HTMLInputElement,
@@ -109,7 +132,7 @@ export const Textarea = forwardRef<
     <textarea
       ref={ref}
       className={cn(
-        'min-w-0 rounded-[3px] border border-cs-border bg-cs-control px-2.5 py-2 text-[11px] leading-5 text-cs-text outline-none transition-colors duration-100 placeholder:text-cs-subtle focus:border-cs-focus focus:ring-2 focus:ring-cs-focus/25 disabled:cursor-not-allowed disabled:opacity-50',
+        'min-w-0 rounded-[4px] border border-cs-border bg-cs-control px-2.5 py-2 text-[11px] leading-5 text-cs-text outline-none transition-colors duration-100 placeholder:text-cs-subtle focus:border-cs-focus focus:ring-2 focus:ring-cs-focus/25 disabled:cursor-not-allowed disabled:opacity-50',
         className,
       )}
       {...props}
@@ -163,7 +186,7 @@ export const Select = ({
     >
       <RadixSelect.Value />
       <RadixSelect.Icon className="shrink-0 text-cs-muted">
-        <ChevronDown size={12} aria-hidden="true" />
+        <ProductIcon icon={ChevronDown} size={12} />
       </RadixSelect.Icon>
     </RadixSelect.Trigger>
     <RadixSelect.Portal>
@@ -181,7 +204,7 @@ export const Select = ({
               className="relative flex h-8 cursor-default select-none items-center rounded-[4px] px-7 pr-2.5 text-[11px] text-cs-muted outline-none data-[highlighted]:bg-cs-hover data-[highlighted]:text-cs-text data-[disabled]:pointer-events-none data-[disabled]:opacity-40"
             >
               <RadixSelect.ItemIndicator className="absolute left-2.5 grid place-items-center text-cs-text">
-                <Check size={11} aria-hidden="true" />
+                <ProductIcon icon={Check} size={11} strokeWidth={2} />
               </RadixSelect.ItemIndicator>
               <RadixSelect.ItemText>{option.label}</RadixSelect.ItemText>
             </RadixSelect.Item>
@@ -219,7 +242,7 @@ export function Checkbox({
       onCheckedChange={(next) => onCheckedChange(next === true)}
     >
       <RadixCheckbox.Indicator>
-        <Check size={11} strokeWidth={2.2} aria-hidden="true" />
+        <ProductIcon icon={Check} size={11} strokeWidth={2.1} />
       </RadixCheckbox.Indicator>
     </RadixCheckbox.Root>
   );

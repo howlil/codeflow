@@ -1,4 +1,31 @@
 import {
+  ArrowDownRight,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUpLeft,
+  Box,
+  Braces,
+  Code2,
+  Crosshair,
+  FileCode2,
+  Files,
+  FolderGit2,
+  GitBranch,
+  Layers,
+  Maximize2,
+  Minimize2,
+  Network,
+  Package,
+  Play,
+  RefreshCw,
+  Route,
+  Search,
+  Variable,
+  ZoomIn,
+  ZoomOut,
+  type LucideIcon,
+} from 'lucide-react';
+import {
   useEffect,
   useMemo,
   useRef,
@@ -32,6 +59,7 @@ import {
   Button,
   IconButton,
   Input,
+  ProductIcon,
   Select,
 } from '../../components/ui/primitives';
 
@@ -54,13 +82,34 @@ type GraphLayout = {
   height: number;
 };
 
-const NODE_WIDTH = 196;
-const NODE_HEIGHT = 72;
-const COLUMN_GAP = 72;
-const ROW_GAP = 34;
+const NODE_WIDTH = 188;
+const NODE_HEIGHT = 68;
+const COLUMN_GAP = 64;
+const ROW_GAP = 30;
 const MIN_GRAPH_ZOOM = 0.6;
 const MAX_GRAPH_ZOOM = 1.4;
 const GRAPH_ZOOM_STEP = 0.1;
+
+const GRAPH_LEVEL_ICONS: Record<GraphLevel, LucideIcon> = {
+  code: Code2,
+  structure: Files,
+  packages: Package,
+};
+
+const NODE_KIND_ICONS: Record<SemanticGraphNode['kind'], LucideIcon> = {
+  Repository: FolderGit2,
+  Workspace: Layers,
+  Package,
+  Module: Layers,
+  File: FileCode2,
+  Function: Braces,
+  Method: Braces,
+  Class: Box,
+  Interface: Box,
+  Type: Box,
+  Enum: Box,
+  Variable,
+};
 
 type SourceSnippetLine = {
   lineNumber: number;
@@ -453,6 +502,7 @@ export function GraphWorkspace({
                     {impact.summary.transitiveCount} transitive
                   </span>
                   <Button variant="ghost" onClick={() => setImpact(null)}>
+                    <ProductIcon icon={Minimize2} size={12} />
                     Clear dependents
                   </Button>
                 </motion.div>
@@ -564,16 +614,24 @@ function GraphContextBar({
   return (
     <div className="graph-context-bar">
       <div className="graph-repository-context">
-        <strong>{repositoryLabel}</strong>
-        <span>
-          {flow.analysis.analyzedFileCount} analyzed file
-          {flow.analysis.analyzedFileCount === 1 ? '' : 's'}
-          {flow.analysis.status === 'partial' ? ' · partial' : ''}
+        <span className="graph-context-icon">
+          <ProductIcon icon={FolderGit2} size={13} />
         </span>
+        <div className="graph-context-copy">
+          <strong>{repositoryLabel}</strong>
+          <span>
+            {flow.analysis.analyzedFileCount} analyzed file
+            {flow.analysis.analyzedFileCount === 1 ? '' : 's'}
+            {flow.analysis.status === 'partial' ? ' · partial' : ''}
+          </span>
+        </div>
       </div>
 
       <div className="graph-entry-control">
-        <span>Entry</span>
+        <span className="graph-control-label">
+          <ProductIcon icon={Play} size={11} />
+          <span>Entry</span>
+        </span>
         {entryPoints.length > 1 ? (
           <Select
             aria-label="Entry point"
@@ -597,8 +655,10 @@ function GraphContextBar({
       </div>
 
       <div className="graph-search-control">
+        <ProductIcon icon={Search} size={12} className="graph-search-icon" />
         <Input
           ref={searchInputRef}
+          className="graph-search-input"
           aria-label="Search code graph"
           type="search"
           value={query}
@@ -643,6 +703,7 @@ function GraphContextBar({
       </div>
 
       <Button variant="ghost" onClick={onChangeRepository}>
+        <ProductIcon icon={RefreshCw} size={12} />
         Change repository
       </Button>
     </div>
@@ -692,6 +753,7 @@ function GraphProjectionControls({
               disabled={count === 0}
               onClick={() => onLevelChange(candidate)}
             >
+              <ProductIcon icon={GRAPH_LEVEL_ICONS[candidate]} size={11} />
               <span>{levelLabel(candidate)}</span>
             </Button>
           );
@@ -699,7 +761,10 @@ function GraphProjectionControls({
       </div>
 
       <div className="graph-lens-control">
-        <span>Relationship</span>
+        <span className="graph-control-label">
+          <ProductIcon icon={GitBranch} size={11} />
+          <span>Relationship</span>
+        </span>
         <Select
           aria-label="Relationship lens"
           value={lens}
@@ -1047,7 +1112,14 @@ function GraphCanvas({
                         <span>{node.changeKind.toUpperCase()}</span>
                       ) : null}
                     </span>
-                    <strong>{node.label}</strong>
+                    <span className="semantic-graph-node-title">
+                      <ProductIcon
+                        icon={NODE_KIND_ICONS[node.kind]}
+                        size={12}
+                        className="semantic-graph-node-kind-icon"
+                      />
+                      <strong>{node.label}</strong>
+                    </span>
                     <span className="semantic-graph-node-path">
                       {compactPath(node.path)}
                     </span>
@@ -1070,7 +1142,7 @@ function GraphCanvas({
           disabled={zoom <= MIN_GRAPH_ZOOM}
           onClick={() => zoomBy(-GRAPH_ZOOM_STEP)}
         >
-          −
+          <ProductIcon icon={ZoomOut} size={12} />
         </IconButton>
         <span aria-live="polite">{Math.round(zoom * 100)}%</span>
         <IconButton
@@ -1079,14 +1151,18 @@ function GraphCanvas({
           disabled={zoom >= MAX_GRAPH_ZOOM}
           onClick={() => zoomBy(GRAPH_ZOOM_STEP)}
         >
-          +
+          <ProductIcon icon={ZoomIn} size={12} />
         </IconButton>
-        <Button variant="ghost" onClick={fitGraph}>
-          Fit graph
-        </Button>
-        <Button variant="ghost" onClick={() => scrollFocusIntoCenter('smooth')}>
-          Center focus
-        </Button>
+        <IconButton aria-label="Fit graph" title="Fit graph" onClick={fitGraph}>
+          <ProductIcon icon={Maximize2} size={12} />
+        </IconButton>
+        <IconButton
+          aria-label="Center focus"
+          title="Center focus"
+          onClick={() => scrollFocusIntoCenter('smooth')}
+        >
+          <ProductIcon icon={Crosshair} size={12} />
+        </IconButton>
       </div>
     </div>
   );
@@ -1144,7 +1220,10 @@ function GraphInspector({
       >
         <div className="graph-inspector-header">
           <span className="panel-kicker">Selected relationship</span>
-          <strong>{edge.kind}</strong>
+          <span className="graph-inspector-title">
+            <ProductIcon icon={GitBranch} size={13} />
+            <strong>{edge.kind}</strong>
+          </span>
           <span>
             {source?.label ?? edge.sourceId} → {target?.label ?? edge.targetId}
           </span>
@@ -1206,7 +1285,10 @@ function GraphInspector({
     >
       <div className="graph-inspector-header">
         <span className="panel-kicker">Selected · {node.kind}</span>
-        <strong>{node.label}</strong>
+        <span className="graph-inspector-title">
+          <ProductIcon icon={NODE_KIND_ICONS[node.kind]} size={13} />
+          <strong>{node.label}</strong>
+        </span>
         <span>{formatLocation(node.path, node.location)}</span>
       </div>
 
@@ -1238,16 +1320,21 @@ function GraphInspector({
         <div className="graph-node-primary-actions">
           {!expandedOutgoing.has(node.id) && outgoing.length > 0 ? (
             <Button onClick={() => onExpandOutgoing(node.id)}>
+              <ProductIcon icon={ArrowDownRight} size={12} />
               Expand outgoing
             </Button>
           ) : null}
           {!expandedIncoming.has(node.id) && incoming.length > 0 ? (
             <Button onClick={() => onExpandIncoming(node.id)}>
+              <ProductIcon icon={ArrowUpLeft} size={12} />
               Expand incoming
             </Button>
           ) : null}
           {expandedOutgoing.has(node.id) && expandedIncoming.has(node.id) ? (
-            <Button onClick={() => onCollapse(node.id)}>Collapse branch</Button>
+            <Button onClick={() => onCollapse(node.id)}>
+              <ProductIcon icon={Minimize2} size={12} />
+              Collapse branch
+            </Button>
           ) : null}
         </div>
         <div className="graph-node-secondary-actions">
@@ -1256,17 +1343,20 @@ function GraphInspector({
           outgoing.length > 0 &&
           incoming.length > 0 ? (
             <Button variant="ghost" onClick={() => onShowBoth(node.id)}>
+              <ProductIcon icon={Route} size={12} />
               Expand both
             </Button>
           ) : null}
           {focusId !== node.id ? (
             <Button variant="ghost" onClick={() => onFocus(node)}>
+              <ProductIcon icon={Crosshair} size={12} />
               Focus here
             </Button>
           ) : null}
           {(expandedOutgoing.has(node.id) || expandedIncoming.has(node.id)) &&
           !(expandedOutgoing.has(node.id) && expandedIncoming.has(node.id)) ? (
             <Button variant="ghost" onClick={() => onCollapse(node.id)}>
+              <ProductIcon icon={Minimize2} size={12} />
               Collapse branch
             </Button>
           ) : null}
@@ -1276,11 +1366,13 @@ function GraphInspector({
               disabled={impactLoading}
               onClick={() => void onShowDependents(node)}
             >
+              <ProductIcon icon={Network} size={12} />
               {impactLoading ? 'Tracing…' : 'Show dependents'}
             </Button>
           ) : null}
           {node.kind === 'Function' && !projectedFunction ? (
             <Button onClick={() => onTraceFunction(node)}>
+              <ProductIcon icon={GitBranch} size={12} />
               Trace calls from here
             </Button>
           ) : null}
@@ -1366,8 +1458,12 @@ function GraphInspector({
                   type="button"
                   onClick={() => onSelectEdge(candidate.id)}
                 >
-                  <span>
-                    {outgoingEdge ? '→' : '←'} {candidate.kind}
+                  <span className="graph-related-edge-kind">
+                    <ProductIcon
+                      icon={outgoingEdge ? ArrowRight : ArrowLeft}
+                      size={11}
+                    />
+                    {candidate.kind}
                   </span>
                   <strong>{other?.label ?? 'Unknown entity'}</strong>
                   <small>{evidenceTrust(candidate.evidence)}</small>

@@ -9,11 +9,12 @@ import {
   Play,
   Route,
   ScanSearch,
+  type LucideIcon,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
 
-import { Button } from '../../components/ui/primitives';
+import { Button, ProductIcon } from '../../components/ui/primitives';
 import { GitHubRepositoryPicker } from './GitHubRepositoryPicker';
 
 type PreviewNodeId =
@@ -35,7 +36,7 @@ type PreviewNode = {
   detail: string;
   outputs: string[];
   group: 'intake' | 'analysis' | 'output';
-  icon: typeof Braces;
+  icon: LucideIcon;
   x: string;
   y: string;
 };
@@ -264,7 +265,7 @@ export function LandingExperience({
       <div className="landing-hero">
         <div className="landing-copy">
           <div className="landing-eyebrow">
-            <Network size={13} aria-hidden="true" />
+            <ProductIcon icon={Network} size={12} />
             <span>Source-backed code navigation</span>
           </div>
 
@@ -358,7 +359,6 @@ export function LandingExperience({
 
             <div className="landing-preview-flow">
               {PREVIEW_NODES.map((node, index) => {
-                const Icon = node.icon;
                 const selected = node.id === activeNode;
 
                 return (
@@ -376,7 +376,7 @@ export function LandingExperience({
                     whileTap={{ scale: 0.99 }}
                   >
                     <span className="landing-preview-node-icon">
-                      <Icon size={12} aria-hidden="true" />
+                      <ProductIcon icon={node.icon} size={12} />
                     </span>
                     <span className="landing-preview-node-copy">
                       <strong>{node.label}</strong>

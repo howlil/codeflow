@@ -1,0 +1,273 @@
+.graph-context-bar {
+  grid-template-columns:
+    minmax(172px, 0.72fr) minmax(200px, 0.86fr) minmax(280px, 1.35fr)
+    auto;
+  gap: 8px;
+  min-height: 40px;
+  padding: 5px 8px;
+}
+
+.graph-repository-context {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 7px;
+  align-items: center;
+}
+
+.graph-context-icon {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  color: var(--color-cs-muted);
+  background: var(--color-cs-surface);
+  border: 1px solid var(--color-cs-border);
+  border-radius: 4px;
+}
+
+.graph-context-copy {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.graph-context-copy strong,
+.graph-entry-control strong {
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.graph-context-copy > span {
+  overflow: hidden;
+  color: var(--color-cs-muted);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.graph-control-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-cs-muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.graph-entry-control {
+  gap: 6px;
+}
+
+.graph-search-icon {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 9px;
+  color: var(--color-cs-muted);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.graph-search-input {
+  padding-left: 28px;
+}
+
+.graph-context-bar > button {
+  white-space: nowrap;
+}
+
+.graph-primary-toolbar {
+  min-height: 42px;
+  padding: 5px 8px;
+  gap: 10px;
+}
+
+.graph-projection-controls {
+  gap: 8px;
+}
+
+.graph-level-switcher {
+  gap: 0;
+  padding: 1px;
+  border-radius: 5px;
+}
+
+.graph-level-switcher button {
+  height: 28px;
+  padding-inline: 7px;
+  gap: 5px;
+  border-radius: 3px;
+}
+
+.graph-level-switcher button svg,
+.graph-lens-control svg {
+  color: var(--color-cs-muted);
+}
+
+.graph-level-switcher button[aria-pressed='true'] svg {
+  color: var(--color-cs-focus);
+}
+
+.graph-lens-control {
+  grid-template-columns: auto minmax(108px, 132px);
+  gap: 5px;
+}
+
+.semantic-graph-node {
+  width: 188px;
+  height: 68px;
+  gap: 3px;
+  padding: 6px 7px;
+  border-radius: 5px;
+}
+
+.semantic-graph-node-meta {
+  gap: 5px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.semantic-graph-node-title {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.semantic-graph-node-title strong {
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.semantic-graph-node-kind-icon {
+  color: var(--color-cs-muted);
+}
+
+.semantic-graph-node--focus .semantic-graph-node-kind-icon,
+.semantic-graph-node--selected .semantic-graph-node-kind-icon {
+  color: var(--color-cs-focus);
+}
+
+.semantic-graph-node-path {
+  font-size: 9px;
+}
+
+.graph-viewport-controls {
+  left: 8px;
+  bottom: 8px;
+  gap: 1px;
+  padding: 2px;
+  border-radius: 5px;
+}
+
+.graph-viewport-controls > span {
+  min-width: 36px;
+  font-size: 9px;
+}
+
+.graph-viewport-controls button {
+  min-width: 27px;
+}
+
+.graph-inspector-header {
+  gap: 3px;
+  padding: 8px 9px;
+}
+
+.graph-inspector-title {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.graph-inspector-title svg {
+  color: var(--color-cs-muted);
+}
+
+.graph-inspector-title strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.graph-node-primary-actions {
+  gap: 3px;
+}
+
+.graph-node-secondary-actions {
+  gap: 1px;
+}
+
+.graph-node-secondary-actions button {
+  gap: 5px;
+}
+
+.graph-related-edge-kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.graph-related-edge-kind svg {
+  color: var(--color-cs-subtle);
+}
+
+.graph-related-edge-list button:hover .graph-related-edge-kind svg {
+  color: var(--color-cs-focus);
+}
+
+@media (max-width: 1120px) {
+  .graph-context-bar {
+    grid-template-columns:
+      minmax(150px, 0.68fr) minmax(180px, 0.86fr) minmax(220px, 1.22fr)
+      auto;
+  }
+}
+
+@media (max-width: 1020px) {
+  .graph-context-bar {
+    grid-template-columns: minmax(150px, 1fr) auto;
+  }
+}
+
+@media (max-width: 680px) {
+  .graph-context-bar {
+    grid-template-columns: 1fr;
+    padding: 6px 8px;
+  }
+
+  .graph-repository-context {
+    grid-template-columns: 22px minmax(0, 1fr);
+  }
+
+  .graph-context-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .graph-level-switcher button {
+    padding-inline: 5px;
+  }
+
+  .graph-level-switcher button svg {
+    display: none;
+  }
+
+  .graph-viewport-controls {
+    right: 8px;
+    left: auto;
+    justify-content: flex-end;
+  }
+}

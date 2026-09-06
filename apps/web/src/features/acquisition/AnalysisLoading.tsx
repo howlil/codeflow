@@ -1,6 +1,8 @@
 import { Braces, FileSearch, GitBranch, Network } from 'lucide-react';
 import { motion } from 'motion/react';
 
+import { ProductIcon } from '../../components/ui/primitives';
+
 const ACTIVITY_LABELS = [
   { icon: FileSearch, label: 'Scanning source structure' },
   { icon: Braces, label: 'Resolving symbols and entry points' },
@@ -77,7 +79,7 @@ export function AnalysisLoading({ target }: { target: string | null }) {
           animate={{ y: [0, -3, 0] }}
           transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
         >
-          <Network size={16} />
+          <ProductIcon icon={Network} size={15} />
           <span>entry</span>
         </motion.div>
         <motion.div
@@ -90,7 +92,7 @@ export function AnalysisLoading({ target }: { target: string | null }) {
             ease: 'easeInOut',
           }}
         >
-          <Braces size={15} />
+          <ProductIcon icon={Braces} size={14} />
           <span>symbols</span>
         </motion.div>
         <motion.div
@@ -103,7 +105,7 @@ export function AnalysisLoading({ target }: { target: string | null }) {
             ease: 'easeInOut',
           }}
         >
-          <GitBranch size={15} />
+          <ProductIcon icon={GitBranch} size={14} />
           <span>calls</span>
         </motion.div>
         <motion.div
@@ -111,7 +113,7 @@ export function AnalysisLoading({ target }: { target: string | null }) {
           animate={{ scale: [1, 1.035, 1] }}
           transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
         >
-          <FileSearch size={15} />
+          <ProductIcon icon={FileSearch} size={14} />
           <span>graph</span>
         </motion.div>
       </div>
@@ -129,7 +131,7 @@ export function AnalysisLoading({ target }: { target: string | null }) {
         </div>
 
         <div className="analysis-loading-activities">
-          {ACTIVITY_LABELS.map(({ icon: Icon, label }, index) => (
+          {ACTIVITY_LABELS.map(({ icon, label }, index) => (
             <motion.div
               key={label}
               initial={{ opacity: 0.35 }}
@@ -141,7 +143,7 @@ export function AnalysisLoading({ target }: { target: string | null }) {
                 ease: 'easeInOut',
               }}
             >
-              <Icon size={13} aria-hidden="true" />
+              <ProductIcon icon={icon} size={12} />
               <span>{label}</span>
             </motion.div>
           ))}

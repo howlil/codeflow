@@ -11,7 +11,7 @@ import { LandingExperience } from './features/acquisition/LandingExperience';
 import { GraphWorkspace } from './features/workspace/GraphWorkspace';
 import type { RepositorySelectionSummary } from './features/acquisition/RepositoryPicker';
 import type { SemanticGraphNode } from './domain/graph/graph-model';
-import { IconButton } from './components/ui/primitives';
+import { IconButton, ProductIcon } from './components/ui/primitives';
 
 type Theme = 'dark' | 'light';
 
@@ -115,11 +115,7 @@ export function App() {
               setTheme((current) => (current === 'dark' ? 'light' : 'dark'))
             }
           >
-            {theme === 'dark' ? (
-              <Sun size={14} aria-hidden="true" />
-            ) : (
-              <Moon size={14} aria-hidden="true" />
-            )}
+            <ProductIcon icon={theme === 'dark' ? Sun : Moon} size={13} />
           </IconButton>
         </header>
 
