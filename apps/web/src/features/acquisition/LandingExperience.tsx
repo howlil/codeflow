@@ -1,10 +1,4 @@
-import {
-  ArrowRight,
-  Braces,
-  Database,
-  GitBranch,
-  Network,
-} from 'lucide-react';
+import { ArrowRight, Braces, Database, GitBranch, Network } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
 
@@ -105,7 +99,10 @@ export function LandingExperience({
           </AnimatePresence>
         </div>
 
-        <div className="landing-demo" aria-label="Interactive CodeFlow preview">
+        <div
+          className="landing-demo"
+          aria-label="Interactive CodeFlow preview"
+        >
           <div className="landing-demo-toolbar">
             <div>
               <span className="landing-window-dot" />
