@@ -86,7 +86,8 @@
 
 .landing-experience .github-input-row:focus-within {
   border-color: var(--color-cs-focus);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-cs-focus) 28%, transparent);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--color-cs-focus) 28%, transparent);
 }
 
 .landing-experience .github-input-row input {
@@ -189,7 +190,10 @@
   min-height: 340px;
   overflow: hidden;
   background-color: var(--color-cs-bg);
-  background-image: radial-gradient(var(--color-cs-border) 0.7px, transparent 0.7px);
+  background-image: radial-gradient(
+    var(--color-cs-border) 0.7px,
+    transparent 0.7px
+  );
   background-size: 17px 17px;
 }
 
@@ -214,7 +218,11 @@
 
 .landing-demo-edges path {
   fill: none;
-  stroke: color-mix(in srgb, var(--color-cs-focus) 58%, var(--color-cs-border));
+  stroke: color-mix(
+    in srgb,
+    var(--color-cs-focus) 58%,
+    var(--color-cs-border)
+  );
   stroke-width: 1.2;
 }
 
@@ -246,7 +254,8 @@
 
 .landing-demo-node[aria-pressed='true'] {
   border-color: var(--color-cs-focus);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-cs-focus) 32%, transparent);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--color-cs-focus) 32%, transparent);
 }
 
 .landing-demo-node > span:nth-child(2) {
@@ -364,7 +373,10 @@
   min-height: 300px;
   overflow: hidden;
   background-color: var(--color-cs-panel);
-  background-image: radial-gradient(var(--color-cs-border) 0.7px, transparent 0.7px);
+  background-image: radial-gradient(
+    var(--color-cs-border) 0.7px,
+    transparent 0.7px
+  );
   background-size: 17px 17px;
   border: 1px solid var(--color-cs-border);
   border-radius: 14px;
