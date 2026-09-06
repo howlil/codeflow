@@ -1,14 +1,14 @@
 # Current Iteration
 
-Status: IN_PROGRESS
+Status: READY_FOR_MILESTONE
 
-Milestone: M16 - Detailed Interactive Codeflow Entry
+Last Completed Milestone: M16 - Detailed Interactive Codeflow Entry
 
-## Product Outcome
+## Product Outcome Delivered
 
-CodeFlow's entry surface should explain the product by letting the user interact with a compact but detailed representation of the analysis pipeline before opening a repository. The landing must stay task-first: one repository action, one source-backed flow model, and no decorative SaaS feature buffet.
+CodeFlow's entry surface now explains the existing source-analysis model through one compact interactive flow before repository analysis starts. The repository action remains primary while the preview makes the path from source intake to evidence inspection understandable without adding another product mode.
 
-The intended entry journey is:
+The entry journey is:
 
 ```text
 UNDERSTAND WHAT CODEFLOW TRACES
@@ -18,7 +18,7 @@ UNDERSTAND WHAT CODEFLOW TRACES
 -> ENTER SEMANTIC GRAPH
 ```
 
-The preview should explain the internal navigation model as:
+The interactive preview now represents:
 
 ```text
 PUBLIC REPOSITORY
@@ -30,50 +30,22 @@ PUBLIC REPOSITORY
 -> INSPECT SOURCE + EVIDENCE
 ```
 
-## Slices
+## Completed Slices
 
-### S1 - Entry information architecture
+- S1 tightened the landing information architecture around the public GitHub repository action and added a compact relationship capability strip without feature-card marketing UI.
+- S2 replaced the three-node demo with a ten-node source-analysis flow. Every node is selectable, connected relationships are emphasized, and the inspector explains the selected stage and its outputs.
+- S3 kept the surface compact and flat with 1px strokes, existing restrained steel-blue semantics, Lucide icons, and Motion limited to path drawing, active relationship emphasis, selection feedback, and inspector continuity.
+- S4 added behavior coverage for the detailed preview and its animated inspector transition while preserving the absence of local-repository and pull-request acquisition from the initial surface.
 
-- Keep public GitHub repository analysis as the only primary acquisition action.
-- Tighten landing copy and spacing around the repository action.
-- Add a compact capability strip that names the relationship categories CodeFlow can expose without turning them into marketing cards.
-- Preserve the existing product boundary: static source analysis only, no repository code execution.
+## Boundaries Preserved
 
-### S2 - Detailed interactive flow graph
+- Public GitHub repository analysis remains the only primary acquisition action.
+- Repository-analysis APIs, analysis engine, graph truth, persistence, and repository-selection contracts are unchanged.
+- No new runtime dependency was introduced; the implementation reuses `lucide-react` and `motion` already present in the web app.
+- No fake numeric analysis progress was introduced.
+- Local repository acquisition and pull-request visualization remain absent from the initial surface.
+- No new product capability was added beyond explaining and starting the existing repository-analysis flow.
 
-- Replace the three-node preview with a detailed source-analysis flow from repository intake through semantic graph output and evidence inspection.
-- Use semantic Lucide icons already available in the repo rather than adding another icon package.
-- Make every graph node keyboard/click selectable.
-- Highlight the selected node and its directly connected relationships.
-- Show concise node-specific explanation and outputs in an inspector region.
+## Verification
 
-### S3 - Compact visual and motion treatment
-
-- Keep the surface flat, compact, neutral, and information-dense with 1px strokes and restrained steel-blue semantic emphasis.
-- Use Motion only for path drawing, active relationship emphasis, node selection feedback, and inspector continuity.
-- Respect reduced-motion behavior already provided by the app-level MotionConfig.
-- Ensure the diagram collapses cleanly on narrow viewports without replacing it with unrelated mobile UI.
-
-### S4 - Verification and milestone closure
-
-- Update behavior tests for the detailed interactive preview and selection state.
-- Preserve tests proving local-repository and pull-request acquisition are absent from the initial surface.
-- Run repository quality gates: formatting, lint, production build, and web tests.
-- Production Compose validation remains unnecessary because this milestone changes only frontend presentation/interaction and no deployment contract.
-
-## Acceptance Criteria
-
-- Initial landing exposes one public GitHub repository action.
-- The landing diagram represents repository, source discovery, entry points, symbols, relationship mapping, calls, dependencies, types/references, semantic graph, and evidence inspection.
-- Each diagram node is interactive and updates the detail inspector without triggering network analysis.
-- Selected relationships are visibly traceable without continuous decorative animation.
-- No new runtime dependency is introduced for icons or animation.
-- Existing repository-analysis API behavior remains unchanged.
-- Formatting, lint, build, and web behavior tests pass before merge.
-
-## Boundaries
-
-- No analysis-engine, persistence, graph-truth, API, or repository-selection contract changes.
-- No fake numeric analysis progress.
-- No local repository acquisition or pull-request visualization added back to the entry surface.
-- No new product capability beyond explaining and starting the existing repository-analysis flow.
+Final integration requires formatting, lint, production build, and web behavior tests to pass on the PR head. Production Compose validation is intentionally skipped because this milestone does not change deployment/runtime infrastructure contracts.
