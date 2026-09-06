@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { PullRequestAnalysis } from './change-client';
-import type { FlowProjection } from './flow-client';
+import type { PullRequestAnalysis } from '../../integrations/api/change-client';
+import type { FlowProjection } from '../../integrations/api/flow-client';
 import {
   availableGraphLenses,
   buildSemanticGraph,

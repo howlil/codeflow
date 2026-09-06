@@ -1,7 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react';
 
-import type { RepositoryAnalysisRequest } from './flow-client';
-import { Button, Input, Select } from './ui/primitives';
+import type { RepositoryAnalysisRequest } from '../../integrations/api/flow-client';
+import { Button, Input, Select } from '../../components/ui/primitives';
 
 const MAX_ANALYZED_FILES = 96;
 const MAX_FILE_BYTES = 128 * 1024;

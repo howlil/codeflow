@@ -6,20 +6,20 @@ import {
   analyzeRepositoryFlow,
   type FlowProjection,
   type RepositoryAnalysisRequest,
-} from './flow-client';
+} from './integrations/api/flow-client';
 import {
   analyzeGitHubPullRequest,
   type PullRequestAnalysis,
-} from './change-client';
-import { GitHubPullRequestPicker } from './GitHubPullRequestPicker';
-import { GitHubRepositoryPicker } from './GitHubRepositoryPicker';
-import { GraphWorkspace } from './GraphWorkspace';
+} from './integrations/api/change-client';
+import { GitHubPullRequestPicker } from './features/acquisition/GitHubPullRequestPicker';
+import { GitHubRepositoryPicker } from './features/acquisition/GitHubRepositoryPicker';
+import { GraphWorkspace } from './features/workspace/GraphWorkspace';
 import {
   RepositoryPicker,
   type RepositorySelectionSummary,
-} from './RepositoryPicker';
-import type { SemanticGraphNode } from './graph-model';
-import { Button, IconButton } from './ui/primitives';
+} from './features/acquisition/RepositoryPicker';
+import type { SemanticGraphNode } from './domain/graph/graph-model';
+import { Button, IconButton } from './components/ui/primitives';
 
 type Theme = 'dark' | 'light';
 

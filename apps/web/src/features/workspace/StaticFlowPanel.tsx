@@ -6,8 +6,8 @@ import type {
   FlowNode,
   FlowProjection,
   StaticFlowRelationshipKind,
-} from './flow-client';
-import { Button } from './ui/primitives';
+} from '../../integrations/api/flow-client';
+import { Button } from '../../components/ui/primitives';
 
 export type RelationshipLens = 'ALL' | 'CALLS' | StaticFlowRelationshipKind;
 
