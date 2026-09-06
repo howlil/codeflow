@@ -101,7 +101,10 @@ export function LandingExperience({
           </AnimatePresence>
         </div>
 
-        <div className="landing-preview" aria-label="Interactive CodeFlow preview">
+        <div
+          className="landing-preview"
+          aria-label="Interactive CodeFlow preview"
+        >
           <div className="landing-preview-bar">
             <span>checkout-service</span>
             <span>Code graph</span>
