@@ -5,6 +5,7 @@ import {
   useState,
   type KeyboardEvent,
 } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 
 import type { PullRequestAnalysis } from '../../integrations/api/change-client';
 import {
@@ -376,7 +377,13 @@ export function GraphWorkspace({
   );
 
   return (
-    <section className="graph-workspace" aria-label="Code graph explorer">
+    <motion.section
+      className="graph-workspace"
+      aria-label="Code graph explorer"
+      initial={{ opacity: 0, y: 5 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -4 }}
+    >
       <GraphContextBar
         flow={flow}
         selectionSummary={selectionSummary}
@@ -397,9 +404,19 @@ export function GraphWorkspace({
         onChangeRepository={onChangeRepository}
       />
 
-      {changeAnalysis !== null ? (
-        <ChangeOverlayBar analysis={changeAnalysis} />
-      ) : null}
+      <AnimatePresence initial={false}>
+        {changeAnalysis !== null ? (
+          <motion.div
+            key="change-overlay"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.12 }}
+          >
+            <ChangeOverlayBar analysis={changeAnalysis} />
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
       <div className="graph-workspace-body">
         <div className="graph-primary-pane">
@@ -421,24 +438,44 @@ export function GraphWorkspace({
               onLensChange={setRequestedLens}
             />
 
-            {impact !== null ? (
-              <div className="graph-impact-status" role="status">
-                <span>
-                  Dependents: {impact.summary.directCount} direct ·{' '}
-                  {impact.summary.transitiveCount} transitive
-                </span>
-                <Button variant="ghost" onClick={() => setImpact(null)}>
-                  Clear dependents
-                </Button>
-              </div>
-            ) : null}
+            <AnimatePresence initial={false}>
+              {impact !== null ? (
+                <motion.div
+                  key="impact-status"
+                  className="graph-impact-status"
+                  role="status"
+                  initial={{ opacity: 0, y: -3 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -3 }}
+                  transition={{ duration: 0.12 }}
+                >
+                  <span>
+                    Dependents: {impact.summary.directCount} direct ·{' '}
+                    {impact.summary.transitiveCount} transitive
+                  </span>
+                  <Button variant="ghost" onClick={() => setImpact(null)}>
+                    Clear dependents
+                  </Button>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
           </div>
 
-          {impactError !== null ? (
-            <div className="graph-inline-error" role="alert">
-              {impactError}
-            </div>
-          ) : null}
+          <AnimatePresence initial={false}>
+            {impactError !== null ? (
+              <motion.div
+                key="impact-error"
+                className="graph-inline-error"
+                role="alert"
+                initial={{ opacity: 0, y: -3 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -3 }}
+                transition={{ duration: 0.12 }}
+              >
+                {impactError}
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
 
           <GraphCanvas
             nodes={visibleNodes}
@@ -482,7 +519,7 @@ export function GraphWorkspace({
           }}
         />
       </div>
-    </section>
+    </motion.section>
   );
 }
 
@@ -571,32 +608,39 @@ function GraphContextBar({
           onChange={(event) => onQueryChange(event.target.value)}
           onKeyDown={onSearchKeyDown}
         />
-        {query.trim() !== '' ? (
-          <div
-            className="graph-search-results"
-            role="listbox"
-            aria-label="Graph search results"
-          >
-            {searchResults.length === 0 ? (
-              <p>No matching semantic entity.</p>
-            ) : (
-              searchResults.map((node, index) => (
-                <button
-                  key={node.id}
-                  type="button"
-                  role="option"
-                  aria-selected={activeSearchIndex === index}
-                  onMouseEnter={() => onActiveSearchIndexChange(index)}
-                  onClick={() => onChooseSearchResult(node)}
-                >
-                  <span>{node.kind}</span>
-                  <strong>{node.label}</strong>
-                  <small>{node.path ?? 'path unavailable'}</small>
-                </button>
-              ))
-            )}
-          </div>
-        ) : null}
+        <AnimatePresence initial={false}>
+          {query.trim() !== '' ? (
+            <motion.div
+              key="graph-search-results"
+              className="graph-search-results"
+              role="listbox"
+              aria-label="Graph search results"
+              initial={{ opacity: 0, y: -4, scale: 0.99 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -4, scale: 0.99 }}
+              transition={{ duration: 0.12 }}
+            >
+              {searchResults.length === 0 ? (
+                <p>No matching semantic entity.</p>
+              ) : (
+                searchResults.map((node, index) => (
+                  <button
+                    key={node.id}
+                    type="button"
+                    role="option"
+                    aria-selected={activeSearchIndex === index}
+                    onMouseEnter={() => onActiveSearchIndexChange(index)}
+                    onClick={() => onChooseSearchResult(node)}
+                  >
+                    <span>{node.kind}</span>
+                    <strong>{node.label}</strong>
+                    <small>{node.path ?? 'path unavailable'}</small>
+                  </button>
+                ))
+              )}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </div>
 
       <Button variant="ghost" onClick={onChangeRepository}>
@@ -695,6 +739,7 @@ function GraphCanvas({
   onSelectEdge: (id: string) => void;
 }) {
   const canvasRef = useRef<HTMLDivElement>(null);
+  const shouldReduceMotion = useReducedMotion();
   const [zoom, setZoom] = useState(1);
   const zoomRef = useRef(1);
 
@@ -942,50 +987,67 @@ function GraphCanvas({
               })}
             </svg>
 
-            {nodes.map((node) => {
-              const position = layout.positions.get(node.id);
-              if (position === undefined) {
-                return null;
-              }
-              const muted = emphasis.active && !emphasis.nodeIds.has(node.id);
-              return (
-                <button
-                  key={node.id}
-                  type="button"
-                  className={`semantic-graph-node${
-                    focusId === node.id ? ' semantic-graph-node--focus' : ''
-                  }${
-                    selectedNodeId === node.id
-                      ? ' semantic-graph-node--selected'
-                      : ''
-                  }${node.entryPoint ? ' semantic-graph-node--entry' : ''}${
-                    impactIds.has(node.id) ? ' semantic-graph-node--impact' : ''
-                  }${
-                    node.changeKind === undefined
-                      ? ''
-                      : ` semantic-graph-node--change-${node.changeKind}`
-                  }${muted ? ' semantic-graph-node--muted' : ''}`}
-                  style={{ left: position.x, top: position.y }}
-                  aria-pressed={selectedNodeId === node.id}
-                  aria-label={`${node.kind} ${node.label}${
-                    node.changeKind === undefined ? '' : ` ${node.changeKind}`
-                  }`}
-                  onClick={() => onSelectNode(node.id)}
-                >
-                  <span className="semantic-graph-node-meta">
-                    <span>{node.kind}</span>
-                    {node.entryPoint ? <span>ENTRY</span> : null}
-                    {node.changeKind !== undefined ? (
-                      <span>{node.changeKind.toUpperCase()}</span>
-                    ) : null}
-                  </span>
-                  <strong>{node.label}</strong>
-                  <span className="semantic-graph-node-path">
-                    {compactPath(node.path)}
-                  </span>
-                </button>
-              );
-            })}
+            <AnimatePresence initial={false}>
+              {nodes.map((node) => {
+                const position = layout.positions.get(node.id);
+                if (position === undefined) {
+                  return null;
+                }
+                const muted = emphasis.active && !emphasis.nodeIds.has(node.id);
+                return (
+                  <motion.button
+                    key={node.id}
+                    type="button"
+                    className={`semantic-graph-node${
+                      focusId === node.id ? ' semantic-graph-node--focus' : ''
+                    }${
+                      selectedNodeId === node.id
+                        ? ' semantic-graph-node--selected'
+                        : ''
+                    }${node.entryPoint ? ' semantic-graph-node--entry' : ''}${
+                      impactIds.has(node.id)
+                        ? ' semantic-graph-node--impact'
+                        : ''
+                    }${
+                      node.changeKind === undefined
+                        ? ''
+                        : ` semantic-graph-node--change-${node.changeKind}`
+                    }${muted ? ' semantic-graph-node--muted' : ''}`}
+                    initial={{ left: position.x, top: position.y, scale: 0.96 }}
+                    animate={{ left: position.x, top: position.y, scale: 1 }}
+                    exit={{ scale: 0.96 }}
+                    transition={{
+                      left: {
+                        duration: shouldReduceMotion ? 0 : 0.18,
+                        ease: [0.22, 1, 0.36, 1],
+                      },
+                      top: {
+                        duration: shouldReduceMotion ? 0 : 0.18,
+                        ease: [0.22, 1, 0.36, 1],
+                      },
+                      scale: { duration: shouldReduceMotion ? 0 : 0.12 },
+                    }}
+                    aria-pressed={selectedNodeId === node.id}
+                    aria-label={`${node.kind} ${node.label}${
+                      node.changeKind === undefined ? '' : ` ${node.changeKind}`
+                    }`}
+                    onClick={() => onSelectNode(node.id)}
+                  >
+                    <span className="semantic-graph-node-meta">
+                      <span>{node.kind}</span>
+                      {node.entryPoint ? <span>ENTRY</span> : null}
+                      {node.changeKind !== undefined ? (
+                        <span>{node.changeKind.toUpperCase()}</span>
+                      ) : null}
+                    </span>
+                    <strong>{node.label}</strong>
+                    <span className="semantic-graph-node-path">
+                      {compactPath(node.path)}
+                    </span>
+                  </motion.button>
+                );
+              })}
+            </AnimatePresence>
           </div>
         </div>
       </div>
@@ -1068,7 +1130,14 @@ function GraphInspector({
       (candidate) => candidate.id === edge.targetId,
     );
     return (
-      <aside className="graph-inspector" aria-label="Graph inspector">
+      <motion.aside
+        key={`edge:${edge.id}`}
+        className="graph-inspector"
+        aria-label="Graph inspector"
+        initial={{ opacity: 0, x: 5 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.12 }}
+      >
         <div className="graph-inspector-header">
           <span className="panel-kicker">Relationship</span>
           <strong>{edge.kind}</strong>
@@ -1082,18 +1151,25 @@ function GraphInspector({
           </div>
         ) : null}
         <EvidenceList evidence={edge.evidence} />
-      </aside>
+      </motion.aside>
     );
   }
 
   if (node === null) {
     return (
-      <aside className="graph-inspector" aria-label="Graph inspector">
+      <motion.aside
+        key="empty"
+        className="graph-inspector"
+        aria-label="Graph inspector"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.1 }}
+      >
         <div className="graph-inspector-empty">
           <strong>Select a node or relationship</strong>
           <span>Inspect source, evidence, and graph-native actions here.</span>
         </div>
-      </aside>
+      </motion.aside>
     );
   }
 
@@ -1122,7 +1198,14 @@ function GraphInspector({
   );
 
   return (
-    <aside className="graph-inspector" aria-label="Graph inspector">
+    <motion.aside
+      key={`node:${node.id}`}
+      className="graph-inspector"
+      aria-label="Graph inspector"
+      initial={{ opacity: 0, x: 5 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.12 }}
+    >
       <div className="graph-inspector-header">
         <span className="panel-kicker">{node.kind}</span>
         <strong>{node.label}</strong>
@@ -1296,7 +1379,7 @@ function GraphInspector({
       {node.evidence.length > 0 ? (
         <EvidenceList evidence={node.evidence} />
       ) : null}
-    </aside>
+    </motion.aside>
   );
 }
 
