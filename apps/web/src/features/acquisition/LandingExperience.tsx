@@ -50,7 +50,7 @@ export function LandingExperience({
 }) {
   const [activeNode, setActiveNode] = useState<DemoNodeId>('service');
   const selectedNode =
-    DEMO_NODES.find((node) => node.id === activeNode) ?? DEMO_NODES[1];
+    DEMO_NODES.find((node) => node.id === activeNode) ?? DEMO_NODES[1]!;
 
   return (
     <motion.section
@@ -189,11 +189,15 @@ export function LandingExperience({
         </div>
         <div>
           <strong>Keep evidence visible</strong>
-          <span>Relationships stay tied to source locations and analysis evidence.</span>
+          <span>
+            Relationships stay tied to source locations and analysis evidence.
+          </span>
         </div>
         <div>
           <strong>Reduce codebase archaeology</strong>
-          <span>Move from “where is this?” to “what does this reach?” in one surface.</span>
+          <span>
+            Move from “where is this?” to “what does this reach?” in one surface.
+          </span>
         </div>
       </div>
     </motion.section>
